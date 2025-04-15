@@ -133,6 +133,7 @@ var tools = {
             while (result) {
                 result = tools.findImageClick("closeBtn.png");
             }
+            sleep(random(1000, 2000))
             var 当前坐标 = tools.人物坐标();
             var 安全区坐标范围 = config.zuobiao.比奇安全区坐标范围;
             while (true) {
@@ -158,14 +159,46 @@ var tools = {
             // var 当前坐标 = tools.人物坐标();
 
         },
-        去比奇挂机图: (尝试次数) => {
-            尝试次数 = 尝试次数 || 0;
-            var 最大尝试次数 = 20;
-            if (尝试次数 >= 最大尝试次数) {
-                toastLog("多次尝试未移动，终止脚本避免死循环");
-                return false;
+        去比奇挂机图Loop: (挂机地图) => {
+            //tools.人物移动.去比奇挂机图(挂机地图);
+            var 当前坐标 = { x: 0, y: 0 } //tools.人物坐标();
+            while (true) {
+                var 当前地图 = null;
+                try {
+                    当前地图 = tools.人物所在地图();
+                } catch (error) {
+                    toastLog('获取当前地图失败')
+                    continue;
+                }
+                var 坐标 = { x: 0, y: 0 }
+                try {
+                    坐标 = tools.人物坐标();
+                } catch (error) {
+                    toastLog('获取人物坐标失败')
+                    continue;
+                }
+                if (当前地图 == 挂机地图) { //说明到目的地
+                    break;
+                }
+                else {
+                    if (坐标 != null && 当前坐标 != null && 坐标.x == 当前坐标.x && 坐标.y == 当前坐标.y) {
+                        toastLog('重新跑图');
+                        try {
+                            tools.人物移动.去比奇挂机图(挂机地图);
+                        } catch (error) {
+                            toastLog('跑图异常')
+                        } 
+                    }
+                    else {
+                        当前坐标 = 坐标;
+                    }
+                }
+                sleep(1000 * 5);
             }
-            var tempGuaJi = "兽人古墓三层"
+            toastLog("到达目的地");
+            return;
+        },
+        去比奇挂机图: (挂机地图) => {
             var 当前地图 = tools.人物所在地图();
             if (当前地图 == null || 当前地图 == "") {
                 toastLog(`当前地图未知`);
@@ -175,129 +208,191 @@ var tools = {
                 tools.打开大地图();
                 sleep(1000);
             }
-            if (当前地图 == "比奇省" || 当前地图 == "比奇城" || 当前地图 == "银杏山谷" || 当前地图 == "边界村") {
-                if (tempGuaJi == "兽人古墓一层") {
-                    tools.findImageClick("map-shourengumu1.png");
-                    sleep(1000);
-                    tools.找图并点击图片中心("map-shourengumu1-rukou.png");
-                    sleep(1000);
+            var closeBtn = tools.findImage("closeBtn.png");
+            if (closeBtn.status) {
+                var closeImg = closeBtn.img;
+                var fbl = `${device.width}_${device.height}`;
+                if (当前地图 == "比奇省" || 当前地图 == "比奇城" || 当前地图 == "银杏山谷" || 当前地图 == "边界村") {
+                    if (挂机地图 == "兽人古墓一层") {
+                        var r = config.zuobiao.比奇大地图偏移[fbl].比奇大城.兽人古墓一层;
+                        var x = closeImg.x + random(r.x[0], r.x[1]);
+                        var y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                        sleep(1000);
+
+
+                        r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第一层.打怪点[0];
+                        x = closeImg.x + random(r.x[0], r.x[1]);
+                        y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+
+                    }
+                    else if (挂机地图 == "兽人古墓二层") {
+                        var r = config.zuobiao.比奇大地图偏移[fbl].比奇大城.兽人古墓一层;
+                        var x = closeImg.x + random(r.x[0], r.x[1]);
+                        var y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                        sleep(1000);
+
+                        r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第一层.兽人古墓二层;
+                        x = closeImg.x + random(r.x[0], r.x[1]);
+                        y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                        sleep(1000);
+
+                        r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第二层.打怪点[0];
+                        x = closeImg.x + random(r.x[0], r.x[1]);
+                        y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                    }
+                    else if (挂机地图 == "兽人古墓三层") {
+                        var r = config.zuobiao.比奇大地图偏移[fbl].比奇大城.兽人古墓一层;
+                        var x = closeImg.x + random(r.x[0], r.x[1]);
+                        var y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                        sleep(1000);
+
+                        r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第一层.兽人古墓二层;
+                        x = closeImg.x + random(r.x[0], r.x[1]);
+                        y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y);
+                        sleep(1000);
+
+                        r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第二层.兽人古墓三层;
+                        x = closeImg.x + random(r.x[0], r.x[1]);
+                        y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y);
+                        sleep(1000);
+
+                        r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第三层.打怪点[0];
+                        x = closeImg.x + random(r.x[0], r.x[1]);
+                        y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                    }
                 }
-                else if (tempGuaJi == "兽人古墓二层") {
-                    tools.findImageClick("map-shourengumu1.png");
-                    sleep(1000);
-                    tools.findImageClick("map-shourengumu2.png");
-                    sleep(1000);
-                    tools.找图并点击图片中心("map-shourengumu2-rukou.png");
-                    sleep(1000);
+                else if (当前地图 == "兽人古墓一层") {
+                    if (挂机地图 == "兽人古墓一层") {
+                        toastLog("到达目的地");
+                        return;
+                    }
+                    else if (挂机地图 == "兽人古墓二层") {
+                        var r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第一层.兽人古墓二层;
+                        var x = closeImg.x + random(r.x[0], r.x[1]);
+                        var y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                        sleep(1000);
+
+                        r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第二层.打怪点[0];
+                        x = closeImg.x + random(r.x[0], r.x[1]);
+                        y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+
+                    }
+                    else if (挂机地图 == "兽人古墓三层") {
+                        var r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第一层.兽人古墓二层;
+                        var x = closeImg.x + random(r.x[0], r.x[1]);
+                        var y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                        sleep(1000);
+
+                        r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第二层.兽人古墓三层;
+                        x = closeImg.x + random(r.x[0], r.x[1]);
+                        y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                        sleep(1000);
+
+                        r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第三层.打怪点[0];
+                        x = closeImg.x + random(r.x[0], r.x[1]);
+                        y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                    }
                 }
-                else if (tempGuaJi == "兽人古墓三层") {
-                    tools.findImageClick("map-shourengumu1.png");
-                    sleep(1000);
-                    tools.findImageClick("map-shourengumu2.png");
-                    sleep(1000);
-                    tools.findImageClick("map-shourengumu3.png");
-                    sleep(1000);
-                    tools.找图并点击图片中心("map-shourengumu3-rukou.png");
-                    sleep(1000);
+                else if (当前地图 == "兽人古墓二层") {
+                    if (挂机地图 == "兽人古墓一层") {
+                        var r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第二层.兽人古墓一层;
+                        var x = closeImg.x + random(r.x[0], r.x[1]);
+                        var y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                        sleep(1000);
+
+                        r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第一层.打怪点[0];
+                        x = closeImg.x + random(r.x[0], r.x[1]);
+                        y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                    }
+                    else if (挂机地图 == "兽人古墓二层") {
+                        toastLog("到达目的地");
+                        return;
+                    }
+                    else if (挂机地图 == "兽人古墓三层") {
+                        var r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第二层.兽人古墓三层;
+                        var x = closeImg.x + random(r.x[0], r.x[1]);
+                        var y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                        sleep(1000);
+
+                        r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第三层.打怪点[0];
+                        x = closeImg.x + random(r.x[0], r.x[1]);
+                        y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                    }
                 }
-            }
-            else if (当前地图 == "兽人古墓一层") {
-                if (tempGuaJi == "兽人古墓一层") {
-                    toastLog("到达目的地");
-                    return true;
+                else if (当前地图 == "兽人古墓三层") {
+                    if (挂机地图 == "兽人古墓一层") {
+                        var r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第三层.兽人古墓二层;
+                        var x = closeImg.x + random(r.x[0], r.x[1]);
+                        var y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                        sleep(1000);
+
+                        var r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第二层.兽人古墓一层;
+                        var x = closeImg.x + random(r.x[0], r.x[1]);
+                        var y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                        sleep(1000);
+
+                        r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第一层.打怪点[0];
+                        x = closeImg.x + random(r.x[0], r.x[1]);
+                        y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+
+                    }
+                    else if (挂机地图 == "兽人古墓二层") {
+                        var r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第二层.兽人古墓一层;
+                        var x = closeImg.x + random(r.x[0], r.x[1]);
+                        var y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                        sleep(1000);
+
+                        r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第一层.打怪点[0];
+                        x = closeImg.x + random(r.x[0], r.x[1]);
+                        y = closeImg.y + random(r.y[0], r.y[1]);
+                        click(x, y)
+                    }
+                    else if (挂机地图 == "兽人古墓三层") {
+                        toastLog("到达目的地");
+                        return;
+                    }
                 }
-                else if (tempGuaJi == "兽人古墓二层") {
-                    tools.findImageClick("map-shourengumu2.png");
-                    sleep(1000);
-                    tools.找图并点击图片中心("map-shourengumu2-rukou.png");
-                    sleep(1000);
+                else {
+                    toastLog(`${当前地图}识别失败或不支持`);
+                    return false;
                 }
-                else if (tempGuaJi == "兽人古墓三层") {
-                    tools.findImageClick("map-shourengumu2.png");
-                    sleep(1000);
-                    tools.findImageClick("map-shourengumu3.png");
-                    sleep(1000);
-                    tools.找图并点击图片中心("map-shourengumu3-rukou.png");
-                    sleep(1000);
-                }
-            }
-            else if (当前地图 == "兽人古墓二层") {
-                if (tempGuaJi == "兽人古墓一层") {
-                    tools.findImageClick("map-shourengumu1.png");
-                    sleep(1000);
-                    tools.找图并点击图片中心("map-shourengumu1-rukou.png");
-                    sleep(1000);
-                }
-                else if (tempGuaJi == "兽人古墓二层") {
-                    toastLog("到达目的地");
-                    return true;
-                }
-                else if (tempGuaJi == "兽人古墓三层") {
-                    tools.findImageClick("map-shourengumu3.png");
-                    sleep(1000);
-                    tools.找图并点击图片中心("map-shourengumu3-rukou.png");
-                    sleep(1000);
-                }
-            }
-            else if (当前地图 == "兽人古墓三层") {
-                if (tempGuaJi == "兽人古墓一层") {
-                    tools.findImageClick("map-shourengumu2.png");
-                    sleep(1000);
-                    tools.findImageClick("map-shourengumu1.png");
-                    sleep(1000);
-                    tools.找图并点击图片中心("map-shourengumu1-rukou.png");
-                    sleep(1000);
-                }
-                else if (tempGuaJi == "兽人古墓二层") {
-                    tools.findImageClick("map-shourengumu3.png");
-                    sleep(1000);
-                    tools.找图并点击图片中心("map-shourengumu3-rukou.png");
-                    sleep(1000);
-                }
-                else if (tempGuaJi == "兽人古墓三层") {
-                    toastLog("到达目的地");
-                    return true;
+
+                var result = true;
+                while (result) {
+                    result = tools.findImageClick("closeBtn.png");
+                    sleep(1000)
                 }
             }
             else {
-                toastLog(`不支持${当前地图}回比奇老兵`);
-                return false;
+                toastLog("未找到closeBtn");
+                return;
             }
-            var result = true;
-            while (result) {
-                result = tools.findImageClick("closeBtn.png");
-            }
-            var 当前坐标 = tools.人物坐标();
-            var 安全区坐标范围 = config.zuobiao.比奇安全区坐标范围;
-            while (true) {
-                sleep(1000 * 5);
-                当前地图 = tools.人物所在地图();
-                if (当前地图 == ) { //说明到了安全区
-                    break;
-                }
-                else {
-                    if (坐标.x == 当前坐标.x && 坐标.y == 当前坐标.y) {
-                        toastLog('目标未移动，递归');
-                        tools.人物移动.去比奇老兵(尝试次数 + 1);
-                        break;
-                    }
-                    else {
-                        当前坐标 = 坐标;
-                    }
-                }
-            }
-            //tools.比奇安全区到小贩();
-            toastLog("到达目的地");
-            return true;
-            // var 当前坐标 = tools.人物坐标();
-
+            return;
         }
     },
     人物所在地图: () => {
-        var result = true;
-        while (result) {
-            result = tools.findImageClick("closeBtn.png");
-        }
         var fbl = `${device.width}_${device.height}`;
         var p = config.zuobiao.地点范围[fbl];
         var result = tools.findAllText(p.x1, p.y1, p.x2, p.y2);
@@ -309,10 +404,6 @@ var tools = {
         }
     },
     人物坐标: () => {
-        var result = true;
-        while (result) {
-            result = tools.findImageClick("closeBtn.png");
-        }
         var fbl = `${device.width}_${device.height}`;
         var p = config.zuobiao.人物坐标范围[fbl];
         var result = tools.findAllText(p.x1, p.y1, p.x2, p.y2);
@@ -336,6 +427,7 @@ var tools = {
         var result = true;
         while (result) {
             result = tools.findImageClick("closeBtn.png");
+            sleep(500)
         }
         sleep(1000);
 
@@ -396,8 +488,8 @@ var tools = {
         var result = true;
         while (result) {
             result = tools.findImageClick("closeBtn.png");
+            sleep(1000)
         }
-        sleep(500);
         var fbl = `${device.width}_${device.height}`;
         var p = config.zuobiao.小地图范围[fbl];
         var x = random(p.x1 + 10, p.x2);
@@ -406,10 +498,12 @@ var tools = {
     },
     shenqiCapture: () => {
         try {
-            images.stopScreenCapture()
+            //images.stopScreenCapture()
             images.requestScreenCapture()
+            sleep(1000)
         } catch (error) {
             toast("请求截图错误");
+            toastLog(error)
             exit();
         }
     },
@@ -517,9 +611,11 @@ var tools = {
             var x = result.img.x + random(5, result.size.w);
             var y = result.img.y + random(5, result.size.h);
             click(x, y)
+            // toastLog('找图成功')
             return true
         }
         else {
+            toastLog('找图失败' + fileName)
             return false
         }
     },
@@ -529,9 +625,11 @@ var tools = {
             var x = result.img.x + (result.size.w / 2);
             var y = result.img.y + (result.size.h / 2);
             click(x, y)
+            // toastLog('找图成功')
             return true
         }
         else {
+            toastLog('找图失败' + fileName)
             return false
         }
     },
@@ -680,8 +778,9 @@ function excuteAuto() {
     win.setPosition(-10000, padding_top);
     sleep(1500)
 
+    tools.人物移动.去比奇挂机图Loop("兽人古墓三层");
 
-    tools.人物移动.比奇安全区到小贩();
+    // tools.人物移动.去比奇挂机图();
     //toastLog(p)
     // // 可自行换个能找到的小图X\
     // let targetImgPath = "./res/UI/test.png"; 
