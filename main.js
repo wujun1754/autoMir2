@@ -25,6 +25,385 @@ var serviceStorage = storages.create("zjh336.cn" + config.serviceScriptKey);
 
 
 var tools = {
+    人物移动: {
+        右走一步: (duration) => {
+            let fbl = `${device.width}_${device.height}`;
+            let p = config.zuobiao.遥感中心位置[fbl];
+            let dx1 = random(-5, 5);
+            let dx2 = random(40, 70);
+            // let duration = random(1000, 2000);
+            gestures(
+                [0, duration, [p.x - dx1, p.y - dx1], [p.x + dx2, p.y + dx1]]
+            );
+        },
+        左走一步: (duration) => {
+            var fbl = `${device.width}_${device.height}`;
+            var p = config.zuobiao.遥感中心位置[fbl];
+            let dx1 = random(-5, 5);
+            let dx2 = random(40, 70);
+            gestures(
+                [0, duration, [p.x - dx1, p.y - dx1], [p.x - dx2, p.y + dx1]]
+            );
+            //swipe(p.x, p.y, p.x - 25, p.y, 500)
+        },
+        上走一步: (duration) => {
+            var fbl = `${device.width}_${device.height}`;
+            var p = config.zuobiao.遥感中心位置[fbl];
+            let dx1 = random(-5, 5);
+            let dx2 = random(40, 70);
+            gestures(
+                [0, duration, [p.x - dx1, p.y - dx1], [p.x + dx1, p.y - dx2]]
+            );
+            //swipe(p.x, p.y, p.x, p.y - 25, 500)
+        },
+        下走一步: (duration) => {
+            var fbl = `${device.width}_${device.height}`;
+            var p = config.zuobiao.遥感中心位置[fbl];
+            let dx1 = random(-5, 5);
+            let dx2 = random(40, 70);
+            gestures(
+                [0, duration, [p.x - dx1, p.y - dx1], [p.x + dx1, p.y + dx2]]
+            );
+            //swipe(p.x, p.y, p.x, p.y + 25, 500)
+        },
+        比奇安全区到小贩: () => {
+            var 当前坐标 = tools.人物坐标();
+            var 比奇小贩坐标 = config.zuobiao.比奇小贩坐标;
+            if (比奇小贩坐标.x > 当前坐标.x) {
+                tools.人物移动.右走一步((比奇小贩坐标.x - 当前坐标.x) * 1000)
+                sleep(600)
+            } else {
+                tools.人物移动.左走一步((当前坐标.x - 比奇小贩坐标.x) * 1000)
+                sleep(600)
+            }
+            if (比奇小贩坐标.y > 当前坐标.y) {
+                tools.人物移动.下走一步((比奇小贩坐标.y - 当前坐标.y) * 1000)
+                sleep(600)
+            } else {
+                tools.人物移动.上走一步((当前坐标.y - 比奇小贩坐标.y) * 1000)
+                sleep(600)
+            }
+        },
+        去比奇老兵: (尝试次数) => {
+            尝试次数 = 尝试次数 || 0;
+            var 最大尝试次数 = 20;
+            if (尝试次数 >= 最大尝试次数) {
+                toastLog("多次尝试未移动，终止脚本避免死循环");
+                return false;
+            }
+            var 当前地图 = tools.人物所在地图();
+            if (当前地图 == null || 当前地图 == "") {
+                toastLog(`当前地图未知`);
+                return false;
+            }
+            else {
+                tools.打开大地图();
+                sleep(1000);
+            }
+            if (当前地图 == "兽人古墓三层") {
+                tools.findImageClick("map-shourengumu2.png");
+                sleep(1000);
+                tools.findImageClick("map-shourengumu1.png");
+                sleep(1000);
+                tools.findImageClick("map-biqi.png");
+                sleep(1000);
+                tools.findImageClick("map-biqilaobing.png");
+            }
+            else if (当前地图 == "兽人古墓二层") {
+                tools.findImageClick("map-shourengumu1.png");
+                sleep(1000);
+                tools.findImageClick("map-biqi.png");
+                sleep(1000);
+                tools.findImageClick("map-biqilaobing.png");
+            }
+            else if (当前地图 == "兽人古墓一层") {
+                tools.findImageClick("map-biqi.png");
+                sleep(1000);
+                tools.findImageClick("map-biqilaobing.png");
+            }
+            else if (当前地图 == "比奇省" || 当前地图 == "比奇城" || 当前地图 == "银杏山谷" || 当前地图 == "边界村") {
+                tools.findImageClick("map-biqilaobing.png");
+            }
+            else {
+                toastLog(`不支持${当前地图}回比奇老兵`);
+                return false;
+            }
+            var result = true;
+            sleep(random(1000, 2000))
+            while (result) {
+                result = tools.findImageClick("closeBtn.png");
+            }
+            var 当前坐标 = tools.人物坐标();
+            var 安全区坐标范围 = config.zuobiao.比奇安全区坐标范围;
+            while (true) {
+                sleep(1000 * 5);
+                var 坐标 = tools.人物坐标();
+                if (坐标 != null && 坐标.x > 安全区坐标范围.x1 && 坐标.x < 安全区坐标范围.x2 && 坐标.y > 安全区坐标范围.y1 && 坐标.y < 安全区坐标范围.y2) { //说明到了安全区
+                    break;
+                }
+                else {
+                    if (坐标.x == 当前坐标.x && 坐标.y == 当前坐标.y) {
+                        toastLog('目标未移动，递归');
+                        tools.人物移动.去比奇老兵(尝试次数 + 1);
+                        break;
+                    }
+                    else {
+                        当前坐标 = 坐标;
+                    }
+                }
+            }
+            //tools.比奇安全区到小贩();
+            toastLog("到达目的地");
+            return true;
+            // var 当前坐标 = tools.人物坐标();
+
+        },
+        去比奇挂机图: (尝试次数) => {
+            尝试次数 = 尝试次数 || 0;
+            var 最大尝试次数 = 20;
+            if (尝试次数 >= 最大尝试次数) {
+                toastLog("多次尝试未移动，终止脚本避免死循环");
+                return false;
+            }
+            var tempGuaJi = "兽人古墓三层"
+            var 当前地图 = tools.人物所在地图();
+            if (当前地图 == null || 当前地图 == "") {
+                toastLog(`当前地图未知`);
+                return false;
+            }
+            else {
+                tools.打开大地图();
+                sleep(1000);
+            }
+            if (当前地图 == "比奇省" || 当前地图 == "比奇城" || 当前地图 == "银杏山谷" || 当前地图 == "边界村") {
+                if (tempGuaJi == "兽人古墓一层") {
+                    tools.findImageClick("map-shourengumu1.png");
+                    sleep(1000);
+                    tools.找图并点击图片中心("map-shourengumu1-rukou.png");
+                    sleep(1000);
+                }
+                else if (tempGuaJi == "兽人古墓二层") {
+                    tools.findImageClick("map-shourengumu1.png");
+                    sleep(1000);
+                    tools.findImageClick("map-shourengumu2.png");
+                    sleep(1000);
+                    tools.找图并点击图片中心("map-shourengumu2-rukou.png");
+                    sleep(1000);
+                }
+                else if (tempGuaJi == "兽人古墓三层") {
+                    tools.findImageClick("map-shourengumu1.png");
+                    sleep(1000);
+                    tools.findImageClick("map-shourengumu2.png");
+                    sleep(1000);
+                    tools.findImageClick("map-shourengumu3.png");
+                    sleep(1000);
+                    tools.找图并点击图片中心("map-shourengumu3-rukou.png");
+                    sleep(1000);
+                }
+            }
+            else if (当前地图 == "兽人古墓一层") {
+                if (tempGuaJi == "兽人古墓一层") {
+                    toastLog("到达目的地");
+                    return true;
+                }
+                else if (tempGuaJi == "兽人古墓二层") {
+                    tools.findImageClick("map-shourengumu2.png");
+                    sleep(1000);
+                    tools.找图并点击图片中心("map-shourengumu2-rukou.png");
+                    sleep(1000);
+                }
+                else if (tempGuaJi == "兽人古墓三层") {
+                    tools.findImageClick("map-shourengumu2.png");
+                    sleep(1000);
+                    tools.findImageClick("map-shourengumu3.png");
+                    sleep(1000);
+                    tools.找图并点击图片中心("map-shourengumu3-rukou.png");
+                    sleep(1000);
+                }
+            }
+            else if (当前地图 == "兽人古墓二层") {
+                if (tempGuaJi == "兽人古墓一层") {
+                    tools.findImageClick("map-shourengumu1.png");
+                    sleep(1000);
+                    tools.找图并点击图片中心("map-shourengumu1-rukou.png");
+                    sleep(1000);
+                }
+                else if (tempGuaJi == "兽人古墓二层") {
+                    toastLog("到达目的地");
+                    return true;
+                }
+                else if (tempGuaJi == "兽人古墓三层") {
+                    tools.findImageClick("map-shourengumu3.png");
+                    sleep(1000);
+                    tools.找图并点击图片中心("map-shourengumu3-rukou.png");
+                    sleep(1000);
+                }
+            }
+            else if (当前地图 == "兽人古墓三层") {
+                if (tempGuaJi == "兽人古墓一层") {
+                    tools.findImageClick("map-shourengumu2.png");
+                    sleep(1000);
+                    tools.findImageClick("map-shourengumu1.png");
+                    sleep(1000);
+                    tools.找图并点击图片中心("map-shourengumu1-rukou.png");
+                    sleep(1000);
+                }
+                else if (tempGuaJi == "兽人古墓二层") {
+                    tools.findImageClick("map-shourengumu3.png");
+                    sleep(1000);
+                    tools.找图并点击图片中心("map-shourengumu3-rukou.png");
+                    sleep(1000);
+                }
+                else if (tempGuaJi == "兽人古墓三层") {
+                    toastLog("到达目的地");
+                    return true;
+                }
+            }
+            else {
+                toastLog(`不支持${当前地图}回比奇老兵`);
+                return false;
+            }
+            var result = true;
+            while (result) {
+                result = tools.findImageClick("closeBtn.png");
+            }
+            var 当前坐标 = tools.人物坐标();
+            var 安全区坐标范围 = config.zuobiao.比奇安全区坐标范围;
+            while (true) {
+                sleep(1000 * 5);
+                当前地图 = tools.人物所在地图();
+                if (当前地图 == ) { //说明到了安全区
+                    break;
+                }
+                else {
+                    if (坐标.x == 当前坐标.x && 坐标.y == 当前坐标.y) {
+                        toastLog('目标未移动，递归');
+                        tools.人物移动.去比奇老兵(尝试次数 + 1);
+                        break;
+                    }
+                    else {
+                        当前坐标 = 坐标;
+                    }
+                }
+            }
+            //tools.比奇安全区到小贩();
+            toastLog("到达目的地");
+            return true;
+            // var 当前坐标 = tools.人物坐标();
+
+        }
+    },
+    人物所在地图: () => {
+        var result = true;
+        while (result) {
+            result = tools.findImageClick("closeBtn.png");
+        }
+        var fbl = `${device.width}_${device.height}`;
+        var p = config.zuobiao.地点范围[fbl];
+        var result = tools.findAllText(p.x1, p.y1, p.x2, p.y2);
+        if (result != null && result.length == 1) {
+            return result[0].text;
+        }
+        else {
+            return null;
+        }
+    },
+    人物坐标: () => {
+        var result = true;
+        while (result) {
+            result = tools.findImageClick("closeBtn.png");
+        }
+        var fbl = `${device.width}_${device.height}`;
+        var p = config.zuobiao.人物坐标范围[fbl];
+        var result = tools.findAllText(p.x1, p.y1, p.x2, p.y2);
+        if (result != null && result.length == 1) {
+            try {
+                let parts = result[0].text.split(":");
+                return {
+                    x: parseInt(parts[0]),
+                    y: parseInt(parts[1])
+                }
+            } catch (error) {
+                return null;
+            }
+        }
+        else {
+            return null;
+        }
+    },
+    修理装备: () => {
+        toastLog('尝试关闭所有窗口');
+        var result = true;
+        while (result) {
+            result = tools.findImageClick("closeBtn.png");
+        }
+        sleep(1000);
+
+        tools.jiaoSe();
+        sleep(2000);
+
+        result = tools.findImage("closeBtn.png");
+        if (result.status) {
+            toastLog('卸下头盔');
+            tools.clickTou(result.img);
+            sleep(1000);
+            tools.findImageClick("xiexia.png")
+
+            sleep(1000);
+            toastLog('卸下项链');
+            tools.clickXiangLian(result.img);
+            sleep(1000);
+            tools.findImageClick("xiexia.png")
+
+
+            sleep(1000);
+            toastLog('卸下武器');
+            tools.clickWuQi(result.img);
+            sleep(1000);
+            tools.findImageClick("xiexia.png")
+
+            sleep(1000);
+            toastLog('卸下手镯1');
+            tools.clickShouZhuo1(result.img);
+            sleep(1000);
+            tools.findImageClick("xiexia.png")
+
+
+            sleep(1000);
+            toastLog('卸下手镯2');
+            tools.clickShouZhuo2(result.img);
+            sleep(1000);
+            tools.findImageClick("xiexia.png")
+
+            sleep(1000);
+            toastLog('卸下戒指1');
+            tools.clickJieZhi1(result.img);
+            sleep(1000);
+            tools.findImageClick("xiexia.png")
+
+
+            sleep(1000);
+            toastLog('卸下戒指2');
+            tools.clickJieZhi2(result.img);
+            sleep(1000);
+            tools.findImageClick("xiexia.png")
+        }
+        else {
+            toastLog('未找到人物');
+        }
+    },
+    打开大地图: () => {
+        var result = true;
+        while (result) {
+            result = tools.findImageClick("closeBtn.png");
+        }
+        sleep(500);
+        var fbl = `${device.width}_${device.height}`;
+        var p = config.zuobiao.小地图范围[fbl];
+        var x = random(p.x1 + 10, p.x2);
+        var y = random(p.y1, p.y2);
+        click(x, y);
+    },
     shenqiCapture: () => {
         try {
             images.stopScreenCapture()
@@ -39,13 +418,53 @@ var tools = {
         var result = config.zuobiao.jiaoSeBtn[fbl]
         click(result.x, result.y)
     },
-    tou: (closeImg) => {//点击人物头部
+    clickTou: (closeImg) => {//点击人物头部
         var fbl = `${device.width}_${device.height}`;
         var tou = config.zuobiao.renWuTou[fbl];
-        var x = closeImg.postion.x + tou.x;
-        var y = closeImg.postion.y + tou.y;
-        toastLog(`x = ${x} y = ${y}`)
-        utils.canvasRect(x, y, x + 150, y + 150, "img", "test");
+        var x = closeImg.x + tou.x;
+        var y = closeImg.y + tou.y;
+        click(x, y)
+    },
+    clickXiangLian: (closeImg) => {//点击人物项链
+        var fbl = `${device.width}_${device.height}`;
+        var xianglian = config.zuobiao.renWuXiangLian[fbl];
+        var x = closeImg.x + xianglian.x;
+        var y = closeImg.y + xianglian.y;
+        click(x, y)
+    },
+    clickWuQi: (closeImg) => {//点击人物武器
+        var fbl = `${device.width}_${device.height}`;
+        var wuqi = config.zuobiao.renWuWuQi[fbl];
+        var x = closeImg.x + wuqi.x;
+        var y = closeImg.y + wuqi.y;
+        click(x, y)
+    },
+    clickShouZhuo1: (closeImg) => {//点击人物手镯1
+        var fbl = `${device.width}_${device.height}`;
+        var r = config.zuobiao.renWuShouZhuo1[fbl];
+        var x = closeImg.x + r.x;
+        var y = closeImg.y + r.y;
+        click(x, y)
+    },
+    clickShouZhuo2: (closeImg) => {//点击人物手镯1
+        var fbl = `${device.width}_${device.height}`;
+        var r = config.zuobiao.renWuShouZhuo2[fbl];
+        var x = closeImg.x + r.x;
+        var y = closeImg.y + r.y;
+        click(x, y)
+    },
+    clickJieZhi1: (closeImg) => {//点击人物戒指1
+        var fbl = `${device.width}_${device.height}`;
+        var r = config.zuobiao.renWuJieZhi1[fbl];
+        var x = closeImg.x + r.x;
+        var y = closeImg.y + r.y;
+        click(x, y)
+    },
+    clickJieZhi2: (closeImg) => {//点击人物戒指2
+        var fbl = `${device.width}_${device.height}`;
+        var r = config.zuobiao.renWuJieZhi2[fbl];
+        var x = closeImg.x + r.x;
+        var y = closeImg.y + r.y;
         click(x, y)
     },
     findImage: (fileName) => {
@@ -65,6 +484,8 @@ var tools = {
                 h: targetImg.height
             }
             var result = images.findImage(img, targetImg, options);
+
+
             utils.recycleNull(img);
             utils.recycleNull(targetImg);
             if (result != null && (result.x > 0 || result.y > 0)) {
@@ -96,14 +517,22 @@ var tools = {
             var x = result.img.x + random(5, result.size.w);
             var y = result.img.y + random(5, result.size.h);
             click(x, y)
-            return {
-                status: true
-            }
+            return true
         }
         else {
-            return {
-                status: false
-            }
+            return false
+        }
+    },
+    找图并点击图片中心: (fileName) => {
+        var result = tools.findImage(fileName);
+        if (result.status && result.img.x > 0 && result.img.y > 0) {
+            var x = result.img.x + (result.size.w / 2);
+            var y = result.img.y + (result.size.h / 2);
+            click(x, y)
+            return true
+        }
+        else {
+            return false
         }
     },
     findText: () => {
@@ -113,12 +542,10 @@ var tools = {
         var { screenWidth, screenHeight } = tools.getScreenDimensions();
         return utils.regionalAnalysisChart3(img, 0, 0, screenWidth, screenHeight, 60, 255, false, false, "区域识字测试代码");
     },
-    findAllText: (img) => {
-        if (img == null) {
-            img = captureScreen();
-        }
-        var { screenWidth, screenHeight } = tools.getScreenDimensions();
-        return utils.regionalAnalysisChart3(img, 0, 0, screenWidth, screenHeight, 60, 255, false, false, "区域识字测试代码");
+    findAllText: (x1, y1, x2, y2) => {
+        tools.shenqiCapture();
+        var img = captureScreen();
+        return utils.regionalAnalysisChart3(img, x1, y1, x2, y2, 60, 255, false, false, "区域识字测试代码");
     },
     getScreenDimensions: () => {  // 获取当前屏幕方向
         let screenWidth, screenHeight;
@@ -251,29 +678,11 @@ ui.run(() => {
 function excuteAuto() {
     isShowConfig = false
     win.setPosition(-10000, padding_top);
-    sleep(2000)
-    // var targetImgPath = `./res/UI/720_1280/closeBtn.png`;
-    // var targetImg = images.read(targetImgPath);
+    sleep(1500)
 
 
-    //修理装备
-
-    toastLog('尝试关闭未知窗口');
-    tools.findImageClick("closeBtn.png");
-    sleep(2000);
-
-    toastLog('点击角色');
-    tools.jiaoSe();
-    sleep(2000);
-
-    var result = tools.findImage("closeBtn.png");
-    if (result.status) {
-        toastLog('点击人物头部');
-        tools.tou(result.img);
-    }
-    else {
-        toastLog('未找到人物');
-    }
+    tools.人物移动.比奇安全区到小贩();
+    //toastLog(p)
     // // 可自行换个能找到的小图X\
     // let targetImgPath = "./res/UI/test.png"; 
     // let targetImg = images.load("http://192.168.1.7:9998/uploadPath/autoJsTools/863818023224810/system/imageHandler/allScreen.png");//images.read(targetImgPath);
