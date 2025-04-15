@@ -18,13 +18,122 @@ if (!floaty.checkPermission()) {
 let config = require("./common/config.js")
 // 工具类
 let utils = require("./common/utils.js")
-// 工具类
-let tool = require("./common/tool.js")
 // 公共储存对象
 var commonStorage = storages.create("zjh336.cn" + config.commonScriptKey);
 // 业务储存对象
 var serviceStorage = storages.create("zjh336.cn" + config.serviceScriptKey);
 
+
+var tools = {
+    shenqiCapture: () => {
+        try {
+            images.stopScreenCapture()
+            images.requestScreenCapture()
+        } catch (error) {
+            toast("请求截图错误");
+            exit();
+        }
+    },
+    jiaoSe: () => {//点击角色坐标
+        var fbl = `${device.width}_${device.height}`;
+        var result = config.zuobiao.jiaoSeBtn[fbl]
+        click(result.x, result.y)
+    },
+    tou: (closeImg) => {//点击人物头部
+        var fbl = `${device.width}_${device.height}`;
+        var tou = config.zuobiao.renWuTou[fbl];
+        var x = closeImg.postion.x + tou.x;
+        var y = closeImg.postion.y + tou.y;
+        toastLog(`x = ${x} y = ${y}`)
+        utils.canvasRect(x, y, x + 150, y + 150, "img", "test");
+        click(x, y)
+    },
+    findImage: (fileName) => {
+        var w = device.width;
+        var h = device.height;
+        var exists = config.youxiaoFBL.some(item => item.w === w && item.h === h);
+        if (exists) {
+            tools.shenqiCapture();
+            var img = captureScreen();
+            var targetImgPath = `./res/UI/${w}_${h}/${fileName}`;
+            var targetImg = images.read(targetImgPath);
+            var options = {
+                threshold: 0.7
+            };
+            var imgSize = {
+                w: targetImg.width,
+                h: targetImg.height
+            }
+            var result = images.findImage(img, targetImg, options);
+            utils.recycleNull(img);
+            utils.recycleNull(targetImg);
+            if (result != null && (result.x > 0 || result.y > 0)) {
+                return {
+                    status: true,
+                    img: result,
+                    size: imgSize
+                };
+            }
+            else {
+                return {
+                    status: false,
+                    img: null,
+                    err: '未找到对应的图片'
+                }
+            }
+        }
+        else {
+            return {
+                status: false,
+                img: null,
+                err: '不支持' + w + 'x' + h + '分辨率'
+            }
+        }
+    },
+    findImageClick: (fileName) => {
+        var result = tools.findImage(fileName);
+        if (result.status && result.img.x > 0 && result.img.y > 0) {
+            var x = result.img.x + random(5, result.size.w);
+            var y = result.img.y + random(5, result.size.h);
+            click(x, y)
+            return {
+                status: true
+            }
+        }
+        else {
+            return {
+                status: false
+            }
+        }
+    },
+    findText: () => {
+        if (img == null) {
+            img = captureScreen();
+        }
+        var { screenWidth, screenHeight } = tools.getScreenDimensions();
+        return utils.regionalAnalysisChart3(img, 0, 0, screenWidth, screenHeight, 60, 255, false, false, "区域识字测试代码");
+    },
+    findAllText: (img) => {
+        if (img == null) {
+            img = captureScreen();
+        }
+        var { screenWidth, screenHeight } = tools.getScreenDimensions();
+        return utils.regionalAnalysisChart3(img, 0, 0, screenWidth, screenHeight, 60, 255, false, false, "区域识字测试代码");
+    },
+    getScreenDimensions: () => {  // 获取当前屏幕方向
+        let screenWidth, screenHeight;
+        if (context.getResources().getConfiguration().orientation == 1) {
+            // 竖屏
+            screenWidth = device.width;
+            screenHeight = device.height;
+        } else {
+            // 横屏
+            screenWidth = device.height;
+            screenHeight = device.width;
+        }
+        return { screenWidth, screenHeight };
+    }
+}
 
 // 初始化文字识别插件(必须初始化才生效)
 utils.initOcr("谷歌")
@@ -34,15 +143,8 @@ utils.initOcr("谷歌")
 
 // // 开启调试模式 绘制延时
 // commonStorage.put("debugSleep", 500)
-
-try {
-    images.stopScreenCapture()
-    images.requestScreenCapture()
-} catch (error) {
-    toast("请求截图错误");
-    exit();
-}
-toast('系统启动成功')
+tools.shenqiCapture();
+toast('字节飞舞科技')
 
 var w = parseInt(device.width * 0.96);
 var h = parseInt(device.height * 0.9);
@@ -50,8 +152,6 @@ var padding_left = parseInt((device.width - w) / 2)
 var padding_top = parseInt((device.height - h) / 2);
 let tabCount = 3;
 let tabW = 0;
-var btnW = 100;
-var winMenu = null;
 var isStart = false
 var isShowConfig = false
 var win = null;
@@ -148,28 +248,10 @@ ui.run(() => {
 });
 
 
-var findAllText = (img) => {
-    if (img == null) {
-        img = captureScreen();
-    }
-    var { screenWidth, screenHeight } = getScreenDimensions();
-    return utils.regionalAnalysisChart3(img, 0, 0, screenWidth, screenHeight, 60, 255, false, false, "区域识字测试代码");
-}
-
-
 function excuteAuto() {
     isShowConfig = false
     win.setPosition(-10000, padding_top);
     sleep(2000)
-    try {
-        images.stopScreenCapture()
-        images.requestScreenCapture()
-    } catch (error) {
-        toast("请求截图错误");
-        exit();
-    }
-    var img = captureScreen();
-
     // var targetImgPath = `./res/UI/720_1280/closeBtn.png`;
     // var targetImg = images.read(targetImgPath);
 
@@ -177,19 +259,17 @@ function excuteAuto() {
     //修理装备
 
     toastLog('尝试关闭未知窗口');
-    tool.findImageClick(img, "closeBtn.png");
+    tools.findImageClick("closeBtn.png");
     sleep(2000);
 
     toastLog('点击角色');
-    tool.clickObj.jiaoSe();
+    tools.jiaoSe();
     sleep(2000);
 
-
-    img = captureScreen();
-    var result = tool.findImage(img, "closeBtn.png");
+    var result = tools.findImage("closeBtn.png");
     if (result.status) {
         toastLog('点击人物头部');
-        tool.clickObj.tou(result.img);
+        tools.tou(result.img);
     }
     else {
         toastLog('未找到人物');
@@ -247,7 +327,7 @@ function switchTab(index) {
 
 // 更新悬浮窗位置
 function updateWindowPosition() {
-    let { screenWidth, screenHeight } = getScreenDimensions();
+    let { screenWidth, screenHeight } = tools.getScreenDimensions();
 
     // 自定义触发吸边的距离，默认是20像素
     let edgeMargin = 100;
@@ -339,110 +419,6 @@ function showWinConfig() {
 
 
 
-
-// 隐藏窗口（通过关闭）
-function hideWindow() {
-    win.close();
-    // win.setPosition(-1000, -1000);
-}
-
-
-
-var tools = {
-    jiaoSe: () => {//点击角色坐标
-        var fbl = `${device.width}_${device.height}`;
-        var result = config.zuobiao.jiaoSeBtn[fbl]
-        click(result.x, result.y)
-    },
-    tou: (closeImg) => {//点击人物头部
-        var fbl = `${device.width}_${device.height}`;
-        var tou = config.zuobiao.renWuTou[fbl];
-        var x = closeImg.postion.x + tou.x;
-        var y = closeImg.postion.y + tou.y;
-        toastLog(`x = ${x} y = ${y}`)
-        // utils.canvasRect(x, y, x + 150, y + 150, "img", "test");
-        click(x, y)
-    },
-    findImage: (img, fileName) => {
-        var w = device.width;
-        var h = device.height;
-        var exists = config.youxiaoFBL.some(item => item.w === w && item.h === h);
-        if (exists) {
-            if (img == null) {
-                img = captureScreen();
-            }
-            var targetImgPath = `./res/UI/${w}_${h}/${fileName}`;
-            var targetImg = images.read(targetImgPath);
-            var options = {
-                threshold: 0.7
-            };
-            var imgSize = {
-                w: targetImg.width,
-                h: targetImg.height
-            }
-            var result = images.findImage(img, targetImg, options);
-            utils.recycleNull(img);
-            utils.recycleNull(targetImg);
-            if (result != null && (result.x > 0 || result.y > 0)) {
-                return {
-                    status: true,
-                    img: result,
-                    size: imgSize
-                };
-            }
-            else {
-                return {
-                    status: false,
-                    img: null,
-                    err: '未找到对应的图片'
-                }
-            }
-        }
-        else {
-            return {
-                status: false,
-                img: null,
-                err: '不支持' + w + 'x' + h + '分辨率'
-            }
-        }
-    },
-    findImageClick: (img, fileName) => {
-        var result = tools.findImage(img, fileName);
-        if (result.status && result.img.x > 0 && result.img.y > 0) {
-            var x = result.img.x + random(5, result.size.w);
-            var y = result.img.y + random(5, result.size.h);
-            click(x, y)
-            return {
-                status: true
-            }
-        }
-        else {
-            return {
-                status: false
-            }
-        }
-    },
-    findText: () => {
-        if (img == null) {
-            img = captureScreen();
-        }
-        var { screenWidth, screenHeight } = tools.getScreenDimensions();
-        return utils.regionalAnalysisChart3(img, 0, 0, screenWidth, screenHeight, 60, 255, false, false, "区域识字测试代码");
-    },
-    getScreenDimensions: () => {  // 获取当前屏幕方向
-        let screenWidth, screenHeight;
-        if (context.getResources().getConfiguration().orientation == 1) {
-            // 竖屏
-            screenWidth = device.width;
-            screenHeight = device.height;
-        } else {
-            // 横屏
-            screenWidth = device.height;
-            screenHeight = device.width;
-        }
-        return { screenWidth, screenHeight };
-    }
-}
 
 
 
