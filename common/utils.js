@@ -3440,13 +3440,13 @@ utilsObj.regionalAnalysisChartPosition2 = (img, x1, y1, x2, y2, threshold, maxVa
     utilsObj.recycleNull(clipImg);
 
     // 绘制方框
-    utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【目标文字】" + matchingContent);
+    //utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【目标文字】" + matchingContent);
 
     // 根据内容获取匹配文字坐标
     let matchingPosition = utilsObj.ocrGetPositionByContent(imgAfter, matchingContent, xy1["x"], xy1["y"], xy2["x"], xy2["y"], openSplit)
 
     // 绘制方框
-    utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【文字识别结果】" + matchingPosition.content);
+    //utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【文字识别结果】" + matchingPosition.content);
 
     // 回收灰度化、阈值化后的图片
     utilsObj.recycleNull(imgAfter);

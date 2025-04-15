@@ -1,38 +1,62 @@
+
 /*
- * @Author: 大柒
- * @QQ: 531310591@qq.com
- * @Date: 2021-04-18 04:22:04
+ * @Author: 字节飞舞
+ * @QQ: 175417739@qq.com
+ * @Date: 2025-04-11 04:22:04
  * @Version: Auto.Js Pro
  * @Description: 
- * @LastEditors: Please set LastEditors
- * @LastEditTime: 2021-05-17 20:23:07
  */
 
-'ui';
-var w = 0;
-var h = 0;
+auto.waitFor()// 等待无障碍服务开启
+if (!floaty.checkPermission()) {
+    toast("请开启悬浮窗权限！");
+    floaty.requestPermission();
+    exit();
+}
+
+// 配置类
+let config = require("./common/config.js")
+// 工具类
+let utils = require("./common/utils.js")
+// 工具类
+let tool = require("./common/tool.js")
+// 公共储存对象
+var commonStorage = storages.create("zjh336.cn" + config.commonScriptKey);
+// 业务储存对象
+var serviceStorage = storages.create("zjh336.cn" + config.serviceScriptKey);
+
+
+// 初始化文字识别插件(必须初始化才生效)
+utils.initOcr("谷歌")
+
+// 开启调试模式 找图、找色、识字绘制效果
+// commonStorage.put("debugModel", true)
+
+// // 开启调试模式 绘制延时
+// commonStorage.put("debugSleep", 500)
+
+try {
+    images.stopScreenCapture()
+    images.requestScreenCapture()
+} catch (error) {
+    toast("请求截图错误");
+    exit();
+}
+toast('系统启动成功')
+
+var w = parseInt(device.width * 0.96);
+var h = parseInt(device.height * 0.9);
+var padding_left = parseInt((device.width - w) / 2)
+var padding_top = parseInt((device.height - h) / 2);
 let tabCount = 3;
-var padding_left = 0;
-var padding_top = 0
 let tabW = 0;
 var btnW = 100;
+var winMenu = null;
+var isStart = false
+var isShowConfig = false
 var win = null;
-function showWinConfig() {
-    if (context.getResources().getConfiguration().orientation == 1) {
-        w = parseInt(device.width * 0.96);
-        h = parseInt(device.height * 0.9);
-        padding_left = parseInt((device.width - w) / 2)
-        padding_top = parseInt((device.height - h) / 2);
-    }
-    else {
-        w = parseInt(device.height * 0.96);
-        h = parseInt(device.width * 0.9);
-        padding_left = parseInt((device.height - w) / 2)
-        padding_top = parseInt((device.width - h) / 2);
-    }
-    tabW = parseInt((w / tabCount));
-    // toast(context.getResources().getConfiguration().orientation)
-    toast(tabW)
+
+ui.run(() => {
     win = floaty.rawWindow(
         <frame id="configFrame" gravity="center">
 
@@ -56,13 +80,12 @@ function showWinConfig() {
                     <vertical id="view1" visibility="visible" gravity="center">
                         <horizontal>
                             <text textSize="16sp">比奇挂机</text>
-                            <spinner id="sp1" entries="古墓一层|古墓二层|古墓三层" />
+                            <spinner id="sp1" entries="兽人一层|兽人二层|兽人三层" />
                         </horizontal>
                         <horizontal>
                             <text textSize="16sp">盟重挂机</text>
-                            <spinner id="sp2" entries="石墓一层|石墓二层|石墓三层" />
+                            <spinner id="sp2" entries="石墓一层|石墓二层|石墓三层|石墓四层|石墓五层" />
                         </horizontal>
-                        {/* <text text="这是view1" textColor="#000000" textSize="18sp" /> */}
                     </vertical>
                     <vertical id="view2" visibility="gone" gravity="center">
                         <text text="这是view2" textColor="#000000" textSize="18sp" />
@@ -71,299 +94,365 @@ function showWinConfig() {
                         <text text="这是view3" textColor="#000000" textSize="18sp" />
                     </vertical>
                 </vertical>
-                <vertical w="*">
-                    <button id="btnClose" text="保存配置" w="*" />
-                </vertical>
+                <horizontal padding="16">
+                    <button id="btnStart" text="🚀 启动" w="0" layout_weight="1" />
+                    <button id="btnSave" text="💾 保存" w="0" layout_weight="1" marginLeft="8" />
+                    {/* <button id="btnClose" text="❌ 退出" w="0" layout_weight="1" marginLeft="8" /> */}
+                    <button id="btnClose" text="退出" w="0" layout_weight="1" marginLeft="8" />
+                </horizontal>
             </vertical>
 
         </frame>
     );
-    win.setSize(w, h);
-    win.setPosition(padding_left, padding_top);
-    win.setTouchable(true);    // 可交互
-    win.tab1.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
-    win.tab2.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
-    win.tab3.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
-    win.btnClose.setLayoutParams(android.widget.LinearLayout.LayoutParams(w, -2));
-    function switchTab(index) {
-        for (let i = 1; i <= 3; i++) {
-            let isActive = i === index;
-            win["text" + i].setTextColor(colors.parseColor(isActive ? "#000000" : "#888888"));
-            win["line" + i].setVisibility(isActive ? 0 : 8); // 0:VISIBLE, 8:GONE
-            win["view" + i].setVisibility(isActive ? 0 : 8);
-        }
-    }
-    // 监听点击
     win.tab1.setOnClickListener(() => switchTab(1));
     win.tab2.setOnClickListener(() => switchTab(2));
     win.tab3.setOnClickListener(() => switchTab(3));
-    // win.tab1.click(() => {
-    //     win.view1.visibility = 0; // visible
-    //     win.view2.visibility = 8; // gone
-    //     win.view3.visibility = 8; // gone
-    // });
-    // win.tab2.click(() => {
-    //     win.view1.visibility = 8;
-    //     win.view2.visibility = 0;
-    //     win.view3.visibility = 8;
-    // });
-    // win.tab3.click(() => {
-    //     win.view1.visibility = 8;
-    //     win.view2.visibility = 8;
-    //     win.view3.visibility = 0;
-    // });
-    // win.page1.click(() => {
-
-    // });
-
-    // win.page2.click(() => {
-    //     win.view1.visibility = 8;
-    //     win.view2.visibility = 0;
-    //     win.view3.visibility = 8;
-    // });
-
-    // win.page3.click(() => {
-    //     win.view1.visibility = 8;
-    //     win.view2.visibility = 8;
-    //     win.view3.visibility = 0;
-    // });
-    win.btnClose.click(() => {
-        hideWindow()
+    win.btnStart.click(() => {
+        ui.run(() => {
+            if (isStart) {
+                isShowConfig = true
+                isStart = false
+                win.btnStart.text("启动")
+                window.img.setBackgroundColor(colors.parseColor("#ffffff"));
+            }
+            else {
+                isShowConfig = false
+                isStart = true
+                win.btnStart.text("暂停")
+                win.setPosition(-10000, padding_top);
+                window.img.setBackgroundColor(colors.parseColor("#03e298"));
+            }
+        })
     })
+    win.btnClose.click(() => {
+        isShowConfig = false
+        win.setPosition(-10000, padding_top);
+    });
+    win.btnSave.click(() => {
+        threads.start(function () {
+            excuteAuto()
+        });
+        // images.showImage(img);
+        // let MLKitOCR = $plugins.load("org.autojs.autojspro.plugin.mlkit.ocr");
+        // let googleOcr = new MLKitOCR();
+        // let resultMlk = googleOcr.detect(img);
+        // let contentMlkArr = Object.values(resultMlk).map(item => item.text) || [];
+        // utils.recycleNull(img);
+        // toastLog(JSON.stringify(contentMlkArr));
+
+    })
+    win.sp2.setSelection(1); // 默认选中“石墓二层”
+    win.setSize(w, h);
+    win.setPosition(-10000, padding_top);
+    win.setTouchable(true);    // 可交互
+});
+
+
+var findAllText = (img) => {
+    if (img == null) {
+        img = captureScreen();
+    }
+    var { screenWidth, screenHeight } = getScreenDimensions();
+    return utils.regionalAnalysisChart3(img, 0, 0, screenWidth, screenHeight, 60, 255, false, false, "区域识字测试代码");
 }
+
+
+function excuteAuto() {
+    isShowConfig = false
+    win.setPosition(-10000, padding_top);
+    sleep(2000)
+    try {
+        images.stopScreenCapture()
+        images.requestScreenCapture()
+    } catch (error) {
+        toast("请求截图错误");
+        exit();
+    }
+    var img = captureScreen();
+
+    // var targetImgPath = `./res/UI/720_1280/closeBtn.png`;
+    // var targetImg = images.read(targetImgPath);
+
+
+    //修理装备
+
+    toastLog('尝试关闭未知窗口');
+    tool.findImageClick(img, "closeBtn.png");
+    sleep(2000);
+
+    toastLog('点击角色');
+    tool.clickObj.jiaoSe();
+    sleep(2000);
+
+
+    img = captureScreen();
+    var result = tool.findImage(img, "closeBtn.png");
+    if (result.status) {
+        toastLog('点击人物头部');
+        tool.clickObj.tou(result.img);
+    }
+    else {
+        toastLog('未找到人物');
+    }
+    // // 可自行换个能找到的小图X\
+    // let targetImgPath = "./res/UI/test.png"; 
+    // let targetImg = images.load("http://192.168.1.7:9998/uploadPath/autoJsTools/863818023224810/system/imageHandler/allScreen.png");//images.read(targetImgPath);
+    // let result = utils.grayThresholdFindImg2(img, targetImg, 60, 255, 0.7, false, false);
+    // // let result1 = images.findImage(img, targetImg, options);
+    // utils.recycleNull(img);
+    // utils.recycleNull(targetImg);
+    // toastLog(result);
+    // toastLog(targetImg);
+    //
+
+
+    //找文字坐标
+    // let result = utils.regionalAnalysisChartPosition2(img, 0, 0, size.w - 5, size.h, 60, 255, "删除角色", false, false);
+
+
+    //这里只会显示所有文字(纯文字)
+    //let result = utils.regionalAnalysisChart(img, 0, 0, size.w - 5, size.h, 60, 255, "Test");
+
+    //这里会显示所有文字(包含坐标)
+    // let result = utils.regionalAnalysisChart3(img, 0, 0, size.w - 5, size.h, 60, 255, false, false);
+    // if (result != null && result.length > 0) {
+    //     const has111 = arr.some(item => item.text === '您的通行证帐');
+    //     for (let index = 0; index < result.length; index++) {
+
+    //     }
+    // }
+
+    //utils.recycleNull(img);
+    // if (result.x > 0 && result.y > 0) {
+    //     click(result.x, result.y)
+    // }
+    //toastLog(JSON.stringify(result));
+
+}
+
+let window = floaty.window(
+    <frame w="24" h="24">
+        <img id="img" src="@drawable/ic_android_black_48dp" bg="#ffffff" w="24" h="24" />
+    </frame>
+);
+
+function switchTab(index) {
+    for (let i = 1; i <= 3; i++) {
+        let isActive = i === index;
+        win["text" + i].setTextColor(colors.parseColor(isActive ? "#000000" : "#888888"));
+        win["line" + i].setVisibility(isActive ? 0 : 8); // 0:VISIBLE, 8:GONE
+        win["view" + i].setVisibility(isActive ? 0 : 8);
+    }
+}
+
+// 更新悬浮窗位置
+function updateWindowPosition() {
+    let { screenWidth, screenHeight } = getScreenDimensions();
+
+    // 自定义触发吸边的距离，默认是20像素
+    let edgeMargin = 100;
+
+    // 获取悬浮窗当前位置
+    let windowX = window.getX();
+    let windowWidth = window.getWidth();
+    let windowY = window.getY();
+
+    // 如果悬浮窗靠近左边边缘，则吸附到左边
+    if (windowX < edgeMargin) {
+        ui.run(() => window.setPosition(-24, windowY)); // 只露出一半图标
+    }
+    // 如果悬浮窗靠近右边边缘，则吸附到右边
+    else if (screenWidth - windowX < edgeMargin) {
+        // 调整计算方式，使右边能够正确吸附，并露出一半
+        ui.run(() => window.setPosition(screenWidth - 34, windowY));
+    }
+    // 否则恢复到原位置
+    else {
+        ui.run(() => window.setPosition(windowX, windowY));
+    }
+}
+// 拖动逻辑 + 自动吸边
+let x = 0, y = 0;
+let windowX, windowY;
+let downTime;
+
+window.img.setOnTouchListener(function (view, event) {
+    switch (event.getAction()) {
+        case event.ACTION_DOWN:
+            x = event.getRawX();
+            y = event.getRawY();
+            windowX = window.getX();
+            windowY = window.getY();
+            downTime = new Date().getTime();
+            return true;
+        case event.ACTION_MOVE:
+            let dx = event.getRawX() - x;
+            let dy = event.getRawY() - y;
+            ui.run(() => window.setPosition(windowX + dx, windowY + dy)); // 使用ui.run()来保证UI更新在主线程中
+            return true;
+        case event.ACTION_UP:
+            // 点击判断
+            if (new Date().getTime() - downTime < 200) {
+                if (!isShowConfig) {
+                    isShowConfig = true
+                    showWinConfig();
+                } else {
+
+                    toast('请勿重复')
+                }
+            }
+            // 自动吸边
+            updateWindowPosition();
+            return true;
+    }
+    return false;
+});
+
+// 初始化时设置位置
+updateWindowPosition();
+
+// 监听屏幕方向变化并实时更新位置
+device.wakeUp();
+setInterval(() => {
+    updateWindowPosition();
+}, 1000);
+
+
+
+function showWinConfig() {
+    var { screenWidth, screenHeight } = tools.getScreenDimensions();
+    w = parseInt(screenWidth * 0.8);
+    h = parseInt(screenHeight * 0.7);
+    padding_left = parseInt(screenWidth * 0.1)
+    padding_top = parseInt((screenHeight) * 0.15);
+    tabW = parseInt((w / tabCount));
+    win.setSize(w, h);
+    win.setPosition(padding_left, padding_top);
+    // win.setTouchable(true);    // 可交互
+    win.tab1.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
+    win.tab2.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
+    win.tab3.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
+    win.btnStart.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
+    win.btnSave.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW - 30, -2));
+    win.btnClose.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW - 30, -2));
+}
+
+
+
 
 // 隐藏窗口（通过关闭）
 function hideWindow() {
     win.close();
+    // win.setPosition(-1000, -1000);
 }
 
-// ui.statusBarColor(colors.parseColor('#426e6d'));
-// ui.layout(
-//     <relative w='*' h='*' bg='#426e6d'>
-//         <vertical w='*'>
-//             <toolbar title='字节飞舞科技' >
-
-//                 <button id='btn' w='auto' text='启 动' textColor='#FFFFFF' textStyle='bold' backgroundTint='#41A4F5'
-//                     marginRight='20' padding='15 0' layout_gravity='right' />
-//             </toolbar>
-//             <vertical padding='20 5'>
-
-//             </vertical>
-//         </vertical>
-//     </relative>
-// );
-// ui.isShow.on('check', checked => {
-//     ui.isShow.setText('悬浮按钮 : ' + (checked ? '开启' : '关闭'));
-//     checked ? fb.show() : fb.hide();
-//     ui.menu.setEnabled(checked);
-// });
-
-// ui.menu.on('check', checked => {
-//     ui.seekbar.setEnabled(!checked);
-//     fb.setMenuOpen(checked); //改变菜单状态
-// });
-
-// ui.seekbar.setOnSeekBarChangeListener({
-//     onProgressChanged: function(seekBar, progress) {
-//         ui.time.setText('定时关闭 : ' + progress + '秒');
-//         fb.setAutoCloseMenuTime(progress * 1000);
-//     }
-// });
-//按钮联动
-// ui.btn.on('click', view => {
-//     //获取指定按钮的值
-//     // let mUtil = fb.getViewUtil('Btns_1');
-//     // let value = !mUtil.getChecked();
-//     // mUtil.setChecked(value);
-//     // view.setText(value ? '停 止' : '启 动');
-//     // view.attr('backgroundTint', value ? '#ED524E' : '#41A4F5');
-//     fb.show()
 
 
-//     var Intent = android.content.Intent;
-//     var intent = new Intent(Intent.ACTION_MAIN);
-//     intent.addCategory(Intent.CATEGORY_HOME);
-//     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//     context.startActivity(intent);
-//     //app.startActivity("home");
-// });
-
-/**
- * Auto Js 悬浮球
- */
-
-//导入FloatButton模块
-var {
-    FloatButton,
-    FloatButtonConfig
-} = require('./FloatButton/init');
-let fb = new FloatButton();
-
-//修改停靠动画时间
-FloatButtonConfig.time.direction = 510;
-
-/**
- * 悬浮球创建事件
- */
-fb.on('create', function () {
-    //设置logo图标
-    fb.setIcon('@drawable/ic_android_black_48dp');
-    //设置logo图标着色
-    fb.setTint('#828282');
-    //设置logo背景颜色
-    fb.setColor('#00000000');//8个0表示透明
-    fb.setMenuRadius(45);//设置菜单半径
-    //设置所有按钮大小 默认40
-    fb.setAllButtonSize(25);
-    //设置所有按钮内边距 默认8
-    fb.setAllButtonPadding(0);
-
-    //添加菜单按钮
-    // fb.addItem('按钮1')
-    //     //设置图标
-    //     .setIcon('https://pic.lemeifenqi.com/222.jpg')
-    //     .setColor('#00000000')
-    //     // .setIcon('@drawable/ic_looks_one_black_48dp')
-    //     // .setText('启动')
-    //     //图标着色
-    //     // .setTint('#FFFFFF')
-    //     // //背景颜色
-    //     // .setColor('#019581')
-    //     //点击事件
-    //     .onClick((view, name) => {
-    //         toastLog('onClick:' + name)
-    //         let path = files.path('@drawable/ic_looks_one_black_48dp');
-
-    //         toast('图标路径: ' + path);
-    //         //返回 true:保持菜单开启 false:关闭菜单
-    //         return false;
-    //     });
-
-    fb.addItem('Btns_1')
-        //启用复选框属性
-        .toCheckbox(mUtil => {
-            //未选中样式
-            mUtil.icon1('@drawable/ic_play_arrow_black_48dp').tint1('#FFFFFF').color1('#41A4F5');
-            //选中样式
-            mUtil.icon2('@drawable/ic_stop_black_48dp').tint2('#FFFFFF').color2('#ED524E');
-        })
-        .onClick((view, name, state) => {
-            toastLog('名称 : ' + name + '\n状态 : ' + state);
-            if (state) {
-                fb.setTint('#4BFF4C');
-                toast('开启辅助');
-                return false;
+var tools = {
+    jiaoSe: () => {//点击角色坐标
+        var fbl = `${device.width}_${device.height}`;
+        var result = config.zuobiao.jiaoSeBtn[fbl]
+        click(result.x, result.y)
+    },
+    tou: (closeImg) => {//点击人物头部
+        var fbl = `${device.width}_${device.height}`;
+        var tou = config.zuobiao.renWuTou[fbl];
+        var x = closeImg.postion.x + tou.x;
+        var y = closeImg.postion.y + tou.y;
+        toastLog(`x = ${x} y = ${y}`)
+        // utils.canvasRect(x, y, x + 150, y + 150, "img", "test");
+        click(x, y)
+    },
+    findImage: (img, fileName) => {
+        var w = device.width;
+        var h = device.height;
+        var exists = config.youxiaoFBL.some(item => item.w === w && item.h === h);
+        if (exists) {
+            if (img == null) {
+                img = captureScreen();
+            }
+            var targetImgPath = `./res/UI/${w}_${h}/${fileName}`;
+            var targetImg = images.read(targetImgPath);
+            var options = {
+                threshold: 0.7
+            };
+            var imgSize = {
+                w: targetImg.width,
+                h: targetImg.height
+            }
+            var result = images.findImage(img, targetImg, options);
+            utils.recycleNull(img);
+            utils.recycleNull(targetImg);
+            if (result != null && (result.x > 0 || result.y > 0)) {
+                return {
+                    status: true,
+                    img: result,
+                    size: imgSize
+                };
             }
             else {
-                toast('暂停辅助');
-                fb.setTint('#828282');
-                return true;
+                return {
+                    status: false,
+                    img: null,
+                    err: '未找到对应的图片'
+                }
             }
-            // ui.btn.setText(state ? '停 止' : '启 动');
-            // ui.btn.attr('backgroundTint', state ? '#ED524E' : '#41A4F5');
-            //返回 true:保持菜单开启 false:关闭菜单
-
-        });
-    //设置按钮属性为选中
-    // fb.getViewUtil('按钮2').setChecked(true);
-    //获取按钮选中状态
-    // log('按钮2选中状态:', fb.getViewUtil('按钮2').getChecked());
-
-    fb.addItem('Btns_2')
-        .setIcon('@drawable/ic_settings_black_48dp')
-        .setTint('#858585')
-        .setColor('#FFFFFF')
-        .onClick((view, name, state) => {
-            //获取指定按钮的值
-            let mUtil = fb.getViewUtil('Btns_1');
-            let state = mUtil.getChecked();
-            if (state) {
-                toast('请先暂停');
-                return true;
+        }
+        else {
+            return {
+                status: false,
+                img: null,
+                err: '不支持' + w + 'x' + h + '分辨率'
             }
-            else {
-                showWinConfig()
-                // win.setPosition(padding_left, padding_top);
-                // win.setVisibility(View.VISIBLE); // 显示窗口Z
-                //mToast.show();
-                // mToast.show();
-                // app.startActivity({
-                //     action: "android.intent.action.MAIN",
-                //     category: "android.intent.category.DEFAULT",
-                //     packageName: context.getPackageName(),
-                // });
-                // app.startActivity({
-                //     packageName: context.getPackageName(),
-                //     className: "org.autojs.autojs.external.open.RunIntentActivity"
-                // });
-                // fb.hide()
-                return false
+        }
+    },
+    findImageClick: (img, fileName) => {
+        var result = tools.findImage(img, fileName);
+        if (result.status && result.img.x > 0 && result.img.y > 0) {
+            var x = result.img.x + random(5, result.size.w);
+            var y = result.img.y + random(5, result.size.h);
+            click(x, y)
+            return {
+                status: true
             }
-            // mUtil.setChecked(value);
-            // view.setText(value ? '停 止' : '启 动');
-            // view.attr('backgroundTint', value ? '#ED524E' : '#41A4F5');
-
-            // ui.btn.setText(state ? '停 止' : '启 动');
-            // ui.btn.attr('backgroundTint', state ? '#ED524E' : '#41A4F5');
-            //返回 true:保持菜单开启 false:关闭菜单
-
-        });
-
-
-    fb.addItem('按钮4')
-        .setIcon('@drawable/ic_person_outline_black_48dp')
-        .setTint('#FFFFFF')
-        .setColor('#FCD633');
-
-    fb.addItem('按钮5')
-        .setIcon('@drawable/ic_notifications_active_black_48dp')
-        .setTint('#FFFFFF')
-        .setColor('#BFBFBF');
-
-    //在无操作一段时间后自动关闭菜单
-    fb.setAutoCloseMenuTime(0);
-});
-
-//菜单按钮点击事件
-fb.on('item_click', (view, name, state) => {
-    //如果在addItem中添加了onClick事件 则不会在这里触发
-    toastLog('item_click:' + name);
-    //返回 true:保持菜单开启 false:关闭菜单
-    return false;
-});
-
-//UI联动
-//菜单状态改变事件
-// fb.on('menu_state_changed', value => {
-//     ui.menu.setText('菜单状态 : ' + (value ? '开启' : '关闭'));
-//     ui.menu.setChecked(value);
-// });
-
-//停靠方向改变事件
-fb.on('direction_changed', value => {
-    toast(value ? '右侧' : '左侧')
-    //ui.direction.setText('停靠方向 : ' + (value ? '右侧' : '左侧'));
-});
-
-//屏幕方向改变事件
-fb.on('orientation_changed', value => {
-    toast(value ? '右侧' : '左侧')
-});
-
-//按钮显示事件
-fb.on('show', () => {
-    //log('悬浮窗显示');
-});
-
-//按钮隐藏事件
-fb.on('hide', () => {
-    // log('悬浮窗隐藏');
-});
+        }
+        else {
+            return {
+                status: false
+            }
+        }
+    },
+    findText: () => {
+        if (img == null) {
+            img = captureScreen();
+        }
+        var { screenWidth, screenHeight } = tools.getScreenDimensions();
+        return utils.regionalAnalysisChart3(img, 0, 0, screenWidth, screenHeight, 60, 255, false, false, "区域识字测试代码");
+    },
+    getScreenDimensions: () => {  // 获取当前屏幕方向
+        let screenWidth, screenHeight;
+        if (context.getResources().getConfiguration().orientation == 1) {
+            // 竖屏
+            screenWidth = device.width;
+            screenHeight = device.height;
+        } else {
+            // 横屏
+            screenWidth = device.height;
+            screenHeight = device.width;
+        }
+        return { screenWidth, screenHeight };
+    }
+}
 
 
-fb.show();
+
+
 var Intent = android.content.Intent;
 var intent = new Intent(Intent.ACTION_MAIN);
 intent.addCategory(Intent.CATEGORY_HOME);
 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 context.startActivity(intent);
+
+
+setInterval(() => { }, 1000);
+
