@@ -85,13 +85,7 @@ var tools = {
                 sleep(600)
             }
         },
-        去比奇老兵: (尝试次数) => {
-            尝试次数 = 尝试次数 || 0;
-            var 最大尝试次数 = 20;
-            if (尝试次数 >= 最大尝试次数) {
-                toastLog("多次尝试未移动，终止脚本避免死循环");
-                return false;
-            }
+        去比奇老兵: () => {
             var 当前地图 = tools.人物所在地图();
             if (当前地图 == null || 当前地图 == "") {
                 toastLog(`当前地图未知`);
@@ -101,63 +95,132 @@ var tools = {
                 tools.打开大地图();
                 sleep(1000);
             }
-            if (当前地图 == "兽人古墓三层") {
-                tools.findImageClick("map-shourengumu2.png");
-                sleep(1000);
-                tools.findImageClick("map-shourengumu1.png");
-                sleep(1000);
-                tools.findImageClick("map-biqi.png");
-                sleep(1000);
-                tools.findImageClick("map-biqilaobing.png");
-            }
-            else if (当前地图 == "兽人古墓二层") {
-                tools.findImageClick("map-shourengumu1.png");
-                sleep(1000);
-                tools.findImageClick("map-biqi.png");
-                sleep(1000);
-                tools.findImageClick("map-biqilaobing.png");
-            }
-            else if (当前地图 == "兽人古墓一层") {
-                tools.findImageClick("map-biqi.png");
-                sleep(1000);
-                tools.findImageClick("map-biqilaobing.png");
-            }
-            else if (当前地图 == "比奇省" || 当前地图 == "比奇城" || 当前地图 == "银杏山谷" || 当前地图 == "边界村") {
-                tools.findImageClick("map-biqilaobing.png");
-            }
-            else {
-                toastLog(`不支持${当前地图}回比奇老兵`);
-                return false;
-            }
-            var result = true;
-            sleep(random(1000, 2000))
-            while (result) {
-                result = tools.findImageClick("closeBtn.png");
-            }
-            sleep(random(1000, 2000))
-            var 当前坐标 = tools.人物坐标();
-            var 安全区坐标范围 = config.zuobiao.比奇安全区坐标范围;
-            while (true) {
-                sleep(1000 * 5);
-                var 坐标 = tools.人物坐标();
-                if (坐标 != null && 坐标.x > 安全区坐标范围.x1 && 坐标.x < 安全区坐标范围.x2 && 坐标.y > 安全区坐标范围.y1 && 坐标.y < 安全区坐标范围.y2) { //说明到了安全区
-                    break;
+            var closeBtn = tools.findImage("closeBtn.png");
+            if (closeBtn.status) {
+                if (当前地图 == "兽人古墓三层") {
+                    var r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第三层.兽人古墓二层;
+                    var x = closeImg.x + random(r.x[0], r.x[1]);
+                    var y = closeImg.y + random(r.y[0], r.y[1]);
+                    click(x, y)
+                    sleep(1000);
+
+                    r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第二层.兽人古墓一层;
+                    x = closeImg.x + random(r.x[0], r.x[1]);
+                    y = closeImg.y + random(r.y[0], r.y[1]);
+                    click(x, y)
+                    sleep(1000);
+
+                    r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第一层.比奇省;
+                    x = closeImg.x + random(r.x[0], r.x[1]);
+                    y = closeImg.y + random(r.y[0], r.y[1]);
+                    click(x, y)
+                    sleep(1000);
+
+                    r = config.zuobiao.比奇大地图偏移[fbl].比奇大城.比奇老兵;
+                    x = closeImg.x + random(r.x[0], r.x[1]);
+                    y = closeImg.y + random(r.y[0], r.y[1]);
+                    click(x, y)
+                }
+                else if (当前地图 == "兽人古墓二层") {
+                    var r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第二层.兽人古墓一层;
+                    var x = closeImg.x + random(r.x[0], r.x[1]);
+                    var y = closeImg.y + random(r.y[0], r.y[1]);
+                    click(x, y)
+                    sleep(1000);
+
+                    r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第一层.比奇省;
+                    x = closeImg.x + random(r.x[0], r.x[1]);
+                    y = closeImg.y + random(r.y[0], r.y[1]);
+                    click(x, y)
+                    sleep(1000);
+
+                    r = config.zuobiao.比奇大地图偏移[fbl].比奇大城.比奇老兵;
+                    x = closeImg.x + random(r.x[0], r.x[1]);
+                    y = closeImg.y + random(r.y[0], r.y[1]);
+                    click(x, y)
+                }
+                else if (当前地图 == "兽人古墓一层") {
+                    var r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第一层.比奇省;
+                    var x = closeImg.x + random(r.x[0], r.x[1]);
+                    var y = closeImg.y + random(r.y[0], r.y[1]);
+                    click(x, y)
+                    sleep(1000);
+
+                    r = config.zuobiao.比奇大地图偏移[fbl].比奇大城.比奇老兵;
+                    x = closeImg.x + random(r.x[0], r.x[1]);
+                    y = closeImg.y + random(r.y[0], r.y[1]);
+                    click(x, y)
+                }
+                else if (当前地图 == "比奇省" || 当前地图 == "比奇城" || 当前地图 == "银杏山谷" || 当前地图 == "边界村") {
+                    var r = config.zuobiao.比奇大地图偏移[fbl].比奇大城.比奇老兵;
+                    var x = closeImg.x + random(r.x[0], r.x[1]);
+                    var y = closeImg.y + random(r.y[0], r.y[1]);
+                    click(x, y)
                 }
                 else {
-                    if (坐标.x == 当前坐标.x && 坐标.y == 当前坐标.y) {
-                        toastLog('目标未移动，递归');
-                        tools.人物移动.去比奇老兵(尝试次数 + 1);
-                        break;
+                    toastLog(`不支持${当前地图}回比奇老兵`);
+                    return false;
+                }
+                sleep(1000);
+                var result = true;
+                while (result) {
+                    result = tools.findImageClick("closeBtn.png");
+                    sleep(666)
+                }
+            }
+            else {
+                toastLog("未找到closeBtn");
+                return;
+            }
+            return;
+        },
+        去比奇老兵Loop: () => {
+            //tools.人物移动.去比奇挂机图(挂机地图);
+            var 当前坐标 = tools.人物坐标();
+            while (true) {
+                var 当前地图 = null;
+                try {
+                    当前地图 = tools.人物所在地图();
+                } catch (error) {
+                    toastLog('获取当前地图失败')
+                    continue;
+                }
+                if (当前地图 == null) {
+                    toastLog('获取当前地图失败')
+                    continue;
+                }
+                var 坐标 = null;
+                try {
+                    坐标 = tools.人物坐标();
+                } catch (error) {
+                    toastLog('获取人物坐标失败')
+                    continue;
+                }
+                if (坐标 == null) {
+                    toastLog('获取人物坐标失败')
+                    continue;
+                }
+                var 安全区坐标范围 = config.zuobiao.比奇安全区坐标范围;
+                if (坐标 != null && 坐标.x > 安全区坐标范围.x1 && 坐标.x < 安全区坐标范围.x2 && 坐标.y > 安全区坐标范围.y1 && 坐标.y < 安全区坐标范围.y2) {
+                    break; //说明到了安全区
+                }
+                else {
+                    if (坐标 != null && 当前坐标 != null && 坐标.x == 当前坐标.x && 坐标.y == 当前坐标.y) {
+                        toastLog('重新跑图');
+                        try {
+                            tools.人物移动.去比奇老兵();
+                        } catch (error) {
+                            toastLog('跑图异常')
+                        }
                     }
                     else {
                         当前坐标 = 坐标;
                     }
                 }
+                sleep(1000 * 5);
             }
-            //tools.比奇安全区到小贩();
             toastLog("到达目的地");
-            return true;
-            // var 当前坐标 = tools.人物坐标();
+            return;
 
         },
         去比奇挂机图Loop: (挂机地图) => {
@@ -178,11 +241,11 @@ var tools = {
                     toastLog('获取人物坐标失败')
                     continue;
                 }
-                if(当前地图 == null){
+                if (当前地图 == null) {
                     toastLog('获取当前地图失败')
                     continue;
                 }
-                 if(坐标 == null){
+                if (坐标 == null) {
                     toastLog('获取人物坐标失败')
                     continue;
                 }
@@ -387,7 +450,7 @@ var tools = {
                     toastLog(`${当前地图}识别失败或不支持`);
                     return false;
                 }
-                
+
                 sleep(1000);
                 var result = true;
                 while (result) {
@@ -507,7 +570,7 @@ var tools = {
         click(x, y);
     },
     shenqiCapture: () => {
-        var result =false;
+        var result = false;
         try {
             images.stopScreenCapture()
             result = images.requestScreenCapture()
@@ -517,12 +580,12 @@ var tools = {
             toastLog(error)
             exit();
         }
-        if(result){
+        if (result) {
             toastLog("申请截图成功");
         }
-        else{
-              toastLog("申请截图失败");
-              exit();
+        else {
+            toastLog("申请截图失败");
+            exit();
         }
     },
     jiaoSe: () => {//点击角色坐标
@@ -636,7 +699,7 @@ var tools = {
             return true
         }
         else {
-            if(fileName!="closeBtn.png"){
+            if (fileName != "closeBtn.png") {
                 toastLog('找图失败' + fileName)
             }
             return false
@@ -675,11 +738,11 @@ var tools = {
     获取区域文字: (x1, y1, x2, y2) => {
         //tools.shenqiCapture();
         var { w, h } = tools.获取屏幕高宽();
-        if(x2 > w){
+        if (x2 > w) {
             toastLog('x2不能超出屏幕宽度')
             return null;
         }
-        if(y2 > h){
+        if (y2 > h) {
             toastLog('y2不能超出屏幕高度')
             return null;
         }
@@ -730,19 +793,19 @@ var isStart = false
 var isShowConfig = false
 var win = null;
 let window = floaty.window(
-        <frame padding="6" id="xuanFuPanel" w="wrap_content" h="wrap_content">
-            <horizontal>
-                <img id="img" src="@drawable/ic_android_black_48dp" w="16" h="16" marginRight="4" />
-                <text id="cpuText" text="CPU: 0%" textSize="9sp" textColor="#000000" marginRight="6" marginTop="2"  />
-                <text id="memText" text="内存: 0MB" textSize="9sp" textColor="#000000" marginRight="6" marginTop="2"  />
-                <text id="eventText" text="事件: 空闲" textSize="9sp" textColor="#000000" marginTop="2"  />
-            </horizontal>
-        </frame>
+    <frame padding="6" id="xuanFuPanel" w="wrap_content" h="wrap_content">
+        <horizontal>
+            <img id="img" src="@drawable/ic_android_black_48dp" w="16" h="16" marginRight="4" />
+            <text id="cpuText" text="CPU: 0%" textSize="9sp" textColor="#000000" marginRight="6" marginTop="2" />
+            <text id="memText" text="内存: 0MB" textSize="9sp" textColor="#000000" marginRight="6" marginTop="2" />
+            <text id="eventText" text="事件: 空闲" textSize="9sp" textColor="#000000" marginTop="2" />
+        </horizontal>
+    </frame>
 );
 ui.run(() => {
     win = floaty.rawWindow(
         <frame gravity="center" id="configFrame">
-            <vertical  w="{{w}}" h="{{h}}">
+            <vertical w="{{w}}" h="{{h}}">
                 <horizontal id="tabs" w="*">
                     <vertical id="tab1" gravity="center">
                         <text id="text1" text="选地图" textSize="14sp" textColor="#000000" paddingBottom="5" gravity="center" />
@@ -762,7 +825,7 @@ ui.run(() => {
                     <vertical id="view1" visibility="visible" gravity="center">
                         <horizontal>
                             <text textColor="#000000" textSize="12sp">比奇挂机</text>
-                            <spinner  id="sp1" entries="兽人一层|兽人二层|兽人三层" />
+                            <spinner id="sp1" entries="兽人一层|兽人二层|兽人三层" />
                         </horizontal>
                         <horizontal>
                             <text textColor="#000000" textSize="12sp">盟重挂机</text>
@@ -827,23 +890,23 @@ ui.run(() => {
     win.setSize(w, h);
     win.setPosition(-10000, padding_top);
     win.setTouchable(true);    // 可交互
-    
-    
+
+
     // 设置悬浮窗圆角背景
     let gd = new android.graphics.drawable.GradientDrawable();
     gd.setCornerRadius(20); // 圆角半径 20dp（单位是 px）
-    gd.setColor(android.graphics.Color.parseColor("#E5FFFFFF")); 
+    gd.setColor(android.graphics.Color.parseColor("#E5FFFFFF"));
     gd.setStroke(2, android.graphics.Color.parseColor("#81f900"));
     win.configFrame.setBackgroundDrawable(gd);
-    
+
     gd = new android.graphics.drawable.GradientDrawable();
     gd.setCornerRadius(20); // 圆角半径 20dp（单位是 px）
     gd.setColor(android.graphics.Color.parseColor("#B2FFFFFF")); // 70% 不透明白
     gd.setStroke(2, android.graphics.Color.parseColor("#376b00"));
-    
+
     window.xuanFuPanel.setBackgroundDrawable(gd);
-    
-    
+
+
 });
 
 
@@ -851,11 +914,11 @@ function excuteAuto() {
     isShowConfig = false
     win.setPosition(-10000, padding_top);
     sleep(150)
-    
+
     tools.人物移动.去比奇挂机图Loop("兽人古墓三层");
-    
+
     // var yolo = _s.yolov8("yolo8wugong", 320);
-   
+
     // /*  //可同时使用多个模型
     // var yolo2 = _s.yolov5("yolov5s", 640); // yolov5模型
     // var yolo3 = _s.yolov8("yolov8n", 640); //可以调成320，越小速度越快，但越不能识别小物体
