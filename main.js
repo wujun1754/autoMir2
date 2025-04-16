@@ -22,7 +22,8 @@ let utils = require("./common/utils.js")
 var commonStorage = storages.create("zjh336.cn" + config.commonScriptKey);
 // 业务储存对象
 var serviceStorage = storages.create("zjh336.cn" + config.serviceScriptKey);
-
+let _s = require('./yolov5v8ncnn');
+_s.cpugpu = 0; //0为cpu，1为gpu
 
 var tools = {
     人物移动: {
@@ -161,7 +162,7 @@ var tools = {
         },
         去比奇挂机图Loop: (挂机地图) => {
             //tools.人物移动.去比奇挂机图(挂机地图);
-            var 当前坐标 = { x: 0, y: 0 } //tools.人物坐标();
+            var 当前坐标 = tools.人物坐标();
             while (true) {
                 var 当前地图 = null;
                 try {
@@ -177,6 +178,14 @@ var tools = {
                     toastLog('获取人物坐标失败')
                     continue;
                 }
+                if(当前地图 == null){
+                    toastLog('获取当前地图失败')
+                    continue;
+                }
+                 if(坐标 == null){
+                    toastLog('获取人物坐标失败')
+                    continue;
+                }
                 if (当前地图 == 挂机地图) { //说明到目的地
                     break;
                 }
@@ -187,7 +196,7 @@ var tools = {
                             tools.人物移动.去比奇挂机图(挂机地图);
                         } catch (error) {
                             toastLog('跑图异常')
-                        } 
+                        }
                     }
                     else {
                         当前坐标 = 坐标;
@@ -378,11 +387,12 @@ var tools = {
                     toastLog(`${当前地图}识别失败或不支持`);
                     return false;
                 }
-
+                
+                sleep(1000);
                 var result = true;
                 while (result) {
                     result = tools.findImageClick("closeBtn.png");
-                    sleep(1000)
+                    sleep(666)
                 }
             }
             else {
@@ -395,7 +405,7 @@ var tools = {
     人物所在地图: () => {
         var fbl = `${device.width}_${device.height}`;
         var p = config.zuobiao.地点范围[fbl];
-        var result = tools.findAllText(p.x1, p.y1, p.x2, p.y2);
+        var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2);
         if (result != null && result.length == 1) {
             return result[0].text;
         }
@@ -406,7 +416,7 @@ var tools = {
     人物坐标: () => {
         var fbl = `${device.width}_${device.height}`;
         var p = config.zuobiao.人物坐标范围[fbl];
-        var result = tools.findAllText(p.x1, p.y1, p.x2, p.y2);
+        var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2);
         if (result != null && result.length == 1) {
             try {
                 let parts = result[0].text.split(":");
@@ -488,7 +498,7 @@ var tools = {
         var result = true;
         while (result) {
             result = tools.findImageClick("closeBtn.png");
-            sleep(1000)
+            sleep(666)
         }
         var fbl = `${device.width}_${device.height}`;
         var p = config.zuobiao.小地图范围[fbl];
@@ -497,14 +507,22 @@ var tools = {
         click(x, y);
     },
     shenqiCapture: () => {
+        var result =false;
         try {
-            //images.stopScreenCapture()
-            images.requestScreenCapture()
-            sleep(1000)
+            images.stopScreenCapture()
+            result = images.requestScreenCapture()
+            // sleep(1000)
         } catch (error) {
             toast("请求截图错误");
             toastLog(error)
             exit();
+        }
+        if(result){
+            toastLog("申请截图成功");
+        }
+        else{
+              toastLog("申请截图失败");
+              exit();
         }
     },
     jiaoSe: () => {//点击角色坐标
@@ -566,7 +584,7 @@ var tools = {
         var h = device.height;
         var exists = config.youxiaoFBL.some(item => item.w === w && item.h === h);
         if (exists) {
-            tools.shenqiCapture();
+            //tools.shenqiCapture();
             var img = captureScreen();
             var targetImgPath = `./res/UI/${w}_${h}/${fileName}`;
             var targetImg = images.read(targetImgPath);
@@ -577,9 +595,12 @@ var tools = {
                 w: targetImg.width,
                 h: targetImg.height
             }
-            var result = images.findImage(img, targetImg, options);
-
-
+            var result = null;
+            try {
+                result = images.findImage(img, targetImg, options);
+            } catch (e) {
+                toastLog('findImage异常');
+            }
             utils.recycleNull(img);
             utils.recycleNull(targetImg);
             if (result != null && (result.x > 0 || result.y > 0)) {
@@ -615,7 +636,9 @@ var tools = {
             return true
         }
         else {
-            toastLog('找图失败' + fileName)
+            if(fileName!="closeBtn.png"){
+                toastLog('找图失败' + fileName)
+            }
             return false
         }
     },
@@ -633,30 +656,56 @@ var tools = {
             return false
         }
     },
-    findText: () => {
+    获取全屏文字: (img) => {
+        //tools.shenqiCapture();
         if (img == null) {
             img = captureScreen();
         }
-        var { screenWidth, screenHeight } = tools.getScreenDimensions();
-        return utils.regionalAnalysisChart3(img, 0, 0, screenWidth, screenHeight, 60, 255, false, false, "区域识字测试代码");
+        var { w, h } = tools.获取屏幕高宽();
+        var r = null;
+        try {
+            r = utils.regionalAnalysisChart3(img, 0, 0, w, h, 60, 255, false, false, "区域识字测试代码");
+        } catch (e) {
+            toastLog(e)
+            r = null;
+        }
+        utils.recycleNull(img);
+        return r;
     },
-    findAllText: (x1, y1, x2, y2) => {
-        tools.shenqiCapture();
+    获取区域文字: (x1, y1, x2, y2) => {
+        //tools.shenqiCapture();
+        var { w, h } = tools.获取屏幕高宽();
+        if(x2 > w){
+            toastLog('x2不能超出屏幕宽度')
+            return null;
+        }
+        if(y2 > h){
+            toastLog('y2不能超出屏幕高度')
+            return null;
+        }
         var img = captureScreen();
-        return utils.regionalAnalysisChart3(img, x1, y1, x2, y2, 60, 255, false, false, "区域识字测试代码");
+        var r = null;
+        try {
+            r = utils.regionalAnalysisChart3(img, x1, y1, x2, y2, 60, 255, false, false, "");
+        } catch (e) {
+            toastLog('y2不能超出屏幕高度')
+            r = null;
+        }
+        utils.recycleNull(img);
+        return r;
     },
-    getScreenDimensions: () => {  // 获取当前屏幕方向
-        let screenWidth, screenHeight;
+    获取屏幕高宽: () => {  // 获取当前屏幕方向
+        let w, h;
         if (context.getResources().getConfiguration().orientation == 1) {
             // 竖屏
-            screenWidth = device.width;
-            screenHeight = device.height;
+            w = device.width;
+            h = device.height;
         } else {
             // 横屏
-            screenWidth = device.height;
-            screenHeight = device.width;
+            w = device.height;
+            h = device.width;
         }
-        return { screenWidth, screenHeight };
+        return { w, h };
     }
 }
 
@@ -680,13 +729,21 @@ let tabW = 0;
 var isStart = false
 var isShowConfig = false
 var win = null;
-
+let window = floaty.window(
+        <frame padding="6" id="xuanFuPanel" w="wrap_content" h="wrap_content">
+            <horizontal>
+                <img id="img" src="@drawable/ic_android_black_48dp" w="16" h="16" marginRight="4" />
+                <text id="cpuText" text="CPU: 0%" textSize="9sp" textColor="#000000" marginRight="6" marginTop="2"  />
+                <text id="memText" text="内存: 0MB" textSize="9sp" textColor="#000000" marginRight="6" marginTop="2"  />
+                <text id="eventText" text="事件: 空闲" textSize="9sp" textColor="#000000" marginTop="2"  />
+            </horizontal>
+        </frame>
+);
 ui.run(() => {
     win = floaty.rawWindow(
-        <frame id="configFrame" gravity="center">
-
-            <vertical w="{{w}}" h="{{h}}" bg="#55eeeeee">
-                <horizontal id="tabs" w="*" bg="#eeeeee">
+        <frame gravity="center" id="configFrame">
+            <vertical  w="{{w}}" h="{{h}}">
+                <horizontal id="tabs" w="*">
                     <vertical id="tab1" gravity="center">
                         <text id="text1" text="选地图" textSize="14sp" textColor="#000000" paddingBottom="5" gravity="center" />
                         <View id="line1" h="2" bg="#ff0000" visibility="visible" />
@@ -701,14 +758,14 @@ ui.run(() => {
                         <View id="line3" h="2" bg="#ff0000" visibility="gone" />
                     </vertical>
                 </horizontal>
-                <vertical id="content" bg="#eeeeee">
+                <vertical id="content">
                     <vertical id="view1" visibility="visible" gravity="center">
                         <horizontal>
-                            <text textSize="16sp">比奇挂机</text>
-                            <spinner id="sp1" entries="兽人一层|兽人二层|兽人三层" />
+                            <text textColor="#000000" textSize="12sp">比奇挂机</text>
+                            <spinner  id="sp1" entries="兽人一层|兽人二层|兽人三层" />
                         </horizontal>
                         <horizontal>
-                            <text textSize="16sp">盟重挂机</text>
+                            <text textColor="#000000" textSize="12sp">盟重挂机</text>
                             <spinner id="sp2" entries="石墓一层|石墓二层|石墓三层|石墓四层|石墓五层" />
                         </horizontal>
                     </vertical>
@@ -720,8 +777,8 @@ ui.run(() => {
                     </vertical>
                 </vertical>
                 <horizontal padding="16">
-                    <button id="btnStart" text="🚀 启动" w="0" layout_weight="1" />
-                    <button id="btnSave" text="💾 保存" w="0" layout_weight="1" marginLeft="8" />
+                    <button id="btnStart" text="启动" w="0" layout_weight="1" />
+                    <button id="btnSave" text="保存" w="0" layout_weight="1" marginLeft="8" />
                     {/* <button id="btnClose" text="❌ 退出" w="0" layout_weight="1" marginLeft="8" /> */}
                     <button id="btnClose" text="退出" w="0" layout_weight="1" marginLeft="8" />
                 </horizontal>
@@ -770,17 +827,68 @@ ui.run(() => {
     win.setSize(w, h);
     win.setPosition(-10000, padding_top);
     win.setTouchable(true);    // 可交互
+    
+    
+    // 设置悬浮窗圆角背景
+    let gd = new android.graphics.drawable.GradientDrawable();
+    gd.setCornerRadius(20); // 圆角半径 20dp（单位是 px）
+    gd.setColor(android.graphics.Color.parseColor("#E5FFFFFF")); 
+    gd.setStroke(2, android.graphics.Color.parseColor("#81f900"));
+    win.configFrame.setBackgroundDrawable(gd);
+    
+    gd = new android.graphics.drawable.GradientDrawable();
+    gd.setCornerRadius(20); // 圆角半径 20dp（单位是 px）
+    gd.setColor(android.graphics.Color.parseColor("#B2FFFFFF")); // 70% 不透明白
+    gd.setStroke(2, android.graphics.Color.parseColor("#376b00"));
+    
+    window.xuanFuPanel.setBackgroundDrawable(gd);
+    
+    
 });
 
 
 function excuteAuto() {
     isShowConfig = false
     win.setPosition(-10000, padding_top);
-    sleep(1500)
-
+    sleep(150)
+    
     tools.人物移动.去比奇挂机图Loop("兽人古墓三层");
+    
+    // var yolo = _s.yolov8("yolo8wugong", 320);
+   
+    // /*  //可同时使用多个模型
+    // var yolo2 = _s.yolov5("yolov5s", 640); // yolov5模型
+    // var yolo3 = _s.yolov8("yolov8n", 640); //可以调成320，越小速度越快，但越不能识别小物体
+    // */
+    // var p = "./res/wugong/7.png";
+    // var prob_threshold = 0.3; //预测值，返回大于该值的锚框，该值越大返回的锚框数量越少
+    // var nms_thresh = 0.9; //非极大值抑制，返回的锚框中重合面积不大于该值，该值越大返回的锚框重合率越高
 
-    // tools.人物移动.去比奇挂机图();
+    // var img = images.read(p);
+    // var bbox = yolo.detect(img.mat, prob_threshold, nms_thresh);
+    // log(bbox)
+    // let mat = img.mat.clone();
+    // Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2RGB);
+    // for (let i = 0; i < bbox.length; i++) {
+    //     let box = bbox[i];
+    //     let x1 = box[0];
+    //     let y1 = box[1];
+    //     let x2 = box[2];
+    //     let y2 = box[3];
+    //     let prob = box[4];
+    //     let label = box[5];
+    //     Imgproc.rectangle(mat, Point(x1, y1), Point(x2, y2), Scalar(255, 255, 0));
+    // }
+    // let result = Imgcodecs.imwrite("/sdcard/appSync/tempRemoteScript/mir/res/yolo.jpg", mat);
+    // if (result) {
+    //     log("图片保存成功：yolo.jpg");
+
+    //     app.viewFile("/sdcard/appSync/tempRemoteScript/mir/res/yolo.jpg");
+    // } else {
+    //     log("图片保存失败：yolo.jpg");
+    // }
+
+    // 
     //toastLog(p)
     // // 可自行换个能找到的小图X\
     // let targetImgPath = "./res/UI/test.png"; 
@@ -818,11 +926,6 @@ function excuteAuto() {
 
 }
 
-let window = floaty.window(
-    <frame w="24" h="24">
-        <img id="img" src="@drawable/ic_android_black_48dp" bg="#ffffff" w="24" h="24" />
-    </frame>
-);
 
 function switchTab(index) {
     for (let i = 1; i <= 3; i++) {
@@ -835,7 +938,7 @@ function switchTab(index) {
 
 // 更新悬浮窗位置
 function updateWindowPosition() {
-    let { screenWidth, screenHeight } = tools.getScreenDimensions();
+    let { screenWidth, screenHeight } = tools.获取屏幕高宽();
 
     // 自定义触发吸边的距离，默认是20像素
     let edgeMargin = 100;
@@ -864,7 +967,7 @@ let x = 0, y = 0;
 let windowX, windowY;
 let downTime;
 
-window.img.setOnTouchListener(function (view, event) {
+window.xuanFuPanel.setOnTouchListener(function (view, event) {
     switch (event.getAction()) {
         case event.ACTION_DOWN:
             x = event.getRawX();
@@ -885,7 +988,6 @@ window.img.setOnTouchListener(function (view, event) {
                     isShowConfig = true
                     showWinConfig();
                 } else {
-
                     toast('请勿重复')
                 }
             }
@@ -901,20 +1003,20 @@ updateWindowPosition();
 
 // 监听屏幕方向变化并实时更新位置
 device.wakeUp();
-setInterval(() => {
-    updateWindowPosition();
-}, 1000);
+// setInterval(() => {
+//     updateWindowPosition();
+// }, 1000);
 
 
 
 function showWinConfig() {
-    var { screenWidth, screenHeight } = tools.getScreenDimensions();
-    w = parseInt(screenWidth * 0.8);
-    h = parseInt(screenHeight * 0.7);
-    padding_left = parseInt(screenWidth * 0.1)
-    padding_top = parseInt((screenHeight) * 0.15);
-    tabW = parseInt((w / tabCount));
-    win.setSize(w, h);
+    var { w, h } = tools.获取屏幕高宽();
+    var w_ = parseInt(w * 0.8);
+    var h_ = parseInt(h * 0.7);
+    padding_left = parseInt(w * 0.1)
+    padding_top = parseInt((h) * 0.15);
+    tabW = parseInt((w_ / tabCount));
+    win.setSize(w_, h_);
     win.setPosition(padding_left, padding_top);
     // win.setTouchable(true);    // 可交互
     win.tab1.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
@@ -929,13 +1031,31 @@ function showWinConfig() {
 
 
 
+// 开一个线程周期性更新 UI
+threads.start(function () {
+    while (true) {
+        // 获取动态数据（这里只是示例，你可以替换成真实的 CPU/内存/事件信息）
+        let cpuUsage = "CPU: " + utils.getCpuPercentage();
+        let memUsage = "内存: " + utils.getMemoryInfo();
+        let currentEvent = "事件: 正在检测";
+
+        // 在 UI 线程中更新浮窗文字
+        ui.run(() => {
+            window.cpuText.setText(cpuUsage);
+            window.memText.setText(memUsage);
+            window.eventText.setText(currentEvent);
+        });
+
+        sleep(1000 * 3); // 每秒更新一次
+    }
+});
 
 
-var Intent = android.content.Intent;
-var intent = new Intent(Intent.ACTION_MAIN);
-intent.addCategory(Intent.CATEGORY_HOME);
-intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-context.startActivity(intent);
+// var Intent = android.content.Intent;
+// var intent = new Intent(Intent.ACTION_MAIN);
+// intent.addCategory(Intent.CATEGORY_HOME);
+// intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+// context.startActivity(intent);
 
 
 setInterval(() => { }, 1000);

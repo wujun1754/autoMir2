@@ -811,7 +811,8 @@ utilsObj.getMemoryInfo = () => {
     availMemory = parseInt(availMemory / 1024 / 1024);
     usedMemory = parseInt(usedMemory / 1024 / 1024);
     precentlong = parseInt(precentlong);
-    return "【内存】\r\n总共: " + totalMemory + " MB\r\n" + "已用: " + usedMemory + " MB\r\n" + "可用: " + availMemory + " MB\r\n" + "百分比: " + precentlong + "%";
+    return  precentlong + "%";
+    //return "【内存】\r\n总共: " + totalMemory + " MB\r\n" + "已用: " + usedMemory + " MB\r\n" + "可用: " + availMemory + " MB\r\n" + "百分比: " + precentlong + "%";
 }
 
 // 获取监控信息
