@@ -22,67 +22,122 @@ let utils = require("./common/utils.js")
 var commonStorage = storages.create("zjh336.cn" + config.commonScriptKey);
 // 业务储存对象
 var serviceStorage = storages.create("zjh336.cn" + config.serviceScriptKey);
-let _s = require('./yolov5v8ncnn');
-_s.cpugpu = 0; //0为cpu，1为gpu
-
+let MLKitOCR = $plugins.load('org.autojs.autojspro.plugin.mlkit.ocr');
+let ocr = new MLKitOCR();
+let ocrPladderOCR = $ocr.create()
 var tools = {
+    悬浮球描述: (text) => {
+        ui.run(() => {
+            window.eventText.setText(text);
+        });
+    },
     人物移动: {
         右走一步: (duration) => {
-            let fbl = `${device.width}_${device.height}`;
-            let p = config.zuobiao.遥感中心位置[fbl];
-            let dx1 = random(-5, 5);
-            let dx2 = random(40, 70);
-            // let duration = random(1000, 2000);
-            gestures(
-                [0, duration, [p.x - dx1, p.y - dx1], [p.x + dx2, p.y + dx1]]
-            );
+            if (duration > 0) {
+                let fbl = `${device.width}_${device.height}`;
+                let p = config.zuobiao.遥感中心位置[fbl];
+                let dx1 = random(-5, 5);
+                let dx2 = random(40, 70);
+                gestures(
+                    [0, duration, [p.x - dx1, p.y - dx1], [p.x + dx2, p.y + dx1]]
+                );
+            }
         },
         左走一步: (duration) => {
-            var fbl = `${device.width}_${device.height}`;
-            var p = config.zuobiao.遥感中心位置[fbl];
-            let dx1 = random(-5, 5);
-            let dx2 = random(40, 70);
-            gestures(
-                [0, duration, [p.x - dx1, p.y - dx1], [p.x - dx2, p.y + dx1]]
-            );
-            //swipe(p.x, p.y, p.x - 25, p.y, 500)
+            if (duration > 0) {
+                var fbl = `${device.width}_${device.height}`;
+                var p = config.zuobiao.遥感中心位置[fbl];
+                let dx1 = random(-5, 5);
+                let dx2 = random(40, 70);
+                gestures(
+                    [0, duration, [p.x - dx1, p.y - dx1], [p.x - dx2, p.y + dx1]]
+                );
+            }
         },
         上走一步: (duration) => {
-            var fbl = `${device.width}_${device.height}`;
-            var p = config.zuobiao.遥感中心位置[fbl];
-            let dx1 = random(-5, 5);
-            let dx2 = random(40, 70);
-            gestures(
-                [0, duration, [p.x - dx1, p.y - dx1], [p.x + dx1, p.y - dx2]]
-            );
-            //swipe(p.x, p.y, p.x, p.y - 25, 500)
+            if (duration > 0) {
+                var fbl = `${device.width}_${device.height}`;
+                var p = config.zuobiao.遥感中心位置[fbl];
+                let dx1 = random(-5, 5);
+                let dx2 = random(40, 70);
+                gestures(
+                    [0, duration, [p.x - dx1, p.y - dx1], [p.x + dx1, p.y - dx2]]
+                );
+            }
         },
         下走一步: (duration) => {
-            var fbl = `${device.width}_${device.height}`;
-            var p = config.zuobiao.遥感中心位置[fbl];
-            let dx1 = random(-5, 5);
-            let dx2 = random(40, 70);
-            gestures(
-                [0, duration, [p.x - dx1, p.y - dx1], [p.x + dx1, p.y + dx2]]
-            );
-            //swipe(p.x, p.y, p.x, p.y + 25, 500)
+            if (duration > 0) {
+                var fbl = `${device.width}_${device.height}`;
+                var p = config.zuobiao.遥感中心位置[fbl];
+                let dx1 = random(-5, 5);
+                let dx2 = random(40, 70);
+                gestures(
+                    [0, duration, [p.x - dx1, p.y - dx1], [p.x + dx1, p.y + dx2]]
+                );
+            }
         },
-        比奇安全区到小贩: () => {
-            var 当前坐标 = tools.人物坐标();
+        比奇安全区到小贩: (人物坐标) => {
             var 比奇小贩坐标 = config.zuobiao.比奇小贩坐标;
-            if (比奇小贩坐标.x > 当前坐标.x) {
-                tools.人物移动.右走一步((比奇小贩坐标.x - 当前坐标.x) * 1000)
+            if (比奇小贩坐标.x > 人物坐标.x) {
+                tools.人物移动.右走一步((比奇小贩坐标.x - 人物坐标.x) * 1000)
                 sleep(600)
             } else {
-                tools.人物移动.左走一步((当前坐标.x - 比奇小贩坐标.x) * 1000)
+                tools.人物移动.左走一步((人物坐标.x - 比奇小贩坐标.x) * 1000)
                 sleep(600)
             }
-            if (比奇小贩坐标.y > 当前坐标.y) {
-                tools.人物移动.下走一步((比奇小贩坐标.y - 当前坐标.y) * 1000)
+            if (比奇小贩坐标.y > 人物坐标.y) {
+                tools.人物移动.下走一步((比奇小贩坐标.y - 人物坐标.y) * 1000)
                 sleep(600)
             } else {
-                tools.人物移动.上走一步((当前坐标.y - 比奇小贩坐标.y) * 1000)
+                tools.人物移动.上走一步((人物坐标.y - 比奇小贩坐标.y) * 1000)
                 sleep(600)
+            }
+        },
+        判断到达比奇小贩: () => {
+            var 比奇小贩坐标 = config.zuobiao.比奇小贩坐标;
+            var 人物坐标 = tools.人物坐标();
+            var 当前地图 = tools.人物所在地图();
+            if (当前地图 != null && 人物坐标 != null && 当前地图 == "比奇城" && Math.abs(人物坐标.x - 比奇小贩坐标.x) <= 2 && Math.abs(人物坐标.y - 比奇小贩坐标.y) <= 2) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        },
+        去比奇小贩Loop: () => {
+            while (true) {
+                var 人物坐标 = tools.人物坐标();
+                var 当前地图 = tools.人物所在地图();
+                if (人物坐标 != null && 当前地图 != null) {
+                    var 安全区坐标范围 = config.zuobiao.比奇安全区坐标范围;
+                    if (当前地图 == "比奇城" && 人物坐标.x > 安全区坐标范围.x1 - 30 && 人物坐标.x < 安全区坐标范围.x2 + 30 && 人物坐标.y > 安全区坐标范围.y1 - 30 && 人物坐标.y < 安全区坐标范围.y2 + 30) {
+                        tools.人物移动.比奇安全区到小贩(人物坐标);
+                        var 比奇小贩坐标 = config.zuobiao.比奇小贩坐标;
+                        if (Math.abs(当前地图.x - 比奇小贩坐标.x) <= 2 && Math.abs(当前地图.y - 比奇小贩坐标.y) <= 2) {
+                            toastLog("到达小贩NPC");
+                            break;
+                        }
+                        else {
+                            toastLog("未找到小贩NPC");
+                        }
+                        // var 比奇小贩NPC = tools.findImage("biqixiaofan.png");//这个图片不行，和比奇老兵会混淆
+                        // if (比奇小贩NPC.status) {
+                        //     toastLog("到达小贩NPC");
+                        //     var x = 比奇小贩NPC.img.x + (比奇小贩NPC.size.w / 2) + random(-8, 8);
+                        //     var y = 比奇小贩NPC.img.y + (比奇小贩NPC.size.h / 2) + random(-4, 4);
+                        //     click(x, y)
+                        //     break;
+                        // }
+                        // else{
+                        //     toastLog("未找到比奇小贩NPC");
+                        // }
+                    }
+                    else {
+                        tools.人物移动.去比奇老兵Loop();
+                    }
+
+                }
+                sleep(5000)
             }
         },
         去比奇老兵: () => {
@@ -97,6 +152,8 @@ var tools = {
             }
             var closeBtn = tools.findImage("closeBtn.png");
             if (closeBtn.status) {
+                var fbl = `${device.width}_${device.height}`;
+                var closeImg = closeBtn.img;
                 if (当前地图 == "兽人古墓三层") {
                     var r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第三层.兽人古墓二层;
                     var x = closeImg.x + random(r.x[0], r.x[1]);
@@ -201,16 +258,17 @@ var tools = {
                     continue;
                 }
                 var 安全区坐标范围 = config.zuobiao.比奇安全区坐标范围;
-                if (坐标 != null && 坐标.x > 安全区坐标范围.x1 && 坐标.x < 安全区坐标范围.x2 && 坐标.y > 安全区坐标范围.y1 && 坐标.y < 安全区坐标范围.y2) {
+                if (坐标.x > 安全区坐标范围.x1 && 坐标.x < 安全区坐标范围.x2 && 坐标.y > 安全区坐标范围.y1 && 坐标.y < 安全区坐标范围.y2) {
+                    sleep(3000);
                     break; //说明到了安全区
                 }
                 else {
                     if (坐标 != null && 当前坐标 != null && 坐标.x == 当前坐标.x && 坐标.y == 当前坐标.y) {
-                        toastLog('重新跑图');
+                        toastLog('开始跑图');
                         try {
                             tools.人物移动.去比奇老兵();
                         } catch (error) {
-                            toastLog('跑图异常')
+                            toastLog(error)
                         }
                     }
                     else {
@@ -222,53 +280,6 @@ var tools = {
             toastLog("到达目的地");
             return;
 
-        },
-        去比奇挂机图Loop: (挂机地图) => {
-            //tools.人物移动.去比奇挂机图(挂机地图);
-            var 当前坐标 = tools.人物坐标();
-            while (true) {
-                var 当前地图 = null;
-                try {
-                    当前地图 = tools.人物所在地图();
-                } catch (error) {
-                    toastLog('获取当前地图失败')
-                    continue;
-                }
-                var 坐标 = { x: 0, y: 0 }
-                try {
-                    坐标 = tools.人物坐标();
-                } catch (error) {
-                    toastLog('获取人物坐标失败')
-                    continue;
-                }
-                if (当前地图 == null) {
-                    toastLog('获取当前地图失败')
-                    continue;
-                }
-                if (坐标 == null) {
-                    toastLog('获取人物坐标失败')
-                    continue;
-                }
-                if (当前地图 == 挂机地图) { //说明到目的地
-                    break;
-                }
-                else {
-                    if (坐标 != null && 当前坐标 != null && 坐标.x == 当前坐标.x && 坐标.y == 当前坐标.y) {
-                        toastLog('重新跑图');
-                        try {
-                            tools.人物移动.去比奇挂机图(挂机地图);
-                        } catch (error) {
-                            toastLog('跑图异常')
-                        }
-                    }
-                    else {
-                        当前坐标 = 坐标;
-                    }
-                }
-                sleep(1000 * 5);
-            }
-            toastLog("到达目的地");
-            return;
         },
         去比奇挂机图: (挂机地图) => {
             var 当前地图 = tools.人物所在地图();
@@ -463,12 +474,59 @@ var tools = {
                 return;
             }
             return;
-        }
+        },
+        去比奇挂机图Loop: (挂机地图) => {
+            //tools.人物移动.去比奇挂机图(挂机地图);
+            var 当前坐标 = tools.人物坐标();
+            while (true) {
+                var 当前地图 = null;
+                try {
+                    当前地图 = tools.人物所在地图();
+                } catch (error) {
+                    toastLog('获取当前地图失败')
+                    continue;
+                }
+                var 坐标 = { x: 0, y: 0 }
+                try {
+                    坐标 = tools.人物坐标();
+                } catch (error) {
+                    toastLog('获取人物坐标失败')
+                    continue;
+                }
+                if (当前地图 == null) {
+                    toastLog('获取当前地图失败')
+                    continue;
+                }
+                if (坐标 == null) {
+                    toastLog('获取人物坐标失败')
+                    continue;
+                }
+                if (当前地图 == 挂机地图) { //说明到目的地
+                    break;
+                }
+                else {
+                    if (坐标 != null && 当前坐标 != null && 坐标.x == 当前坐标.x && 坐标.y == 当前坐标.y) {
+                        toastLog('重新跑图');
+                        try {
+                            tools.人物移动.去比奇挂机图(挂机地图);
+                        } catch (error) {
+                            toastLog('跑图异常')
+                        }
+                    }
+                    else {
+                        当前坐标 = 坐标;
+                    }
+                }
+                sleep(1000 * 5);
+            }
+            toastLog("到达目的地");
+            return;
+        },
     },
     人物所在地图: () => {
         var fbl = `${device.width}_${device.height}`;
         var p = config.zuobiao.地点范围[fbl];
-        var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2);
+        var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
         if (result != null && result.length == 1) {
             return result[0].text;
         }
@@ -479,7 +537,7 @@ var tools = {
     人物坐标: () => {
         var fbl = `${device.width}_${device.height}`;
         var p = config.zuobiao.人物坐标范围[fbl];
-        var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2);
+        var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
         if (result != null && result.length == 1) {
             try {
                 let parts = result[0].text.split(":");
@@ -494,6 +552,180 @@ var tools = {
         else {
             return null;
         }
+    },
+    比奇卖物品Loop: () => {
+        var result = null;
+        var errCount = 0;
+        tools.悬浮球描述("开始卖物品");
+        while (true) {
+            if (errCount >= 20) {
+                return;
+            }
+            try {
+                result = tools.比奇卖物品();
+            } catch (e) {
+                result = {
+                    status: false,
+                    err: "卖物品异常了" + e
+                }
+            }
+            if (result.status) {
+                tools.悬浮球描述("结束卖物品");
+                break;
+            }
+            else {
+                tools.悬浮球描述(result.err);
+                errCount++;
+                sleep(random(1500, 2000));
+            }
+        }
+    },
+    比奇卖物品: () => {
+        var result = true;
+        while (result) {
+            result = tools.findImageClick("closeBtn2.png");
+            sleep(500)
+        }
+        var r = tools.人物移动.判断到达比奇小贩();
+        if (!r) {
+            return {
+                status: false,
+                err: "人物未到达比奇"
+            }
+        }
+        var { w, h } = tools.获取屏幕高宽();
+        var fbl = `${device.width}_${device.height}`;
+        var 比奇小贩按钮 = config.zuobiao.比奇小贩按钮[fbl]
+        click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2))
+        tools.悬浮球描述("点击比奇小贩按钮");
+        var tryCount = 0;
+        while (true) {
+            if (tryCount >= 10) {
+                return {
+                    status: false,
+                    err: "尝试10次未获取出售物品按钮"
+                }
+            }
+            sleep(1000);
+            var result = tools.获取区域文字(0, 0, w / 2, h / 2, 60, 255, true, false);
+            if (result != null && result.length > 0 && result.some(item => item.text === "出售物品")) {
+                tools.悬浮球描述("检测到出售物品按钮")
+                break;
+            }
+            else {
+                tools.悬浮球描述("未检测到出售物品按钮（" + tryCount + "）")
+            }
+            tryCount++;
+        }
+
+        var 出售物品按钮 = config.zuobiao.比奇小贩面板.出售物品[fbl];
+        click(random(出售物品按钮.x1, 出售物品按钮.x2), random(出售物品按钮.y1, 出售物品按钮.y2))
+        tools.悬浮球描述("点击出售物品按钮");
+        tryCount = 0;
+        while (true) {
+            if (tryCount >= 10) {
+                return {
+                    status: false,
+                    err: "尝试10次未获取卖东西面板"
+                }
+            }
+            sleep(1000);
+            result = tools.获取区域文字(0, 0, w / 2, h / 2, 60, 255, true, false);
+            if (result != null && result.length > 0 && result.some(item => item.text.indexOf("你想卖什么东西") >= 0)) {
+                tools.悬浮球描述("检测到卖东西面板")
+                break;
+            }
+            else {
+                tools.悬浮球描述("未检测到卖东西面板（" + tryCount + "）")
+            }
+            tryCount++;
+        }
+
+
+        var 卖装备背包格子 = config.zuobiao.卖装备背包格子[fbl];
+        click(random(卖装备背包格子["整理按钮"].x1, 卖装备背包格子["整理按钮"].x2), random(卖装备背包格子["整理按钮"].y1, 卖装备背包格子["整理按钮"].y2))
+        tools.悬浮球描述("点击装备整理按钮")
+        sleep(random(2500, 3500));
+
+
+        for (let index = 1; index <= 5; index++) {
+            for (let index1 = 1; index1 <= 8; index1++) {
+                tools.悬浮球描述(`开始出售${index}_${index1}格子`)
+                var p = 卖装备背包格子[`${index}_${index1}`];
+                var randomX = random(-5, 5);
+                var randomY = random(-5, 5);
+                click(p.x + randomX, p.y + randomY)
+                sleep(random(1500, 2000));
+                tools.悬浮球描述("送检YoLo分析是否极品")
+                var img = captureScreen();
+                var imgSmall = tools.截屏裁剪(img, 卖装备背包格子["1_1"].x, 卖装备背包格子["1_1"].y, w, 卖装备背包格子["最底部"]) //captureScreen();//
+                //var savePath = `/sdcard/${index}_${index1}.png`;  // 保存路径可以自定义
+                // let options = {
+                //     threshold: 30
+                // }
+                // // 可利用工具箱生成点色数据进行测试
+                // let result = images.findMultiColors(img, "#FF0000",[
+                //     [-44, -17, "#EC0803"],
+                // ], options);
+                // toastLog(JSON.stringify(result));
+                // 保存图片
+                //images.save(img, savePath, "png");  // 保存为 PNG 格式
+                //var text = ocr.detect(img);//utils.regionalAnalysisChart2(img,卖装备背包格子["1_1"].x,卖装备背包格子["1_1"].y,w,卖装备背包格子["最底部"],60,255,false,false,"区域识字测试代码");
+                let r = ocrPladderOCR.detect(imgSmall);//utils.ocrGetContentStr(imgSmall);
+                var allText = '';
+                //var exists = r.some(item => item.text.indexOf"极品");
+                if (r) {
+                    r.forEach(item => {
+                        allText += item.text;
+                        //console.log(item.text, item.confidence);
+                    });
+                }
+                toastLog(allText)
+                utils.recycleNull(img);
+                utils.recycleNull(imgSmall);
+                toastLog("----------------------");
+                sleep(1500)
+            }
+        }
+        ocrPladderOCR.release();
+        return {
+            status: true,
+            err: ""
+        }
+    },
+    送检YoLo: (img, mode) => {
+        //var img = images.read("/sdcard/screenshot.png");
+        var base64Str = android.util.Base64.encodeToString(images.toBytes(img, "png"), 0);
+
+        var url = "";
+        if (mode == "jipin") {
+            url = "http://183.249.84.44:9850/jipin"
+        }
+        else {
+            return {
+                status: false,
+                err: "无匹配模型",
+            }
+        }
+        var headers = {
+            "Content-Type": "application/json"
+        };
+        var data = {
+            image: base64Str
+        };
+        var response = http.postJson(url, data, { headers: headers, timeout: 10000 });
+        if (response.statusCode == 200) {
+            return {
+                status: true,
+                value: response.body.string(),
+            }
+        } else {
+            return {
+                status: false,
+                err: "状态码:" + response.statusCode,
+            }
+        }
+
     },
     修理装备: () => {
         toastLog('尝试关闭所有窗口');
@@ -692,10 +924,9 @@ var tools = {
     findImageClick: (fileName) => {
         var result = tools.findImage(fileName);
         if (result.status && result.img.x > 0 && result.img.y > 0) {
-            var x = result.img.x + random(5, result.size.w);
-            var y = result.img.y + random(5, result.size.h);
+            var x = result.img.x + random(3, result.size.w);
+            var y = result.img.y + random(3, result.size.h);
             click(x, y)
-            // toastLog('找图成功')
             return true
         }
         else {
@@ -705,13 +936,56 @@ var tools = {
             return false
         }
     },
+    区域找图: (fileName, x1, y1, x2, y2) => {
+        var w = device.width;
+        var h = device.height;
+        var exists = config.youxiaoFBL.some(item => item.w === w && item.h === h);
+        if (exists) {
+            var img = captureScreen();
+            var targetImgPath = `./res/UI/${w}_${h}/${fileName}`;
+            var targetImg = images.read(targetImgPath);
+            var imgSize = {
+                w: targetImg.width,
+                h: targetImg.height
+            }
+            var result = null;
+            try {
+                result = utils.regionalFindImg2(img, targetImg, x1, y1, x2, y2, 60, 255, 0.7, false, false, "区域找图");
+            } catch (e) {
+                toastLog(fileName + '区域找图异常');
+                toastLog(e)
+            }
+            utils.recycleNull(img);
+            utils.recycleNull(targetImg);
+            if (result != null && (result.x > 0 || result.y > 0)) {
+                return {
+                    status: true,
+                    img: result,
+                    size: imgSize
+                };
+            }
+            else {
+                return {
+                    status: false,
+                    img: null,
+                    err: '未找到对应的图片'
+                }
+            }
+        }
+        else {
+            return {
+                status: false,
+                img: null,
+                err: '不支持' + w + 'x' + h + '分辨率'
+            }
+        }
+    },
     找图并点击图片中心: (fileName) => {
         var result = tools.findImage(fileName);
         if (result.status && result.img.x > 0 && result.img.y > 0) {
             var x = result.img.x + (result.size.w / 2);
             var y = result.img.y + (result.size.h / 2);
             click(x, y)
-            // toastLog('找图成功')
             return true
         }
         else {
@@ -735,7 +1009,7 @@ var tools = {
         utils.recycleNull(img);
         return r;
     },
-    获取区域文字: (x1, y1, x2, y2) => {
+    获取区域文字: (x1, y1, x2, y2, param1, param2, isP1, isP2) => {
         //tools.shenqiCapture();
         var { w, h } = tools.获取屏幕高宽();
         if (x2 > w) {
@@ -749,13 +1023,30 @@ var tools = {
         var img = captureScreen();
         var r = null;
         try {
-            r = utils.regionalAnalysisChart3(img, x1, y1, x2, y2, 60, 255, false, false, "");
+            r = utils.regionalAnalysisChart3(img, x1, y1, x2, y2, param1, param2, isP1, isP2, "");
         } catch (e) {
             toastLog('y2不能超出屏幕高度')
             r = null;
         }
         utils.recycleNull(img);
         return r;
+    },
+    截屏裁剪: (img, x1, y1, x2, y2) => {
+        if (img == null) {
+            img = captureScreen();
+        }
+        let xy1 = utils.convertXY(x1, y1, "leftTop")
+        let xy2 = utils.convertXY(x2, y2, "rightBottom")
+        // 按照区域坐标裁剪大图
+        var newImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
+        utils.recycleNull(img);
+        return newImg;
+    },
+    判断是否存仓库: (text) => {
+        if (text.indexOf('药') >= 0 || text.indexOf('符') >= 0 || text.indexOf('盔甲') >= 0 || text.indexOf('战衣') >= 0 || text.indexOf('长袍') >= 0 || text.indexOf('布衣') >= 0) {
+            return false;
+        }
+
     },
     获取屏幕高宽: () => {  // 获取当前屏幕方向
         let w, h;
@@ -802,6 +1093,7 @@ let window = floaty.window(
         </horizontal>
     </frame>
 );
+let lastDirection = context.getResources().getConfiguration().orientation;
 ui.run(() => {
     win = floaty.rawWindow(
         <frame gravity="center" id="configFrame">
@@ -913,45 +1205,51 @@ ui.run(() => {
 function excuteAuto() {
     isShowConfig = false
     win.setPosition(-10000, padding_top);
-    sleep(150)
+    sleep(2000);
 
-    tools.人物移动.去比奇挂机图Loop("兽人古墓三层");
 
-    // var yolo = _s.yolov8("yolo8wugong", 320);
+    // 加载OCR插件，需要先在Auto.js Pro的插件商店中下载官方MLKitOCR插件
 
-    // /*  //可同时使用多个模型
-    // var yolo2 = _s.yolov5("yolov5s", 640); // yolov5模型
-    // var yolo3 = _s.yolov8("yolov8n", 640); //可以调成320，越小速度越快，但越不能识别小物体
-    // */
-    // var p = "./res/wugong/7.png";
-    // var prob_threshold = 0.3; //预测值，返回大于该值的锚框，该值越大返回的锚框数量越少
-    // var nms_thresh = 0.9; //非极大值抑制，返回的锚框中重合面积不大于该值，该值越大返回的锚框重合率越高
 
-    // var img = images.read(p);
-    // var bbox = yolo.detect(img.mat, prob_threshold, nms_thresh);
-    // log(bbox)
-    // let mat = img.mat.clone();
-    // Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2RGB);
-    // for (let i = 0; i < bbox.length; i++) {
-    //     let box = bbox[i];
-    //     let x1 = box[0];
-    //     let y1 = box[1];
-    //     let x2 = box[2];
-    //     let y2 = box[3];
-    //     let prob = box[4];
-    //     let label = box[5];
-    //     Imgproc.rectangle(mat, Point(x1, y1), Point(x2, y2), Scalar(255, 255, 0));
-    // }
-    // let result = Imgcodecs.imwrite("/sdcard/appSync/tempRemoteScript/mir/res/yolo.jpg", mat);
-    // if (result) {
-    //     log("图片保存成功：yolo.jpg");
+    // requestScreenCapture();
 
-    //     app.viewFile("/sdcard/appSync/tempRemoteScript/mir/res/yolo.jpg");
-    // } else {
-    //     log("图片保存失败：yolo.jpg");
+    // for (let i = 0; i < 1; i++) {
+    //     let capture = captureScreen();
+
+    //     // 检测截图文字并计算检测时间，首次检测的耗时比较长
+    //     // 检测时间取决于图片大小、内容、文字数量
+    //     let start = Date.now();
+    //     let result = ocr.detect(capture);
+    //     let end = Date.now();
+    //     console.log(result);
+
+    //     toastLog(`第${i + 1}次检测: ${end - start}ms`);
+    //     sleep(3000);
     // }
 
-    // 
+    // ocr.release();
+
+    // let img = captureScreen();
+    // let MLKitOCR = $plugins.load("org.autojs.autojspro.plugin.mlkit.ocr");
+    // let googleOcr = new MLKitOCR();
+    // let resultMlk = googleOcr.detect(img);
+    // let contentMlkArr = Object.values(resultMlk).map(item => item.text) || [];
+    // utils.recycleNull(img);
+    // toastLog(JSON.stringify(contentMlkArr));
+
+    //var img = captureScreen();
+
+
+    tools.比奇卖物品Loop();
+
+
+    // var r =  tools.截屏裁剪返回Base64(0,0,100,100);
+    // toastLog(r.length)
+    // tools.人物移动.去比奇挂机图Loop("兽人古墓三层");
+    //tools.人物移动.去比奇小贩Loop();
+    //tools.比奇卖物品Loop();
+
+
     //toastLog(p)
     // // 可自行换个能找到的小图X\
     // let targetImgPath = "./res/UI/test.png"; 
@@ -1001,7 +1299,7 @@ function switchTab(index) {
 
 // 更新悬浮窗位置
 function updateWindowPosition() {
-    let { screenWidth, screenHeight } = tools.获取屏幕高宽();
+    let { w, h } = tools.获取屏幕高宽();
 
     // 自定义触发吸边的距离，默认是20像素
     let edgeMargin = 100;
@@ -1010,20 +1308,20 @@ function updateWindowPosition() {
     let windowX = window.getX();
     let windowWidth = window.getWidth();
     let windowY = window.getY();
-
+    ui.run(() => window.setPosition(windowX, h - 250));
     // 如果悬浮窗靠近左边边缘，则吸附到左边
-    if (windowX < edgeMargin) {
-        ui.run(() => window.setPosition(-24, windowY)); // 只露出一半图标
-    }
-    // 如果悬浮窗靠近右边边缘，则吸附到右边
-    else if (screenWidth - windowX < edgeMargin) {
-        // 调整计算方式，使右边能够正确吸附，并露出一半
-        ui.run(() => window.setPosition(screenWidth - 34, windowY));
-    }
-    // 否则恢复到原位置
-    else {
-        ui.run(() => window.setPosition(windowX, windowY));
-    }
+    // if (windowX < edgeMargin) {
+    //     ui.run(() => window.setPosition(-24, h-50)); // 只露出一半图标
+    // }
+    // // 如果悬浮窗靠近右边边缘，则吸附到右边
+    // // else if (screenWidth - windowX < edgeMargin) {
+    // //     // 调整计算方式，使右边能够正确吸附，并露出一半
+    // //     ui.run(() => window.setPosition(screenWidth - 34, screenHeight-30));
+    // // }
+    // // 否则恢复到原位置
+    // else {
+    //     ui.run(() => window.setPosition(windowX,  h-50));
+    // }
 }
 // 拖动逻辑 + 自动吸边
 let x = 0, y = 0;
@@ -1100,15 +1398,17 @@ threads.start(function () {
         // 获取动态数据（这里只是示例，你可以替换成真实的 CPU/内存/事件信息）
         let cpuUsage = "CPU: " + utils.getCpuPercentage();
         let memUsage = "内存: " + utils.getMemoryInfo();
-        let currentEvent = "事件: 正在检测";
-
+        let currentDirection = context.getResources().getConfiguration().orientation;
         // 在 UI 线程中更新浮窗文字
         ui.run(() => {
             window.cpuText.setText(cpuUsage);
             window.memText.setText(memUsage);
-            window.eventText.setText(currentEvent);
+            // window.eventText.setText(currentEvent);
         });
-
+        if (currentDirection !== lastDirection) {
+            lastDirection = currentDirection;
+            updateWindowPosition()
+        }
         sleep(1000 * 3); // 每秒更新一次
     }
 });
