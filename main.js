@@ -25,6 +25,7 @@ var serviceStorage = storages.create("zjh336.cn" + config.serviceScriptKey);
 let MLKitOCR = $plugins.load('org.autojs.autojspro.plugin.mlkit.ocr');
 let ocr = new MLKitOCR();
 let ocrPladderOCR = $ocr.create()
+let 存入仓库数量 = 0;
 var tools = {
     悬浮球描述: (text) => {
         ui.run(() => {
@@ -76,6 +77,28 @@ var tools = {
                 );
             }
         },
+        回比奇补给:()=>{
+            tools.人物移动.去比奇小贩Loop();
+            tools.比奇卖物品Loop();
+            tools.修理装备Loop();
+            tools.买物品Loops([
+                {
+                    name: "修复油",
+                    num:1
+                },
+                {
+                    name: "金创药小",
+                    num:3
+                },{
+                    name: "护身符大",
+                    num:2
+                },
+                {
+                    name: "魔法药中包",
+                    num:3
+                }
+            ]);
+        },
         比奇安全区到小贩: (人物坐标) => {
             var 比奇小贩坐标 = config.zuobiao.比奇小贩坐标;
             if (比奇小贩坐标.x > 人物坐标.x) {
@@ -113,7 +136,7 @@ var tools = {
                     if (当前地图 == "比奇城" && 人物坐标.x > 安全区坐标范围.x1 - 30 && 人物坐标.x < 安全区坐标范围.x2 + 30 && 人物坐标.y > 安全区坐标范围.y1 - 30 && 人物坐标.y < 安全区坐标范围.y2 + 30) {
                         tools.人物移动.比奇安全区到小贩(人物坐标);
                         var 比奇小贩坐标 = config.zuobiao.比奇小贩坐标;
-                        if (Math.abs(当前地图.x - 比奇小贩坐标.x) <= 2 && Math.abs(当前地图.y - 比奇小贩坐标.y) <= 2) {
+                        if (Math.abs(人物坐标.x - 比奇小贩坐标.x) <= 2 && Math.abs(人物坐标.y - 比奇小贩坐标.y) <= 2) {
                             toastLog("到达小贩NPC");
                             break;
                         }
@@ -531,8 +554,12 @@ var tools = {
             return result[0].text;
         }
         else {
-            return null;
+            return result;
         }
+    },
+    初始化攻击面板:()=>{
+       var text =  tools.获取区域文字(7,35,148,200,60,255,false,false);
+       toastLog(text)
     },
     人物坐标: () => {
         var fbl = `${device.width}_${device.height}`;
@@ -553,9 +580,56 @@ var tools = {
             return null;
         }
     },
+    比奇丢护身符:(起始坐标x,起始坐标y,时间戳,检查x,检查y)=>{
+        var tryCount=0;
+        var fbl = `${device.width}_${device.height}`;
+        var 卖装备背包格子 = config.zuobiao.卖装备背包格子[fbl];
+        var { w, h } = tools.获取屏幕高宽();
+        while(true){
+            if(tryCount>=5){
+                return {
+                    status: false,
+                    err: "丢不掉"
+                }
+            }               
+            var x1 = tryCount==0?起始坐标x + random(-5, 5):检查x + random(-5, 5);
+            var y1 = tryCount==0?起始坐标y + random(-5, 5):检查y + random(-5, 5);
+            var x2 = random(config.zuobiao.比奇丢东西范围[fbl].x[0],config.zuobiao.比奇丢东西范围[fbl].x[1]);
+            var y2 = random(config.zuobiao.比奇丢东西范围[fbl].y[0],config.zuobiao.比奇丢东西范围[fbl].y[1]);
+            gesture(时间戳, [x1, y1], [x2, y2]);
+            sleep(random(666, 999));
+            var randomX = random(-5, 5);
+            var randomY = random(-5, 5);
+            click(检查x + randomX, 检查y + randomY)
+            sleep(random(1200, 1500));
+            var img = captureScreen();
+            var imgSmall = tools.截屏裁剪(img, 卖装备背包格子["1_1"].x, 卖装备背包格子["1_1"].y, w, 卖装备背包格子["最底部"]) //captureScreen();//
+            let r = ocrPladderOCR.detect(imgSmall);
+            utils.recycleNull(img);
+            utils.recycleNull(imgSmall);
+            var allText = '';
+            if (r) {
+                r.forEach(item => {
+                    allText += item.text;
+                });
+                if(allText.indexOf("重量")<0 || allText.indexOf("放入")<0){
+                    return {
+                        status: true,
+                        err: ""
+                    }
+                }
+            }
+            tryCount++;
+        }
+        return {
+            status: false,
+            err: "丢不掉"
+        }
+    },
     比奇卖物品Loop: () => {
         var result = null;
         var errCount = 0;
+        ocrPladderOCR = $ocr.create();
         tools.悬浮球描述("开始卖物品");
         while (true) {
             if (errCount >= 20) {
@@ -579,20 +653,12 @@ var tools = {
                 sleep(random(1500, 2000));
             }
         }
+        ocrPladderOCR.release();
+        
     },
     比奇卖物品: () => {
-        var result = true;
-        while (result) {
-            result = tools.findImageClick("closeBtn2.png");
-            sleep(500)
-        }
-        var r = tools.人物移动.判断到达比奇小贩();
-        if (!r) {
-            return {
-                status: false,
-                err: "人物未到达比奇"
-            }
-        }
+        tools.关闭所有窗口();
+        var result = null;
         var { w, h } = tools.获取屏幕高宽();
         var fbl = `${device.width}_${device.height}`;
         var 比奇小贩按钮 = config.zuobiao.比奇小贩按钮[fbl]
@@ -631,7 +697,7 @@ var tools = {
             }
             sleep(1000);
             result = tools.获取区域文字(0, 0, w / 2, h / 2, 60, 255, true, false);
-            if (result != null && result.length > 0 && result.some(item => item.text.indexOf("你想卖什么东西") >= 0)) {
+            if (result != null && result.length > 0 && result.some(item => item.text.indexOf("什么东西") >= 0)) {
                 tools.悬浮球描述("检测到卖东西面板")
                 break;
             }
@@ -646,8 +712,7 @@ var tools = {
         click(random(卖装备背包格子["整理按钮"].x1, 卖装备背包格子["整理按钮"].x2), random(卖装备背包格子["整理按钮"].y1, 卖装备背包格子["整理按钮"].y2))
         tools.悬浮球描述("点击装备整理按钮")
         sleep(random(2500, 3500));
-
-
+        var 第一格 = 卖装备背包格子[`1_1`];
         for (let index = 1; index <= 5; index++) {
             for (let index1 = 1; index1 <= 8; index1++) {
                 tools.悬浮球描述(`开始出售${index}_${index1}格子`)
@@ -655,8 +720,8 @@ var tools = {
                 var randomX = random(-5, 5);
                 var randomY = random(-5, 5);
                 click(p.x + randomX, p.y + randomY)
-                sleep(random(1500, 2000));
-                tools.悬浮球描述("送检YoLo分析是否极品")
+                sleep(random(1200, 1500));
+                // tools.悬浮球描述("送检YoLo分析是否极品")
                 var img = captureScreen();
                 var imgSmall = tools.截屏裁剪(img, 卖装备背包格子["1_1"].x, 卖装备背包格子["1_1"].y, w, 卖装备背包格子["最底部"]) //captureScreen();//
                 //var savePath = `/sdcard/${index}_${index1}.png`;  // 保存路径可以自定义
@@ -677,21 +742,240 @@ var tools = {
                 if (r) {
                     r.forEach(item => {
                         allText += item.text;
-                        //console.log(item.text, item.confidence);
                     });
+                    if(allText.indexOf("极品")>=0){
+                        tools.悬浮球描述(`${index}_${index1}存仓库`)
+                        tools.比奇存仓库(index,index1);
+                        return {
+                            status: false,
+                            err: "重新卖装备"
+                        }
+                    }
+                    else if(allText.indexOf("护身符")>=0){
+                        r = tools.比奇丢护身符(p.x,p.y,random(666,1200),第一格.x,第一格.y);
+                        if(!r.status){
+                            tools.悬浮球描述(`丢弃失败,存仓库`)
+                            tools.比奇存仓库("1","1");
+                            return {
+                                status: false,
+                                err: "重新卖装备"
+                            }
+                        }
+                        
+                    }
+                    else{
+                        var is需存仓库装备 = false;
+                        config.需存仓库装备.forEach(item=>{
+                            if(allText.indexOf(item)>=0){
+                                is需存仓库装备 = true;
+                            }
+                        })
+                        if(is需存仓库装备){
+                            tools.悬浮球描述(`${index}_${index1}发现需存仓库装备`)
+                            tools.比奇存仓库(index,index1);
+                            return {
+                                status: false,
+                                err: "重新卖装备"
+                            }
+                        }
+                        else{
+                            if(allText.indexOf("重量")<0 || allText.indexOf("放入")<0){
+                                return {
+                                    status: true,
+                                    err: ""
+                                }
+                            }else{
+                                tools.findImageClick("beibaofangruBtn.png");
+                                sleep(random(1500,2000));
+                                tools.findImageClick("OKBtn.png");
+                                sleep(random(1500, 2000));
+                            }
+                        }
+                    }
                 }
-                toastLog(allText)
                 utils.recycleNull(img);
                 utils.recycleNull(imgSmall);
-                toastLog("----------------------");
+                // toastLog("----------------------");
                 sleep(1500)
             }
         }
-        ocrPladderOCR.release();
         return {
             status: true,
             err: ""
         }
+    },
+    买物品Loops:(物品s)=>{
+        let 物品集合 = 物品s.map((item, i) => {
+            var 物品页码 = config.zuobiao.购买物品页码[item["name"]];
+            return {
+                "名称": item["name"], 
+                "数量": item["num"], 
+                "页码": 物品页码.页码,
+                "顺序": 物品页码.顺序,
+                "是否下翻":物品页码.是否下翻,
+            };
+        });
+        for (var i = 0; i < 物品集合.length; i++) {
+            var 物品对象 = 物品集合[i];
+            tools.悬浮球描述("开始购买"+物品对象["名称"]+"物品");
+            tools.买物品(物品对象)
+        }
+    },
+    买物品: (物品对象) => {
+        tools.关闭所有窗口();
+        var result = null;
+        var { w, h } = tools.获取屏幕高宽();
+        var fbl = `${device.width}_${device.height}`;
+        var 比奇小贩按钮 = config.zuobiao.比奇小贩按钮[fbl]
+        click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2))
+        var tryCount = 0;
+        while (true) {
+            if (tryCount >= 10) {
+                return {
+                    status: false,
+                    err: "尝试10次未获取购买物品按钮"
+                }
+            }
+            sleep(1000);
+            var result = tools.获取区域文字(0, 0, w / 2, h / 2, 60, 255, true, false);
+            if (result != null && result.length > 0 && result.some(item => item.text === "购买物品")) {
+                break;
+            }
+            tryCount++;
+        }
+
+        var 购买物品按钮 = config.zuobiao.比奇小贩面板.购买物品[fbl];
+        click(random(购买物品按钮.x1, 购买物品按钮.x2), random(购买物品按钮.y1, 购买物品按钮.y2))
+        tryCount = 0;
+        while (true) {
+            if (tryCount >= 10) {
+                return {
+                    status: false,
+                    err: "尝试10次未获取卖东西面板"
+                }
+            }
+            sleep(1000);
+            result = tools.获取区域文字(0, 0, w / 2, h / 2, 60, 255, true, false);
+            if (result != null && result.length > 0 && result.some(item => item.text.indexOf("买什么") >= 0)) {
+                break;
+            }
+            tryCount++;
+        }
+        
+        var 购买物品位置 = config.zuobiao.购买物品位置[fbl];
+        for (var i = 1; i < 物品对象["页码"]; i++) {
+            tools.findImageClick("youjiantouBtn.png");
+            sleep(random(1500,2000))
+        }
+        var p = 购买物品位置[物品对象.顺序.toString()];
+        click(random(p.x[0],p.x[1]),random(p.y[0],p.y[1]))
+        sleep(random(1000,1500))
+        if(物品对象["是否下翻"]){
+            tools.findImageClick("buyOkBtn.png");
+            sleep(random(666,888))
+            p = 购买物品位置["1"];
+            click(random(p.x[0],p.x[1]),random(p.y[0],p.y[1]))
+            sleep(random(1500,2000))
+        }
+        for (var i = 0; i < 物品对象["数量"]; i++) {
+            tools.findImageClick("buyOkBtn.png");
+            sleep(random(666,888))
+        }
+    },
+    比奇存仓库:(index1,index2)=>{
+        tools.关闭所有窗口();
+        var r = tools.人物移动.判断到达比奇小贩();
+        if (!r) {
+            toastLog('人物未到达比奇')
+            return {
+                status: false,
+                err: "人物未到达比奇"
+            }
+        }
+        var { w, h } = tools.获取屏幕高宽();
+        var fbl = `${device.width}_${device.height}`;
+        var 比奇小贩按钮 = config.zuobiao.比奇小贩按钮[fbl]
+        click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2))
+        tools.悬浮球描述("点击比奇小贩按钮");
+        var tryCount = 0;
+        while (true) {
+            if (tryCount >= 10) {
+                return {
+                    status: false,
+                    err: "尝试10次未获取到保管物品按钮"
+                }
+            }
+            sleep(1000);
+            var result = tools.获取区域文字(0, 0, w / 2, h / 2, 60, 255, true, false);
+            if (result != null && result.length > 0 && result.some(item => item.text === "保管物品")) {
+                tools.悬浮球描述("检测到保管物品按钮")
+                break;
+            }
+            else {
+                tools.悬浮球描述("未检测到保管物品按钮（" + tryCount + "）")
+            }
+            tryCount++;
+        }
+        var 保存物品按钮 = config.zuobiao.比奇小贩面板.保存物品[fbl];
+        click(random(保存物品按钮.x1, 保存物品按钮.x2), random(保存物品按钮.y1, 保存物品按钮.y2))
+        tools.悬浮球描述("点击保管物品按钮");
+        tryCount = 0;
+        while (true) {
+            if (tryCount >= 10) {
+                return {
+                    status: false,
+                    err: "尝试10次未获取仓库面板"
+                }
+            }
+            sleep(1000);
+            result = tools.findImage("cangku_clear.png");
+            
+            if (result.status) {
+                tools.悬浮球描述("检测到仓库面板")
+                break;
+            }
+            else {
+                tools.悬浮球描述("未检测到仓库面板（" + tryCount + "）")
+            }
+            tryCount++;
+        }
+        tools.悬浮球描述(`开始保存${index1}_${index2}格子东西`)
+        var 卖装备背包格子 = config.zuobiao.卖装备背包格子[fbl];
+        var 偏移量 = config.zuobiao.保存仓库包格子偏移量[fbl];
+        var p = 卖装备背包格子[`${index1}_${index2}`];
+        var randomX = random(-5, 5);
+        var randomY = random(-5, 5);
+        click(p.x + randomX + 偏移量.x, p.y + randomY +偏移量.y)
+        sleep(random(500,600))
+        tryCount = 0;
+        while(true){
+            if (tryCount >= 10) {
+                return {
+                    status: false,
+                    err: "尝试10次未获取存入按钮"
+                }
+            }
+            result = tools.findImage("beibaocunruBtn.png");
+            if (result.status && result.img.x > 0 && result.img.y > 0) {
+                var x = result.img.x + random(10, result.size.w -5);
+                var y = result.img.y + random(5, 20);
+                click(x, y);
+                tools.悬浮球描述(`已点击保存`)
+                存入仓库数量++;
+                return {
+                    status: true,
+                    err: ""
+                }
+            }
+            else {
+                 tools.悬浮球描述(`未找到存入按钮`)
+            }
+            tryCount++;
+            sleep(random(1000,1500))
+        }
+        
+        
+
     },
     送检YoLo: (img, mode) => {
         //var img = images.read("/sdcard/screenshot.png");
@@ -727,74 +1011,138 @@ var tools = {
         }
 
     },
-    修理装备: () => {
-        toastLog('尝试关闭所有窗口');
-        var result = true;
-        while (result) {
-            result = tools.findImageClick("closeBtn.png");
-            sleep(500)
-        }
+    修理装备Loop: () => {
+        tools.悬浮球描述("正在修理装备");
+        tools.关闭所有窗口();
         sleep(1000);
-
-        tools.jiaoSe();
-        sleep(2000);
-
-        result = tools.findImage("closeBtn.png");
-        if (result.status) {
-            toastLog('卸下头盔');
-            tools.clickTou(result.img);
+        var result = true;
+        tools.findImageClick("jiaoseBtn.png");
+        sleep(300);
+        var tryCount = 0;
+        while (true) {
+            if (tryCount >= 10) {
+                return {
+                    status: false,
+                    err: "尝试10次未获取人物面板"
+                }
+            }
             sleep(1000);
-            tools.findImageClick("xiexia.png")
-
-            sleep(1000);
-            toastLog('卸下项链');
-            tools.clickXiangLian(result.img);
-            sleep(1000);
-            tools.findImageClick("xiexia.png")
-
-
-            sleep(1000);
-            toastLog('卸下武器');
-            tools.clickWuQi(result.img);
-            sleep(1000);
-            tools.findImageClick("xiexia.png")
-
-            sleep(1000);
-            toastLog('卸下手镯1');
-            tools.clickShouZhuo1(result.img);
-            sleep(1000);
-            tools.findImageClick("xiexia.png")
-
-
-            sleep(1000);
-            toastLog('卸下手镯2');
-            tools.clickShouZhuo2(result.img);
-            sleep(1000);
-            tools.findImageClick("xiexia.png")
-
-            sleep(1000);
-            toastLog('卸下戒指1');
-            tools.clickJieZhi1(result.img);
-            sleep(1000);
-            tools.findImageClick("xiexia.png")
-
-
-            sleep(1000);
-            toastLog('卸下戒指2');
-            tools.clickJieZhi2(result.img);
-            sleep(1000);
-            tools.findImageClick("xiexia.png")
+            result = tools.findImage("rewumianbanBtn.png");
+            if (result.status) {
+                tools.悬浮球描述("检测到人物面板")
+                break;
+            }
+            else {
+                tools.悬浮球描述("未检测到人物面板（" + tryCount + "）")
+            }
+            tryCount++;
         }
-        else {
-            toastLog('未找到人物');
+        tools.卸下人物装备(result.img);
+        sleep(1000);
+        tools.关闭所有窗口();
+        sleep(1000);
+        tools.findImageClick("beibaoBtn.png");
+        sleep(1000);
+        tools.findImageClick("beibaozhengliBtn.png");
+        sleep(random(1000, 1500));
+        for (var i = 1; i <= 8; i++) {
+            tools.修理装备(i);
+        }
+        tools.关闭所有窗口();
+        sleep(1000);
+        tools.穿装备();
+    },
+    修理装备: (index) => {
+        tools.关闭所有窗口();
+        sleep(1000);
+        var result = true;
+        sleep(300);
+        var tryCount = 0;
+        var { w, h } = tools.获取屏幕高宽();
+        var fbl = `${device.width}_${device.height}`;
+        var 卖装备背包格子 = config.zuobiao.卖装备背包格子[fbl];
+        var 比奇小贩按钮 = config.zuobiao.比奇小贩按钮[fbl]
+        click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2))
+        tools.悬浮球描述("点击比奇小贩按钮");
+        var tryCount = 0;
+        while (true) {
+            if (tryCount >= 10) {
+                return {
+                    status: false,
+                    err: "尝试10次未获取修理物品按钮"
+                }
+            }
+            sleep(1000);
+            var result = tools.获取区域文字(0, 0, w / 2, h / 2, 60, 255, true, false);
+            if (result != null && result.length > 0 && result.some(item => item.text === "普通修理")) {
+                tools.悬浮球描述("检测到修理物品按钮")
+                break;
+            }
+            else {
+                tools.悬浮球描述("未检测到修理物品按钮（" + tryCount + "）")
+            }
+            tryCount++;
+        }
+
+        var 普通修理按钮 = config.zuobiao.比奇小贩面板.普通修理[fbl];
+        click(random(普通修理按钮.x1, 普通修理按钮.x2), random(普通修理按钮.y1, 普通修理按钮.y2))
+        tools.悬浮球描述("点击普通修理按钮");
+        tryCount = 0;
+        while (true) {
+            if (tryCount >= 10) {
+                return {
+                    status: false,
+                    err: "尝试10次未获取修理装备面板"
+                }
+            }
+            sleep(1000);
+            result = tools.获取区域文字(0, 0, w / 2, h / 2, 60, 255, true, false);
+            if (result != null && result.length > 0 && result.some(item => item.text.indexOf("修理") >= 0)) {
+                tools.悬浮球描述("检测到修理装备面板")
+                break;
+            }
+            else {
+                toastLog(result)
+                tools.悬浮球描述("未检测到修理装备面板（" + tryCount + "）")
+            }
+            tryCount++;
+        }
+
+
+     
+        tools.悬浮球描述(`开始修理${index}格子`)
+        var p = 卖装备背包格子[`1_${index}`];
+        var randomX = random(-5, 5);
+        var randomY = random(-5, 5);
+        click(p.x + randomX, p.y + randomY)
+        sleep(random(1500, 2000));
+        tools.findImageClick("beibaofangruBtn.png");
+        sleep(random(1500,2000));
+        tools.findImageClick("OKBtn.png");
+        sleep(random(1500,2000));
+        
+    },
+    穿装备:()=>{
+        tools.findImageClick("beibaoBtn.png");
+        sleep(random(1500,2000));
+        tools.findImageClick("beibaozhengliBtn.png");
+        sleep(random(1500,2000));
+        var result = tools.findImage("beibaomianban.png");
+        var fbl = `${device.width}_${device.height}`;
+        var p = config.zuobiao.背包格子于面板偏移量[fbl]
+        for (var i = 1; i <= 8; i++) {
+            tools.悬浮球描述("正在穿戴第"+i+"格装备");
+            var p1 = p["1_"+i];
+            var x = result.img.x + p1.x + random(-8,8);
+            var y = result.img.y + p1.y + random(-5,5);
+            click(x,y)
+            sleep(random(1500,2000));
+            tools.findImageClick("beibaochuandaiBtn.png");
+            sleep(random(1500,2000));
         }
     },
     打开大地图: () => {
-        var result = true;
-        while (result) {
-            result = tools.findImageClick("closeBtn.png");
-            sleep(666)
-        }
+        tools.关闭所有窗口();
         var fbl = `${device.width}_${device.height}`;
         var p = config.zuobiao.小地图范围[fbl];
         var x = random(p.x1 + 10, p.x2);
@@ -820,59 +1168,90 @@ var tools = {
             exit();
         }
     },
-    jiaoSe: () => {//点击角色坐标
+    卸下人物装备: (装备面板) => {//点击人物头部
         var fbl = `${device.width}_${device.height}`;
-        var result = config.zuobiao.jiaoSeBtn[fbl]
-        click(result.x, result.y)
-    },
-    clickTou: (closeImg) => {//点击人物头部
-        var fbl = `${device.width}_${device.height}`;
-        var tou = config.zuobiao.renWuTou[fbl];
-        var x = closeImg.x + tou.x;
-        var y = closeImg.y + tou.y;
+        var 头盔 = config.zuobiao.人物面板.头盔[fbl];
+        var 衣服 = config.zuobiao.人物面板.衣服[fbl];
+        var 项链 = config.zuobiao.人物面板.项链[fbl];
+        var 武器 = config.zuobiao.人物面板.武器[fbl];
+        var 手镯1 = config.zuobiao.人物面板.手镯1[fbl];
+        var 手镯2 = config.zuobiao.人物面板.手镯2[fbl];
+        var 戒指1 = config.zuobiao.人物面板.戒指1[fbl];
+        var 戒指2 = config.zuobiao.人物面板.戒指2[fbl];
+        //卸下头盔
+        var x = 装备面板.x + 头盔.x + random(-8,8);
+        var y = 装备面板.y + 头盔.y + random(-5,5);
         click(x, y)
-    },
-    clickXiangLian: (closeImg) => {//点击人物项链
-        var fbl = `${device.width}_${device.height}`;
-        var xianglian = config.zuobiao.renWuXiangLian[fbl];
-        var x = closeImg.x + xianglian.x;
-        var y = closeImg.y + xianglian.y;
+        sleep(random(1000,1500));
+        tools.findImageClick("xiexia.png")
+        sleep(random(1000,1500));
+        
+        //卸下衣服
+        x = 装备面板.x + 衣服.x + random(-5,8);;
+        y = 装备面板.y + 衣服.y + random(-5,5);;
         click(x, y)
-    },
-    clickWuQi: (closeImg) => {//点击人物武器
-        var fbl = `${device.width}_${device.height}`;
-        var wuqi = config.zuobiao.renWuWuQi[fbl];
-        var x = closeImg.x + wuqi.x;
-        var y = closeImg.y + wuqi.y;
+        sleep(random(1000,1500));
+        tools.findImageClick("xiexia.png")
+        sleep(random(1000,1500));
+        
+        
+        //卸下项链
+        x = 装备面板.x + 项链.x + random(-5,8);;
+        y = 装备面板.y + 项链.y + random(-5,5);;
         click(x, y)
-    },
-    clickShouZhuo1: (closeImg) => {//点击人物手镯1
-        var fbl = `${device.width}_${device.height}`;
-        var r = config.zuobiao.renWuShouZhuo1[fbl];
-        var x = closeImg.x + r.x;
-        var y = closeImg.y + r.y;
+        sleep(random(1000,1500));
+        tools.findImageClick("xiexia.png")
+        sleep(random(1000,1500));
+        
+        //卸下项链
+        // x = 装备面板.x + xianglian.x + random(-5,8);;
+        // y = 装备面板.y + xianglian.y + random(-5,5);;
+        // click(x, y)
+        // sleep(random(1000,1500));
+        // tools.findImageClick("xiexia.png")
+        // sleep(random(1000,1500));
+        
+        //卸下武器
+        x = 装备面板.x + 武器.x + random(-5,8);;
+        y = 装备面板.y + 武器.y + random(-10,10);;
         click(x, y)
-    },
-    clickShouZhuo2: (closeImg) => {//点击人物手镯1
-        var fbl = `${device.width}_${device.height}`;
-        var r = config.zuobiao.renWuShouZhuo2[fbl];
-        var x = closeImg.x + r.x;
-        var y = closeImg.y + r.y;
+        sleep(random(1000,1500));
+        tools.findImageClick("xiexia.png")
+        sleep(random(1000,1500));
+        
+        //卸下左手镯
+        x = 装备面板.x + 手镯1.x + random(-5,8);;
+        y = 装备面板.y + 手镯1.y + random(-5,5);;
         click(x, y)
-    },
-    clickJieZhi1: (closeImg) => {//点击人物戒指1
-        var fbl = `${device.width}_${device.height}`;
-        var r = config.zuobiao.renWuJieZhi1[fbl];
-        var x = closeImg.x + r.x;
-        var y = closeImg.y + r.y;
+        sleep(random(1000,1500));
+        tools.findImageClick("xiexia.png")
+        sleep(random(1000,1500));
+        
+        
+        //卸下右手镯
+        x = 装备面板.x + 手镯2.x + random(-5,8);;
+        y = 装备面板.y + 手镯2.y + random(-5,5);;
         click(x, y)
-    },
-    clickJieZhi2: (closeImg) => {//点击人物戒指2
-        var fbl = `${device.width}_${device.height}`;
-        var r = config.zuobiao.renWuJieZhi2[fbl];
-        var x = closeImg.x + r.x;
-        var y = closeImg.y + r.y;
+        sleep(random(1000,1500));
+        tools.findImageClick("xiexia.png")
+        sleep(random(1000,1500));
+        
+        //卸下左戒指
+        x = 装备面板.x + 戒指1.x + random(-5,8);;
+        y = 装备面板.y + 戒指1.y + random(-5,5);;
         click(x, y)
+        sleep(random(1000,1500));
+        tools.findImageClick("xiexia.png")
+        sleep(random(1000,1500));
+        
+        
+        //卸下右戒指
+        x = 装备面板.x + 戒指2.x + random(-5,8);;
+        y = 装备面板.y + 戒指2.y + random(-5,5);;
+        click(x, y)
+        sleep(random(1000,1500));
+        tools.findImageClick("xiexia.png")
+        sleep(random(1000,1500));
     },
     findImage: (fileName) => {
         var w = device.width;
@@ -924,16 +1303,33 @@ var tools = {
     findImageClick: (fileName) => {
         var result = tools.findImage(fileName);
         if (result.status && result.img.x > 0 && result.img.y > 0) {
-            var x = result.img.x + random(3, result.size.w);
-            var y = result.img.y + random(3, result.size.h);
+            var x = result.img.x + result.size.w/2 + random(-5,5);
+            var y = result.img.y + result.size.h/2 + random(-5,5);
             click(x, y)
             return true
         }
         else {
-            if (fileName != "closeBtn.png") {
+            if (fileName != "closeBtn.png" && fileName != "closeBtn2.png") {
                 toastLog('找图失败' + fileName)
             }
             return false
+        }
+    },
+    关闭所有窗口:()=>{
+        var result = true;
+        var tryCount = 0;
+        while (result) {
+            if(tryCount>=10){
+                return;
+            }
+            result = tools.findImageClick("closeBtn2.png");
+            if(result){
+                sleep(1200)
+            }
+            else{
+                sleep(999)
+            }
+            tryCount++;
         }
     },
     区域找图: (fileName, x1, y1, x2, y2) => {
@@ -1042,12 +1438,6 @@ var tools = {
         utils.recycleNull(img);
         return newImg;
     },
-    判断是否存仓库: (text) => {
-        if (text.indexOf('药') >= 0 || text.indexOf('符') >= 0 || text.indexOf('盔甲') >= 0 || text.indexOf('战衣') >= 0 || text.indexOf('长袍') >= 0 || text.indexOf('布衣') >= 0) {
-            return false;
-        }
-
-    },
     获取屏幕高宽: () => {  // 获取当前屏幕方向
         let w, h;
         if (context.getResources().getConfiguration().orientation == 1) {
@@ -1072,7 +1462,7 @@ utils.initOcr("谷歌")
 // // 开启调试模式 绘制延时
 // commonStorage.put("debugSleep", 500)
 tools.shenqiCapture();
-toast('字节飞舞科技')
+toast('技术支持:宁波字节飞舞科技')
 
 var w = parseInt(device.width * 0.96);
 var h = parseInt(device.height * 0.9);
@@ -1202,88 +1592,42 @@ ui.run(() => {
 });
 
 
+
+
 function excuteAuto() {
     isShowConfig = false
     win.setPosition(-10000, padding_top);
-    sleep(2000);
-
-
-    // 加载OCR插件，需要先在Auto.js Pro的插件商店中下载官方MLKitOCR插件
-
-
-    // requestScreenCapture();
-
-    // for (let i = 0; i < 1; i++) {
-    //     let capture = captureScreen();
-
-    //     // 检测截图文字并计算检测时间，首次检测的耗时比较长
-    //     // 检测时间取决于图片大小、内容、文字数量
-    //     let start = Date.now();
-    //     let result = ocr.detect(capture);
-    //     let end = Date.now();
-    //     console.log(result);
-
-    //     toastLog(`第${i + 1}次检测: ${end - start}ms`);
-    //     sleep(3000);
-    // }
-
-    // ocr.release();
-
-    // let img = captureScreen();
-    // let MLKitOCR = $plugins.load("org.autojs.autojspro.plugin.mlkit.ocr");
-    // let googleOcr = new MLKitOCR();
-    // let resultMlk = googleOcr.detect(img);
-    // let contentMlkArr = Object.values(resultMlk).map(item => item.text) || [];
-    // utils.recycleNull(img);
-    // toastLog(JSON.stringify(contentMlkArr));
-
+    sleep(1500);
+    
+    tools.初始化攻击面板()
     //var img = captureScreen();
-
-
-    tools.比奇卖物品Loop();
-
-
-    // var r =  tools.截屏裁剪返回Base64(0,0,100,100);
-    // toastLog(r.length)
-    // tools.人物移动.去比奇挂机图Loop("兽人古墓三层");
-    //tools.人物移动.去比奇小贩Loop();
+    
+    //var result = tools.获取全屏文字();
+    //var result = tools.获取区域文字(200, 100,1060,518, 60, 255, true, false);
+    // var r = utils.regionalAnalysisChart3(img, 200, 100,1060,518, 60, 255, false, false, "区域识字测试代码");
+    // toastLog(r)
+    
+    //  toastLog('------------')
+    //var smallImg = tools.截屏裁剪(img,200, 100,1060,518);
+    // ocrPladderOCR = $ocr.create();
+    // r = ocrPladderOCR.detect(img);
+    // toastLog(r)
+    // ocrPladderOCR.release();
+                //var savePath = `/sdcard/${index}_${index1}.png`;  // 保存路径可以自定义
+                // let options = {
+                //     threshold: 30
+                // }
+                // // 可利用工具箱生成点色数据进行测试
+                // let result = images.findMultiColors(img, "#FF0000",[
+                //     [-44, -17, "#EC0803"],
+                // ], options);
+                // toastLog(JSON.stringify(result));
+                // 保存图片
+                //images.save(img, savePath, "png");  // 保存为 PNG 格式
+                //var text = ocr.detect(img);//utils.regionalAnalysisChart2(img,卖装备背包格子["1_1"].x,卖装备背包格子["1_1"].y,w,卖装备背包格子["最底部"],60,255,false,false,"区域识字测试代码");
+                //utils.ocrGetContentStr(imgSmall);
+    // tools.人物移动.去比奇挂机图Loop("兽人古墓二层");
     //tools.比奇卖物品Loop();
-
-
-    //toastLog(p)
-    // // 可自行换个能找到的小图X\
-    // let targetImgPath = "./res/UI/test.png"; 
-    // let targetImg = images.load("http://192.168.1.7:9998/uploadPath/autoJsTools/863818023224810/system/imageHandler/allScreen.png");//images.read(targetImgPath);
-    // let result = utils.grayThresholdFindImg2(img, targetImg, 60, 255, 0.7, false, false);
-    // // let result1 = images.findImage(img, targetImg, options);
-    // utils.recycleNull(img);
-    // utils.recycleNull(targetImg);
-    // toastLog(result);
-    // toastLog(targetImg);
-    //
-
-
-    //找文字坐标
-    // let result = utils.regionalAnalysisChartPosition2(img, 0, 0, size.w - 5, size.h, 60, 255, "删除角色", false, false);
-
-
-    //这里只会显示所有文字(纯文字)
-    //let result = utils.regionalAnalysisChart(img, 0, 0, size.w - 5, size.h, 60, 255, "Test");
-
-    //这里会显示所有文字(包含坐标)
-    // let result = utils.regionalAnalysisChart3(img, 0, 0, size.w - 5, size.h, 60, 255, false, false);
-    // if (result != null && result.length > 0) {
-    //     const has111 = arr.some(item => item.text === '您的通行证帐');
-    //     for (let index = 0; index < result.length; index++) {
-
-    //     }
-    // }
-
-    //utils.recycleNull(img);
-    // if (result.x > 0 && result.y > 0) {
-    //     click(result.x, result.y)
-    // }
-    //toastLog(JSON.stringify(result));
 
 }
 
@@ -1308,7 +1652,7 @@ function updateWindowPosition() {
     let windowX = window.getX();
     let windowWidth = window.getWidth();
     let windowY = window.getY();
-    ui.run(() => window.setPosition(windowX, h - 250));
+    ui.run(() => window.setPosition(windowX, h - 85));
     // 如果悬浮窗靠近左边边缘，则吸附到左边
     // if (windowX < edgeMargin) {
     //     ui.run(() => window.setPosition(-24, h-50)); // 只露出一半图标
@@ -1397,7 +1741,7 @@ threads.start(function () {
     while (true) {
         // 获取动态数据（这里只是示例，你可以替换成真实的 CPU/内存/事件信息）
         let cpuUsage = "CPU: " + utils.getCpuPercentage();
-        let memUsage = "内存: " + utils.getMemoryInfo();
+        let memUsage = "内存: " + utils.getMemoryInfo() +" 存入仓库("+存入仓库数量+")";
         let currentDirection = context.getResources().getConfiguration().orientation;
         // 在 UI 线程中更新浮窗文字
         ui.run(() => {
