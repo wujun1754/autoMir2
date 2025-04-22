@@ -58,14 +58,14 @@ var tools = {
         打开角色: () => {
             var r = tools.findImageForWaitClick("jiaoseBtn.png", {
                 maxTries: 10,
-                interval: sleep(300)
+                interval: 666
             });
             return r;
         },
         获取角色面板: () => {
             var r = tools.findImageForWaitClick("rewumianbanBtn.png", {
                 maxTries: 10,
-                interval: sleep(300)
+                interval: 666
             });
             return r;
         },
@@ -77,7 +77,7 @@ var tools = {
             click(x, y)
             var 卸下按钮 = tools.findImageForWait("xiexia.png", {
                 maxTries: 10,
-                interval: sleep(300)
+                interval: 666
             });
             return 卸下按钮;
         },
@@ -89,9 +89,12 @@ var tools = {
             click(x, y)
             var 卸下按钮 = tools.findImageForWait("xiexia.png", {
                 maxTries: 10,
-                interval: sleep(300)
+                interval: 666
             });
             return 卸下按钮;
+        },
+        读取聊天框信息: () => {
+
         },
     },
     悬浮球描述: (text) => {
@@ -128,7 +131,11 @@ var tools = {
             var img = tools.截屏裁剪(null, p.x + 装备属性明细.x, p.y, p.x, p.y + 装备属性明细.y);
             let r = ocrPladderOCR.detect(img);
             result.衣服 = tools.根据面板获取持久(r);
+            click(p.x - 10, p.y - 10);
         }
+
+        tools.关闭所有窗口();
+
         //ocrPladderOCR.release();
         return result;
     },
@@ -151,23 +158,23 @@ var tools = {
     喝修复油: () => {
         var 背包按钮 = tools.findImageForWaitClick("beibaoBtn.png", {
             maxTries: 10,
-            interval: sleep(300)
+            interval: 666
         });
         var 关闭按钮 = tools.findImageForWait("closeBtn2.png", {
             maxTries: 10,
-            interval: sleep(300)
+            interval: 666
         });
         if (关闭按钮.status) {
             var 修复油 = tools.findImageForWaitClick("xiufuyou1.png", {
                 maxTries: 10,
-                interval: sleep(300)
+                interval: 666
             });
             if (修复油.status) {
+                let fbl = `${device.width}_${device.height}`;
                 if (修复油.img.y < config.zuobiao.药品格子面板[fbl].y1) {
-                    let fbl = `${device.width}_${device.height}`;
                     tools.findImageForWaitClick("shiyongBtn.png", {
                         maxTries: 10,
-                        interval: sleep(300)
+                        interval: 666
                     });
                 }
                 return true;
@@ -234,7 +241,7 @@ var tools = {
             tools.修理装备Loop();
             tools.买物品Loops([{
                 name: "修复油",
-                num: 3
+                num: 5
             }]);
         },
         比奇安全区到小贩: (人物坐标) => {
@@ -268,6 +275,7 @@ var tools = {
             while (true) {
                 var 人物坐标 = tools.人物坐标();
                 var 当前地图 = tools.人物所在地图();
+                toastLog(人物坐标)
                 if (人物坐标 != null && 当前地图 != null) {
                     var 安全区坐标范围 = config.zuobiao.比奇安全区坐标范围;
                     if (当前地图 == "比奇城" && 人物坐标.x > 安全区坐标范围.x1 - 30 && 人物坐标.x < 安全区坐标范围.x2 + 30 && 人物坐标.y > 安全区坐标范围.y1 - 30 && 人物坐标.y < 安全区坐标范围.y2 + 30) {
@@ -279,17 +287,6 @@ var tools = {
                         } else {
                             toastLog("未找到小贩NPC");
                         }
-                        // var 比奇小贩NPC = tools.findImage("biqixiaofan.png");//这个图片不行，和比奇老兵会混淆
-                        // if (比奇小贩NPC.status) {
-                        //     toastLog("到达小贩NPC");
-                        //     var x = 比奇小贩NPC.img.x + (比奇小贩NPC.size.w / 2) + random(-8, 8);
-                        //     var y = 比奇小贩NPC.img.y + (比奇小贩NPC.size.h / 2) + random(-4, 4);
-                        //     click(x, y)
-                        //     break;
-                        // }
-                        // else{
-                        //     toastLog("未找到比奇小贩NPC");
-                        // }
                     } else {
                         tools.人物移动.去比奇老兵Loop();
                     }
@@ -302,81 +299,31 @@ var tools = {
             var 当前地图 = tools.人物所在地图();
             if (当前地图 == null || 当前地图 == "") {
                 toastLog(`当前地图未知`);
-                return false;
+                return;
             } else {
                 tools.打开大地图();
-                sleep(1000);
             }
-            var closeBtn = tools.findImage("closeBtn.png");
+            var closeBtn = tools.findImageForWait("closeBtn.png", {
+                maxTries: 10,
+                interval: 666
+            });
             if (closeBtn.status) {
-                var fbl = `${device.width}_${device.height}`;
                 var closeImg = closeBtn.img;
-                if (当前地图 == "兽人古墓三层") {
-                    var r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第三层.兽人古墓二层;
+                var fbl = `${device.width}_${device.height}`;
+                var routes = config.地图路由[当前地图]["回比奇老兵"];
+                var 大地图坐标 = config.zuobiao.比奇大地图偏移[fbl];
+                for (var i = 0; i < routes.length; i++) {
+                    var 路由 = routes[i];
+                    var r = null;
+                    路由.forEach((item) => {
+                        r = (r == null ? 大地图坐标[item] : r[item]);
+                    })
                     var x = closeImg.x + random(r.x[0], r.x[1]);
                     var y = closeImg.y + random(r.y[0], r.y[1]);
                     click(x, y)
-                    sleep(1000);
-
-                    r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第二层.兽人古墓一层;
-                    x = closeImg.x + random(r.x[0], r.x[1]);
-                    y = closeImg.y + random(r.y[0], r.y[1]);
-                    click(x, y)
-                    sleep(1000);
-
-                    r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第一层.比奇省;
-                    x = closeImg.x + random(r.x[0], r.x[1]);
-                    y = closeImg.y + random(r.y[0], r.y[1]);
-                    click(x, y)
-                    sleep(1000);
-
-                    r = config.zuobiao.比奇大地图偏移[fbl].比奇大城.比奇老兵;
-                    x = closeImg.x + random(r.x[0], r.x[1]);
-                    y = closeImg.y + random(r.y[0], r.y[1]);
-                    click(x, y)
-                } else if (当前地图 == "兽人古墓二层") {
-                    var r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第二层.兽人古墓一层;
-                    var x = closeImg.x + random(r.x[0], r.x[1]);
-                    var y = closeImg.y + random(r.y[0], r.y[1]);
-                    click(x, y)
-                    sleep(1000);
-
-                    r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第一层.比奇省;
-                    x = closeImg.x + random(r.x[0], r.x[1]);
-                    y = closeImg.y + random(r.y[0], r.y[1]);
-                    click(x, y)
-                    sleep(1000);
-
-                    r = config.zuobiao.比奇大地图偏移[fbl].比奇大城.比奇老兵;
-                    x = closeImg.x + random(r.x[0], r.x[1]);
-                    y = closeImg.y + random(r.y[0], r.y[1]);
-                    click(x, y)
-                } else if (当前地图 == "兽人古墓一层") {
-                    var r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第一层.比奇省;
-                    var x = closeImg.x + random(r.x[0], r.x[1]);
-                    var y = closeImg.y + random(r.y[0], r.y[1]);
-                    click(x, y)
-                    sleep(1000);
-
-                    r = config.zuobiao.比奇大地图偏移[fbl].比奇大城.比奇老兵;
-                    x = closeImg.x + random(r.x[0], r.x[1]);
-                    y = closeImg.y + random(r.y[0], r.y[1]);
-                    click(x, y)
-                } else if (当前地图 == "比奇省" || 当前地图 == "比奇城" || 当前地图 == "银杏山谷" || 当前地图 == "边界村") {
-                    var r = config.zuobiao.比奇大地图偏移[fbl].比奇大城.比奇老兵;
-                    var x = closeImg.x + random(r.x[0], r.x[1]);
-                    var y = closeImg.y + random(r.y[0], r.y[1]);
-                    click(x, y)
-                } else {
-                    toastLog(`不支持${当前地图}回比奇老兵`);
-                    return false;
+                    sleep(random(1200, 1666));
                 }
-                sleep(1000);
-                var result = true;
-                while (result) {
-                    result = tools.findImageClick("closeBtn.png");
-                    sleep(666)
-                }
+                tools.关闭所有窗口();
             } else {
                 toastLog("未找到closeBtn");
                 return;
@@ -385,44 +332,35 @@ var tools = {
         },
         去比奇老兵Loop: () => {
             //tools.人物移动.去比奇挂机图(挂机地图);
-            var 当前坐标 = tools.人物坐标();
+            var 历史坐标 = tools.人物坐标();
             while (true) {
-                var 当前地图 = null;
-                try {
-                    当前地图 = tools.人物所在地图();
-                } catch (error) {
-                    toastLog('获取当前地图失败')
-                    continue;
-                }
+                var 当前地图 = tools.人物所在地图();
+                var 人物坐标 = tools.人物坐标();
                 if (当前地图 == null) {
                     toastLog('获取当前地图失败')
+                    sleep(666)
                     continue;
                 }
-                var 坐标 = null;
-                try {
-                    坐标 = tools.人物坐标();
-                } catch (error) {
+                if (人物坐标 == null) {
                     toastLog('获取人物坐标失败')
-                    continue;
-                }
-                if (坐标 == null) {
-                    toastLog('获取人物坐标失败')
+                    sleep(666)
                     continue;
                 }
                 var 安全区坐标范围 = config.zuobiao.比奇安全区坐标范围;
-                if (坐标.x > 安全区坐标范围.x1 && 坐标.x < 安全区坐标范围.x2 && 坐标.y > 安全区坐标范围.y1 && 坐标.y < 安全区坐标范围.y2) {
+                if (人物坐标.x > 安全区坐标范围.x1 && 人物坐标.x < 安全区坐标范围.x2 && 人物坐标.y > 安全区坐标范围.y1 && 人物坐标.y < 安全区坐标范围.y2) {
                     sleep(3000);
                     break; //说明到了安全区
                 } else {
-                    if (坐标 != null && 当前坐标 != null && 坐标.x == 当前坐标.x && 坐标.y == 当前坐标.y) {
+                    if (人物坐标 != null && 历史坐标 != null && 人物坐标.x == 历史坐标.x && 人物坐标.y == 历史坐标.y) {
                         toastLog('开始跑图');
                         try {
                             tools.人物移动.去比奇老兵();
                         } catch (error) {
                             toastLog(error)
+                            sleep(666)
                         }
                     } else {
-                        当前坐标 = 坐标;
+                        历史坐标 = 人物坐标;
                     }
                 }
                 sleep(1000 * 5);
@@ -543,7 +481,7 @@ var tools = {
             var closeImg = null;
             var closeBtn = tools.findImageForWait("closeBtn.png", {
                 maxTries: 10,
-                interval: sleep(random(333, 666))
+                interval: 666
             })
             if (closeBtn.status) {
                 closeImg = closeBtn.img;
@@ -606,10 +544,13 @@ var tools = {
             let start = new Date().getTime();
             while (true) {
                 if (new Date().getTime() - start > timeout) {
+                    tools.人物移动.点击挂机坐标();
+                    sleep(1000 * 10);
                     break;
                 }
                 r = tools.findImageArea("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1])
                 if (r.status) {
+                    tools.悬浮球描述("攻击中(" + parseInt((timeout - (new Date().getTime() - start)) / 1000) + ")");
                     sleep(random(333, 666));
                 } else {
                     tools.开始拾取();
@@ -1697,7 +1638,6 @@ var tools = {
         return r;
     },
     获取区域文字: (x1, y1, x2, y2, param1, param2, isP1, isP2) => {
-        //tools.shenqiCapture();
         var {
             w,
             h
@@ -1712,13 +1652,17 @@ var tools = {
         }
         var img = captureScreen();
         var r = null;
+        // var smallImg = tools.截屏裁剪(null, x1, y1, x2, y2);
+        // toastLog(smallImg);
         try {
+            //r = ocrPladderOCR.detect(smallImg);
             r = utils.regionalAnalysisChart3(img, x1, y1, x2, y2, param1, param2, isP1, isP2, "");
         } catch (e) {
-            toastLog('y2不能超出屏幕高度')
+            toastLog('获取异常')
             r = null;
         }
         utils.recycleNull(img);
+        //utils.recycleNull(smallImg);
         return r;
     },
     截屏裁剪: (img, x1, y1, x2, y2) => {
@@ -1901,15 +1845,7 @@ function excuteAuto() {
     win.setPosition(-10000, padding_top);
     sleep(1500);
 
-
-
     tools.初始化攻击面板Loop();
-    当前总状态 = 总状态.挂机中;
-    当前挂机状态 = 挂机状态.找怪中;
-
-
-
-
     //tools.人物移动.去比奇挂机图Loop("兽人古墓一层");
     //tools.人物移动.回比奇补给();
     // var r = tools.findImage("xiufuyou1.png");
@@ -1932,7 +1868,9 @@ function excuteAuto() {
 
 
                 var 人物坐标 = tools.人物坐标();
-                if (人物坐标 == null) { //有可能有白起背景和坐标重叠，导致无法获取坐标
+                if (人物坐标 != null && 人物坐标.x > 0 && 人物坐标.y > 0) {
+                    上次坐标记录 = 人物坐标;
+                } else {
                     tools.人物移动.上走一步(random(1800, 2500))
                     tools.人物移动.左走一步(random(1800, 2500))
                 }
@@ -1944,11 +1882,11 @@ function excuteAuto() {
                         sleep(1000);
                         continue;
                     }
+                    sleep(2.5 * 1000);
+                } else {
+                    sleep(1.25 * 1000);
                 }
-                if (人物坐标 != null && 人物坐标.x > 0 && 人物坐标.y > 0) {
-                    上次坐标记录 = 人物坐标;
-                }
-                sleep(2.5 * 1000);
+
             } else {
                 if (当前总状态 == 总状态.请求装备检查) {
                     当前总状态 = 总状态.检查装备;
@@ -1967,20 +1905,43 @@ function excuteAuto() {
     //检测装备
     threads.start(function () {
         while (true) {
+            if (当前总状态 == 总状态.回城补给) {
+                //toastLog(当前总状态)
+                sleep(1000);
+                continue;
+            }
+            当前总状态 = 总状态.请求装备检查;
+            while (true) {
+                sleep(666);
+                if (当前总状态 == 总状态.检查装备) {
+                    break;
+                }
+            }
             var r = tools.获取装备持久();
-            if (挂机参数.持久零补给_衣服) {
-                if (r && r.衣服 && r.衣服.剩持久 <= 0) {
-                    toastLog("回城补给")
+            if (r && r.衣服 && r.衣服.剩持久 <= 0 && 挂机参数.持久零补给_衣服) {
+                //if(r){
+                当前总状态 = 总状态.回城补给;
+                tools.悬浮球描述("回城补给");
+                tools.人物移动.回比奇补给();
+                tools.人物移动.去比奇挂机图Loop("兽人古墓一层");
+                当前总状态 = 总状态.挂机中
+            } else if (r && r.武器 && r.武器.剩持久 <= 0 && 挂机参数.持久零补给_武器) {
+                var isOk = tools.喝修复油();
+                if (!isOk) {
+                    当前总状态 = 总状态.回城补给;
+                    tools.悬浮球描述("回城补给");
+                    tools.人物移动.回比奇补给();
+                    tools.人物移动.去比奇挂机图Loop("兽人古墓一层");
+                    当前总状态 = 总状态.挂机中
+
                 }
+            } else {
+                tools.人物移动.去比奇挂机图Loop("兽人古墓一层");
+                当前总状态 = 总状态.挂机中;
+                当前挂机状态 = 挂机状态.找怪中;
             }
-            if (挂机参数.持久零补给_武器) {
-                if (r && r.武 && r.武器.剩持久 <= 0) {
-                    r = tools.喝修复油();
-                    toastLog("回城补给")
-                }
-            }
-            toastLog(r);
-            return;
+
+            toastLog(JSON.stringify(r));
             sleep(1000 * 60 * 15);
         }
     });
