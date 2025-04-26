@@ -1,2 +1,2 @@
 @echo off
-curl -H "deviceUUID:863818023224810" -H "devicePassword:" http://192.168.1.7:9998/device/stopOnlineLog?deviceUUID=863818023224810
+curl -H "deviceUUID:863818023224810" -H "devicePassword:" http://192.168.1.2:9998/device/stopOnlineLog?deviceUUID=863818023224810

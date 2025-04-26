@@ -18,33 +18,64 @@ let config = require("./common/config.js")
 // 工具类
 let utils = require("./common/utils.js")
 // 公共储存对象
-var commonStorage = storages.create("zjh336.cn" + config.commonScriptKey);
-// 业务储存对象
-var serviceStorage = storages.create("zjh336.cn" + config.serviceScriptKey);
+var commonStorage = storages.create("zijiefeiwu.cn");
 let MLKitOCR = $plugins.load('org.autojs.autojspro.plugin.mlkit.ocr');
 let ocr = new MLKitOCR();
 let ocrPladderOCR = $ocr.create()
 let 存入仓库数量 = 0;
-var 当前挂机顺序 = 0;
-var 当前挂机城市 = "盟重";//比奇
-var 当前挂机地图 = "地牢一层东"//"兽人古墓一层";
+var 挂机点跑图顺序 = 0;
 var 启动金币 = "未知"
-var 是否启动打怪 = false;
-var 是否启动挂机点跑图 = false;
-var 是否检修装备中 = false;
-var 是否锁住跑图 = false;
-var 是否锁住打怪 = false;
-var 是否锁住检修装备 = false;
-var 上次坐标记录 = {
-    x: 0,
-    y: 0
-}
 var 挂机参数 = {
-    持久零补给_衣服: true,
-    持久零补给_武器: true,
+    ditu1: "radio1",
+    ditu1_1: "radio1_1",
+    购买物品: [{
+        name: "魔法药中包",
+        num: 0,
+    },
+    {
+        name: "魔法药中个",
+        num: 4,
+    },
+    {
+        name: "金创药中个",
+        num: 0,
+    },
+    {
+        name: "金创药中包",
+        num: 0,
+    },
+    {
+        name: "随机包",
+        num: 0,
+    },
+    {
+        name: "随机",
+        num: 2,
+    },
+    {
+        name: "地牢",
+        num: 0,
+    },
+    {
+        name: "修复油",
+        num: 2,
+    },
+    {
+        name: "护身符大",
+        num: 1
+    },
+    ],
+    衣服持久0回程: 1,
+    武器持久0回程: 1,
+    补给时点分身: 1,
+    召唤骷髅: 1,
+    召唤神兽: 0,
+    挂机地图: "",
+    挂机城市: ""
 }
 const 总状态 = {
     未启动: "未启动",
+    已启动: "已启动",
     检查装备: "检查装备",
     请求装备检查: "请求装备检查",
     回城补给: "回城补给",
@@ -55,16 +86,241 @@ const 总状态 = {
     重启中: "重启中"
 
 };
-const 挂机状态 = {
-    未启动: "未启动",
-    打怪中: "打怪中",
-    找怪中: "找怪中",
-    跑图选址: "跑图选址"
-};
 var 当前总状态 = 总状态.未启动;
-var 当前挂机状态 = "未启动"
 var 启动时间 = "";
+let lastDirection = context.getResources().getConfiguration().orientation;
+var w = parseInt(device.width * 0.96);
+var h = parseInt(device.height * 0.9);
+var padding_left = parseInt((device.width - w) / 2)
+var padding_top = parseInt((device.height - h) / 2);
+let tabCount = 3;
+let tabW = 0;
+var isStart = false
+var isShowConfig = false
+let windowCommon = floaty.window(
+    <frame padding="2" id="xuanFuCommon" bg="#000000">
+        <horizontal>
+            <text id="commonText" text="" textSize="8sp" textColor="#ffffff" />
+        </horizontal>
+    </frame>
+);
+let window = floaty.window(
+    <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
+        <horizontal>
+            <text id="cpuText" text="CPU" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="startText" text="启动时间" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="cangkuText" text="仓库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="jingbiText" text="金币(未知)" textSize="8sp" textColor="#ffffff" marginRight="3" />
+        </horizontal>
+    </frame>
+);
+var win = floaty.rawWindow(
+    <frame gravity="center" id="configFrame">
+        <vertical w="{{w}}" h="{{h}}">
+            <horizontal id="tabs" w="*">
+                <vertical id="tab1" gravity="center">
+                    <text id="text1" text="选地图" textSize="14sp" textColor="#000000" paddingBottom="5" gravity="center" />
+                    <View id="line1" h="2" bg="#ff0000" visibility="visible" />
+                </vertical>
+                <vertical id="tab2" gravity="center">
+                    <text id="text2" text="配补给" textSize="14sp" textColor="#888888" paddingBottom="5" gravity="center" />
+                    <View id="line2" h="2" bg="#ff0000" visibility="gone" />
+
+                </vertical>
+                <vertical id="tab3" gravity="center">
+                    <text id="text3" text="游戏说明" textSize="14sp" textColor="#888888" paddingBottom="5" gravity="center" />
+                    <View id="line3" h="2" bg="#ff0000" visibility="gone" />
+                </vertical>
+            </horizontal>
+            <vertical id="content" padding="8">
+                <vertical id="view1" visibility="visible" gravity="center">
+                    <horizontal>
+                        <radiogroup id="ditu1" orientation="horizontal" >
+                            <radio textSize="10sp" id="radio1" text="骷髅洞" />
+                            <radio textSize="10sp" id="radio2" text="石墓阵" />
+                            <radio textSize="10sp" id="radio3" text="蜈蚣洞" />
+                            <radio textSize="10sp" id="radio4" text="僵尸洞" />
+                        </radiogroup>
+                    </horizontal>
+                    <horizontal>
+                        <View id="line11" h="1" bg="#d5d5d5" visibility="visible" />
+                    </horizontal>
+                    <horizontal id="ditu1_1" visibility="visible">
+                        <radiogroup id="group1_1" orientation="vertical" gravity="center">
+                            <radio textSize="10sp" id="radio1_1" text="兽人古墓一层" />
+                            <radio textSize="10sp" id="radio1_2" text="兽人古墓二层" />
+                            <radio textSize="10sp" id="radio1_3" text="兽人古墓三层" />
+                        </radiogroup>
+                    </horizontal>
+                    <horizontal id="ditu1_2" visibility="gone">
+                        <radiogroup id="group1_2" orientation="vertical" >
+                            <radio textSize="10sp" id="radio2_1" text="石墓一层" />
+                            <radio textSize="10sp" id="radio2_2" text="石墓三层" />
+                            <radio textSize="10sp" id="radio2_3" text="石墓五层" />
+                        </radiogroup>
+                    </horizontal>
+                    <horizontal id="ditu1_3" visibility="gone">
+                        <radiogroup id="group1_3" orientation="vertical" >
+                            <radio textSize="10sp" id="radio3_1" text="地牢一层东" />
+                            <radio textSize="10sp" id="radio3_2" text="地牢一层北1" />
+                            <radio textSize="10sp" id="radio3_3" text="黑暗地带" />
+                            <radio textSize="10sp" id="radio3_4" text="连接通道八" />
+                        </radiogroup>
+                    </horizontal>
+                    <horizontal id="ditu1_4" visibility="gone">
+                        <radiogroup orientation="vertical" >
+                            <text text="未开通" textSize="10sp" textColor="#000000" />
+                        </radiogroup>
+                    </horizontal>
+                </vertical>
+                <vertical id="view2" visibility="gone" gravity="center">
+                    <horizontal>
+                        <horizontal paddingLeft="6sp">
+                            <text text="中蓝/包" textSize="10sp" textColor="#000000" />
+                            <input id="t_lanYaoZhongBao" focusable="true" w="30sp" text="0" />
+                        </horizontal>
+
+                        <horizontal paddingLeft="6sp">
+                            <text text="中蓝/个" textSize="10sp" textColor="#000000" />
+                            <input id="t_lanYaoZhongGe" inputType="number" w="30sp" text="0" />
+                        </horizontal>
+                        <horizontal paddingLeft="6sp">
+                            <text text="中红/包" textSize="10sp" textColor="#000000" />
+                            <input id="t_hongYaoZhongBao" inputType="number" w="30sp" text="0" />
+                        </horizontal>
+                        <horizontal paddingLeft="6sp">
+                            <text text="中红(个)" textSize="10sp" textColor="#000000" />
+                            <input id="t_hongYaoZhongGe" inputType="number" w="30sp" text="0" />
+                        </horizontal>
+                    </horizontal>
+
+                    <horizontal>
+                        <horizontal paddingLeft="6sp">
+                            <text text="随机/包" textSize="10sp" textColor="#000000" />
+                            <input id="t_suiJiBao" inputType="number" w="30sp" text="0" />
+                        </horizontal>
+                        <horizontal paddingLeft="6sp">
+                            <text text="随机/个" textSize="10sp" textColor="#000000" />
+                            <input id="t_suiJiGe" inputType="number" w="30sp" text="0" />
+                        </horizontal>
+                        <horizontal paddingLeft="6sp">
+                            <text text="地牢/个" textSize="10sp" textColor="#000000" />
+                            <input id="t_diLaoGe" inputType="number" w="30sp" text="0" />
+                        </horizontal>
+                        <horizontal paddingLeft="6sp">
+                            <text text="修复油" textSize="10sp" textColor="#000000" />
+                            <input id="t_xiuFuYou" inputType="number" w="30sp" text="0" />
+                        </horizontal>
+                        <horizontal paddingLeft="6sp">
+                            <text text="护身符/大" textSize="10sp" textColor="#000000" />
+                            <input id="t_hushenhu" inputType="number" w="30sp" text="0" />
+                        </horizontal>
+                    </horizontal>
+                    <horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbIsHuiChengYiFu" text="衣服持久0回程" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="left">
+                            <checkbox id="cbIsHuiChengWuQi" text="武器持久0回程" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbIsFenShen" text="补给时点分身" textSize="10sp" />
+                        </horizontal>
+                    </horizontal>
+                    <horizontal>
+                        <horizontal gravity="left">
+                            <checkbox id="cbIsYinShen" text="超过5只怪隐身" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbZhaoHuanKuLou" text="召唤骷髅" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="left">
+                            <checkbox id="cbZhaoShenShou" text="召唤神兽" textSize="10sp" />
+                        </horizontal>
+                    </horizontal>
+                </vertical>
+                <vertical id="view3" visibility="gone" gravity="center">
+                    <text textSize="12sp" text="内部学习学习交流软件，禁止拿来打金获利" textColor="#000000" />
+                    <text textSize="12sp" paddingTop="5" text="技术支持：宁波字节飞舞软件科技" textColor="#000000" />
+                    <text textSize="12sp" paddingTop="5" text="联系人：15070347799" textColor="#000000" />
+                </vertical>
+            </vertical>
+            <horizontal padding="16">
+                <button id="btnStart" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="启动程序" w="0" layout_width="80dp" layout_height="35dp" />
+                <button id="btnSave" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="保存配置" w="0" layout_width="80dp" layout_height="35dp" />
+                <button id="btnClose" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="关闭窗口" w="0" layout_width="80dp" layout_height="35dp" />
+                <button id="btnSetFouse" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="获得焦点" w="0" layout_width="80dp" layout_height="35dp" />
+            </horizontal>
+        </vertical>
+
+    </frame>
+);
+
+
 var tools = {
+    初始化参数: () => {
+        if (commonStorage.contains("peizhi")) {
+            var str = commonStorage.get("peizhi");
+            挂机参数 = JSON.parse(str);
+        }
+        win[挂机参数.ditu1].setChecked(true);
+        win[挂机参数.ditu1_1].setChecked(true);
+
+
+        win.t_lanYaoZhongBao.setText(挂机参数.购买物品.find(item => {
+            return item.name == "魔法药中包"
+        }).num.toString())
+        win.t_lanYaoZhongBao.setText(挂机参数.购买物品.find(item => {
+            return item.name == "魔法药中包"
+        }).num.toString());
+        win.t_lanYaoZhongGe.setText(挂机参数.购买物品.find(item => {
+            return item.name == "魔法药中个"
+        }).num.toString());
+        win.t_hongYaoZhongBao.setText(挂机参数.购买物品.find(item => {
+            return item.name == "金创药中包"
+        }).num.toString());
+        win.t_hongYaoZhongGe.setText(挂机参数.购买物品.find(item => {
+            return item.name == "金创药中个"
+        }).num.toString());
+        win.t_suiJiBao.setText(挂机参数.购买物品.find(item => {
+            return item.name == "随机包"
+        }).num.toString());
+        win.t_suiJiGe.setText(挂机参数.购买物品.find(item => {
+            return item.name == "随机"
+        }).num.toString());
+        win.t_diLaoGe.setText(挂机参数.购买物品.find(item => {
+            return item.name == "地牢"
+        }).num.toString());
+        win.t_xiuFuYou.setText(挂机参数.购买物品.find(item => {
+            return item.name == "修复油"
+        }).num.toString());
+        win.t_hushenhu.setText(挂机参数.购买物品.find(item => {
+            return item.name == "护身符大"
+        }).num.toString());
+        // win..setText(挂机参数.购买物品.find(item => item.name == "").num);   
+        // win..setText(挂机参数.购买物品.find(item => item.name == "").num);    
+        // win..setText(挂机参数.购买物品.find(item => item.name == "").num);  
+        // win..setText(挂机参数.购买物品.find(item => item.name == "").num);  
+        // win..setText(挂机参数.购买物品.find(item => item.name == "").num);  
+        // win..setText(挂机参数.购买物品.find(item => item.name == "").num);    
+        // win..setText(挂机参数.购买物品.find(item => item.name == "").num);    
+        if (挂机参数.衣服持久0回程 == 1 || 挂机参数.衣服持久0回程 == "1") {
+            win.cbIsHuiChengYiFu.setChecked(true);
+        }
+        if (挂机参数.武器持久0回程 == 1 || 挂机参数.武器持久0回程 == "1") {
+            win.cbIsHuiChengWuQi.setChecked(true);
+        }
+        if (挂机参数.补给时点分身 == 1 || 挂机参数.补给时点分身 == "1") {
+            win.cbIsFenShen.setChecked(true);
+        }
+        if (挂机参数.召唤骷髅 == 1 || 挂机参数.召唤骷髅 == "1") {
+            win.cbZhaoHuanKuLou.setChecked(true);
+        }
+        if (挂机参数.召唤神兽 == 1 || 挂机参数.召唤神兽 == "1") {
+            win.cbZhaoShenShou.setChecked(true);
+        }
+    },
     常用操作: {
         打开角色: () => {
             var r = tools.findImageForWaitClick("jiaoseBtn.png", {
@@ -81,7 +337,6 @@ var tools = {
             return r;
         },
         小退并登录: () => {
-            当前挂机状态 = 总状态.重启中;
             var r = tools.findImageForWaitClick("yijianxiaoTuiBtn.png", {
                 maxTries: 3,
                 interval: 666
@@ -115,12 +370,19 @@ var tools = {
             }
             if (isok) {
                 tools.悬浮球描述("重启成功");
-                tools.去挂机图打怪(当前挂机地图);
+                tools.去挂机图打怪();
             }
             return r;
         },
         点击召唤骷髅: () => {
             var r = tools.findImageForWaitClick("zhaohuankulouBtn.png", {
+                maxTries: 5,
+                interval: 666
+            });
+            return r;
+        },
+        点击召唤神兽: () => {
+            var r = tools.findImageForWaitClick("zhaohuanshenshouBtn.png", {
                 maxTries: 5,
                 interval: 666
             });
@@ -170,19 +432,12 @@ var tools = {
                     sleep(random(1200, 1500))
                 }
             }
-            tools.常用操作.点击召唤骷髅();
-            // while(true){
-            //     r = tools.findImage("youmoshiBtn.png");
-            //     toastLog(r)
-            //     var p = config.zuobiao.按钮集合[fbl].模式;
-            //     if (!r.status) {
-            //         click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]));
-            //         sleep(random(333,666));
-            //     }
-            //     else{
-            //         break;
-            //     }
-            // }
+            if (挂机参数.召唤骷髅 == 1 || 挂机参数.召唤骷髅 == "1") {
+                tools.常用操作.点击召唤骷髅();
+            }
+            if (挂机参数.召唤神兽 == 1 || 挂机参数.召唤神兽 == "1") {
+                tools.常用操作.点击召唤神兽();
+            }
             tools.悬浮球描述("初始化完成");
         },
         初始化攻击面板: () => {
@@ -232,19 +487,19 @@ var tools = {
         获取挂机坐标: () => {
             var r = null;
             var fbl = `${device.width}_${device.height}`;
-            if (当前挂机地图 == "兽人古墓一层") {
+            if (挂机参数.挂机地图 == "兽人古墓一层") {
                 r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第一层.打怪点;
-            } else if (当前挂机地图 == "兽人古墓二层") {
+            } else if (挂机参数.挂机地图 == "兽人古墓二层") {
                 r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第二层.打怪点;
-            } else if (当前挂机地图 == "兽人古墓三层") {
+            } else if (挂机参数.挂机地图 == "兽人古墓三层") {
                 r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓.第三层.打怪点;
-            } else if (当前挂机地图 == "地牢一层东") {
+            } else if (挂机参数.挂机地图 == "地牢一层东") {
                 r = config.zuobiao.盟重大地图偏移[fbl].地牢一层东.打怪点;
             } else {
-                toastLog("不支持" + 当前挂机地图 + "地图")
+                toastLog("不支持" + 挂机参数.挂机地图 + "地图")
                 return {
                     status: false,
-                    err: "不支持" + 当前挂机地图 + "地图"
+                    err: "不支持" + 挂机参数.挂机地图 + "地图"
                 }
             }
             return {
@@ -267,18 +522,17 @@ var tools = {
                     err: 挂机坐标s.err
                 }
             }
-            var r = 挂机坐标s.result[当前挂机顺序];
+            var r = 挂机坐标s.result[挂机点跑图顺序];
             if (人物坐标 != null) {
                 if (人物坐标.x >= r.坐标范围.x[0] && 人物坐标.x <= r.坐标范围.x[1] && 人物坐标.y >= r.坐标范围.y[0] && 人物坐标.y <= r.坐标范围.y[1]) {
-                    当前挂机顺序++;
-                    if (当前挂机顺序 >= 挂机坐标s.result.length) {
-                        当前挂机顺序 = 0;
+                    挂机点跑图顺序++;
+                    if (挂机点跑图顺序 >= 挂机坐标s.result.length) {
+                        挂机点跑图顺序 = 0;
                     }
-                    r = 挂机坐标s.result[当前挂机顺序];
-                    toastLog("切换到第" + (当前挂机顺序 + 1) + "个挂机点");
+                    r = 挂机坐标s.result[挂机点跑图顺序];
+                    toastLog("切换到第" + (挂机点跑图顺序 + 1) + "个挂机点");
                 }
-            }
-            else {
+            } else {
                 var ran = random(0, 挂机坐标s.result.length - 1);
                 tools.悬浮球描述("获取坐标失败随机跑图(" + ran + ")");
                 r = 挂机坐标s.result[ran];
@@ -325,8 +579,7 @@ var tools = {
                         x: parseInt(parts[0]),
                         y: parseInt(parts[1])
                     }
-                }
-                else {
+                } else {
                     return null;
                 }
             } else {
@@ -392,7 +645,9 @@ var tools = {
             return false;
         },
         读取聊天框信息: () => {
-            return tools.获取区域文字(472, 610, 887, 697, 60, 255, true, false);
+            var fbl = `${device.width}_${device.height}`;
+            var p = config.zuobiao.聊天框面板[fbl];
+            return tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
         },
         获取装备持久: () => {
             var result = {
@@ -413,7 +668,9 @@ var tools = {
             if (卸下按钮.status) {
                 var p = 卸下按钮.img;
                 var img = tools.截屏裁剪(null, p.x + 装备属性明细.x, p.y, p.x, p.y + 装备属性明细.y);
+                sleep(666);
                 let r = ocrPladderOCR.detect(img);
+                toastLog(r)
                 result.武器 = tools.常用操作.根据面板获取持久(r);
             }
 
@@ -421,7 +678,9 @@ var tools = {
             if (卸下按钮.status) {
                 var p = 卸下按钮.img;
                 var img = tools.截屏裁剪(null, p.x + 装备属性明细.x, p.y, p.x, p.y + 装备属性明细.y);
+                sleep(666);
                 let r = ocrPladderOCR.detect(img);
+                toastLog(r)
                 result.衣服 = tools.常用操作.根据面板获取持久(r);
                 //click(p.x - 10, p.y - 10);
             }
@@ -473,9 +732,6 @@ var tools = {
                     // }
                 }
             }
-            // if(!isExist){
-            //     tools.常用操作.点击召唤骷髅();
-            // }
         },
         判断是否需要补给: () => {
             var 人物所在 = tools.常用操作.人物所在地图();
@@ -484,13 +740,17 @@ var tools = {
                 return true;
             }
             var r = tools.常用操作.获取装备持久();
-            if (r && r.衣服 && r.衣服.剩持久 <= 0 && 挂机参数.持久零补给_衣服) {
-                return true;
+            if (挂机参数.衣服持久0回程 == 1 || 挂机参数.衣服持久0回程 == "1") {
+                if (r && r.衣服 && r.衣服.剩持久 <= 2) {
+                    return true;
+                }
             }
-            if (r && r.武器 && r.武器.剩持久 <= 0 && 挂机参数.持久零补给_武器) {
+            if (r && r.武器 && r.武器.剩持久 <= 5) {
                 var isOk = tools.喝修复油();
                 if (!isOk) {
-                    return true;
+                    if (挂机参数.武器持久0回程 == 1 || 挂机参数.武器持久0回程 == "1" && r.武器.剩持久 <= 2) {
+                        return true;
+                    }
                 }
             }
             var r1 = tools.常用操作.检查背包是否满();
@@ -500,27 +760,6 @@ var tools = {
             tools.常用操作.关闭所有窗口();
             return false;
 
-        },
-        点击分身: () => {
-            var r = tools.findImageForWaitClick("fenshenxiulianBtn.png", {
-                maxTries: 6,
-                interval: 666
-            })
-            if (!r.status) {
-                var fbl = `${device.width}_${device.height}`;
-                var 左上箭头 = config.zuobiao.按钮集合[fbl].左上箭头;
-                click(random(左上箭头.x[0], 左上箭头.x[1]), random(左上箭头.y[0], 左上箭头.y[1]))
-                sleep(1200)
-            }
-            r = tools.findImageForWaitClick("fenshenxiulianBtn.png", {
-                maxTries: 6,
-                interval: 666
-            })
-            if (!r.status) {
-                return false;
-            }
-
-            //var dsdf =lingqujiangliBtn.png
         },
         关闭所有窗口: (isClick) => {
             if (isClick) {
@@ -540,10 +779,77 @@ var tools = {
             }
         },
     },
+    点击分身: () => {
+        if (挂机参数.补给时点分身 == 1 || 挂机参数.补给时点分身 == "1") {
+            tools.常用操作.关闭所有窗口();
+            var fbl = `${device.width}_${device.height}`;
+            var 左上箭头 = config.zuobiao.按钮集合[fbl].左上箭头;
+            var 分身派遣 = config.zuobiao.按钮集合[fbl].分身派遣;
+            var r = tools.findImageForWaitClick("fenshenxiulianBtn.png", {
+                maxTries: 10,
+                interval: 333
+            })
+            if (!r.status) {
+                click(random(左上箭头.x[0], 左上箭头.x[1]), random(左上箭头.y[0], 左上箭头.y[1]));
+                r = tools.findImageForWaitClick("fenshenxiulianBtn.png", {
+                    maxTries: 10,
+                    interval: 333
+                })
+            }
+            if (!r.status) {
+                tools.悬浮球描述("未找到分身修炼按钮")
+                toastLog("未找到分身修炼按钮");
+                return false;
+            }
+            r = tools.findImageForWaitClick("lingqujiangliBtn.png", {
+                maxTries: 10,
+                interval: 333
+            })
+            r = tools.findImageForWait("fenshenxiulianbar.png", {
+                maxTries: 10,
+                interval: 333
+            })
+            if (!r.status) {
+                tools.悬浮球描述("未找到分身修炼Bar")
+                toastLog("未找到分身修炼Bar");
+                return false;
+            }
+            click(random(分身派遣.x[0], 分身派遣.x[1]), random(分身派遣.y[0], 分身派遣.y[1]));
+            r = tools.findImageForWaitClick("quedingxiulianBtn.png", {
+                maxTries: 10,
+                interval: 333
+            })
+            if (!r.status) {
+                tools.悬浮球描述("未找到分身修炼确定按钮")
+                toastLog("未找到分身修炼确定按钮");
+                return false;
+            }
+            while (true) {
+                r = tools.findImageForWaitClick("fenshenjiashiBtn.png", {
+                    maxTries: 10,
+                    interval: 333
+                })
+
+                if (r.status) {
+                    r = tools.findImageForWaitClick("fenshenquedingjiashiBtn.png", {
+                        maxTries: 10,
+                        interval: 333
+                    })
+                    if (!r.status) {
+                        break;
+                    }
+                }
+                else {
+                    break;
+                }
+            }
+            return true;
+        }
+    },
     去挂机图打怪: () => {
-        tools.人物移动.去挂机地图Loop(当前挂机地图);
+        tools.人物移动.去挂机地图Loop();
         tools.常用操作.初始化挂机();
-        当前挂机状态 = 总状态.挂机中;
+        当前总状态 = 总状态.挂机中;
     },
     悬浮球描述: (text) => {
         ui.run(() => {
@@ -763,8 +1069,10 @@ var tools = {
                     sleep(3000);
                     break; //说明到了安全区
                 }
-                if (人物坐标 == null) {
+                if (人物坐标 == null && tryCount < 10) {
                     tryCount++;
+                    sleep(1000 * 5);
+                    continue;
                 }
                 if (tryCount >= 10 || 历史坐标 == null || (人物坐标.x == 历史坐标.x && 人物坐标.y == 历史坐标.y)) {
                     toastLog('开始跑图(去比奇老兵)');
@@ -832,8 +1140,10 @@ var tools = {
                     sleep(3000);
                     break; //说明到了安全区
                 }
-                if (人物坐标 == null) {
+                if (人物坐标 == null && tryCount < 10) {
                     tryCount++;
+                    sleep(1000 * 5);
+                    continue;
                 }
                 if (tryCount >= 10 || 历史坐标 == null || (人物坐标.x == 历史坐标.x && 人物坐标.y == 历史坐标.y)) {
                     toastLog('开始跑图(去盟重老兵)');
@@ -856,6 +1166,7 @@ var tools = {
         },
         去挂机地图: (挂机地图) => {
             var 当前地图 = tools.常用操作.人物所在地图();
+            //toastLog(挂机地图)
             if (当前地图 == null || 当前地图 == "") {
                 toastLog(`当前地图未知`);
                 return false;
@@ -868,12 +1179,12 @@ var tools = {
                 var closeImg = closeBtn.img;
                 var fbl = `${device.width}_${device.height}`;
                 var routes = config.地图路由[当前地图][挂机地图];
+                toastLog(routes)
                 //toastLog(routes);
                 var 大地图坐标 = null;
-                if (当前挂机城市 == "比奇") {
+                if (挂机参数.挂机城市 == "比奇") {
                     大地图坐标 = config.zuobiao.比奇大地图偏移[fbl];
-                }
-                else if (当前挂机城市 == "盟重") {
+                } else if (挂机参数.挂机城市 == "盟重") {
                     大地图坐标 = config.zuobiao.盟重大地图偏移[fbl];
                 }
                 for (var i = 0; i < routes.length; i++) {
@@ -894,25 +1205,27 @@ var tools = {
             }
             return;
         },
-        去挂机地图Loop: (挂机地图) => {
+        去挂机地图Loop: () => {
+            挂机地图 = 挂机参数.挂机地图;
             var 当前坐标 = tools.常用操作.获取人物坐标();
             var tryCount = 0;
             while (true) {
                 var 当前地图 = tools.常用操作.人物所在地图();
                 if (当前地图 == 挂机地图) { //说明到目的地
                     break;
-                }
-                else {
+                } else {
                     var 坐标 = tools.常用操作.获取人物坐标();
-                    if (坐标 == null) {
+                    if (坐标 == null && tryCount < 10) {
                         tryCount++;
+                        sleep(1000 * 5);
+                        continue;
                     }
                     if (tryCount >= 10 || 当前坐标 == null || (坐标.x == 当前坐标.x && 坐标.y == 当前坐标.y)) {
                         toastLog('开始跑图(挂机Loop)');
                         try {
                             tools.人物移动.去挂机地图(挂机地图);
                         } catch (error) {
-                            toastLog('跑图异常')
+                            toastLog('跑图异常' + error)
                         }
                         tryCount = 0;
                     }
@@ -927,7 +1240,6 @@ var tools = {
         },
     },
     寻找打怪: () => {
-        当前挂机状态 = 挂机状态.找怪中;
         let now = new Date();
         let minute = now.getMinutes(); // 分
         let second = now.getSeconds(); // 秒
@@ -937,23 +1249,24 @@ var tools = {
         var p2 = config.zuobiao.锁定怪物标识范围[fbl];
         var 按钮集合 = config.zuobiao.按钮集合[fbl];
         var 怪物集合 = config.zuobiao.左攻击面板[fbl].怪物集合;
-        var r = tools.findImageAreaForWait("zuoguaiwuBtn.png", 怪物集合.x[0], 怪物集合.y[0], 怪物集合.x[1], 怪物集合.y[1], {
-            maxTries: 3,
-            interval: 333
-        })//tools.findImage("zuoguaiwuBtn.png");
-        var tryCount = 0;
+        var img = captureScreen();
+        var 找色是否有怪 = images.findMultiColors(img, 怪物集合.找色[0].color, [[怪物集合.找色[1].x, 怪物集合.找色[1].y, 怪物集合.找色[1].color]], {
+            region: [怪物集合.x[0], 怪物集合.y[0], 怪物集合.x[1] - 怪物集合.x[0], 怪物集合.y[1] - 怪物集合.y[0]]
+        });
+        utils.recycleNull(img);
+        // var r = tools.findImageAreaForWait("zuoguaiwuBtn.png", 怪物集合.x[0], 怪物集合.y[0], 怪物集合.x[1], 怪物集合.y[1], {
+        //     maxTries: 3,
+        //     interval: 333
+        // }) //tools.findImage("zuoguaiwuBtn.png");
         var isFind = false;
-        if (r.status && r.img.x > 0 && r.img.y > 0) {
-            是否锁住跑图 = true;
+        if (找色是否有怪 != null) {
             click(random(p.选择怪物攻击.x[0], p.选择怪物攻击.x[1]), random(p.选择怪物攻击.y[0], p.选择怪物攻击.y[1]));
-            r = tools.findImageAreaForWait("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1], {
-                maxTries: 3,
-                interval: 333
-            })
+            找色是否有怪 = images.findMultiColors(img, "#D6C9A1", [[54, 14, "#FF0B00"]], {
+                region: [p2.x[0], p2.y[0], p2.x[1] - p2.x[0], p2.y[1] - p2.y[0]]
+            });
             if (r.status && r.img.x > 0 && r.img.y > 0) {
-                tools.悬浮球描述("攻击中");
+                // tools.悬浮球描述("攻击中");
                 toast("攻击中");
-                当前挂机状态 = 挂机状态.打怪中;
                 click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                 isFind = true;
             }
@@ -977,7 +1290,6 @@ var tools = {
                 }
             }
         }
-        是否锁住跑图 = false;
         //tools.悬浮球描述("("+minute+":"+second+")");
         return isFind;
     },
@@ -1000,14 +1312,19 @@ var tools = {
             tools.悬浮球描述("拾取中(" + (10 - tryCount) + ")")
             tryCount++;
         }
-        r = tools.findImage("beibaoyiman.png");
-        if (r.status) {
+        r = tools.常用操作.读取聊天框信息();
+        var 聊天框内容 = ""
+        if (r) {
+            for (var i = 0; i < r.length; i++) {
+                聊天框内容 += r[i];
+            }
+        }
+        if (聊天框内容.indexOf("已满") >= 0 || 聊天框内容.indexOf("己满") >= 0) {
             //if (true) {
             var r1 = tools.常用操作.检查背包是否满();
             if (r1) {
                 tools.回城补给在挂机();
-            }
-            else {
+            } else {
                 tools.常用操作.小退并登录();
             }
         }
@@ -1062,39 +1379,22 @@ var tools = {
         }
     },
     回城补给在挂机: () => {
-        是否锁住跑图 = true;
-        是否锁住打怪 = true;
-        是否锁住检修装备 = true;
         tools.补给操作.回城补给();
-        tools.去挂机图打怪(当前挂机地图);
-        是否锁住跑图 = false;
-        是否锁住打怪 = false;
-        是否锁住检修装备 = false;
+        tools.去挂机图打怪(挂机参数.挂机城市);
     },
     补给操作: {
         回城补给: () => {
             tools.悬浮球描述("回城补给");
             当前总状态 = 总状态.回城补给;
-            if (当前挂机城市 == "比奇") {
+            if (挂机参数.挂机城市 == "比奇") {
                 tools.人物移动.去比奇小贩Loop();
-            }
-            else if (当前挂机城市 == "盟重") {
+            } else if (挂机参数.挂机城市 == "盟重") {
                 tools.人物移动.去盟重小贩Loop();
             }
+            tools.点击分身();
             tools.补给操作.卖物品Loop();
             tools.补给操作.修理装备Loop();
-            tools.补给操作.买物品Loops([{
-                name: "修复油",
-                num: 2
-            },
-            {
-                name: "随机",
-                num: 2
-            },
-            {
-                name: "魔法药中个",
-                num: 4
-            }]);
+            tools.补给操作.买物品Loops();
         },
         卖物品Loop: () => {
             tools.悬浮球描述("开始卖物品");
@@ -1164,8 +1464,7 @@ var tools = {
                                     status: false,
                                     err: "重新卖装备"
                                 }
-                            }
-                            else {
+                            } else {
                                 var is需存仓库装备 = false;
                                 config.需存仓库装备.forEach(item => {
                                     if (allText.indexOf(item) >= 0) {
@@ -1179,8 +1478,7 @@ var tools = {
                                         status: false,
                                         err: "重新卖装备"
                                     }
-                                }
-                                else {
+                                } else {
                                     r = tools.findImageForWaitClick("beibaofangruBtn.png", {
                                         maxTries: 10,
                                         interval: 666
@@ -1195,8 +1493,7 @@ var tools = {
                         }
                         utils.recycleNull(img);
                         utils.recycleNull(imgSmall);
-                    }
-                    else {
+                    } else {
                         return {
                             status: true,
                             err: ""
@@ -1220,8 +1517,8 @@ var tools = {
                 err: ""
             }
         },
-        买物品Loops: (物品s) => {
-            let 物品集合 = 物品s.map((item, i) => {
+        买物品Loops: () => {
+            let 物品集合 = 挂机参数.购买物品.filter(item => parseInt(item.num) > 0).map((item, i) => {
                 var 物品页码 = config.zuobiao.购买物品页码[item["name"]];
                 return {
                     "名称": item["name"],
@@ -1231,11 +1528,14 @@ var tools = {
                     "是否下翻": 物品页码.是否下翻,
                 };
             });
-            for (var i = 0; i < 物品集合.length; i++) {
-                var 物品对象 = 物品集合[i];
-                tools.悬浮球描述("开始购买" + 物品对象["名称"] + "物品");
-                tools.补给操作.买物品(物品对象)
+            if (物品集合 != null && 物品集合.length > 0) {
+                for (var i = 0; i < 物品集合.length; i++) {
+                    var 物品对象 = 物品集合[i];
+                    tools.悬浮球描述("开始购买" + 物品对象["名称"] + "物品");
+                    tools.补给操作.买物品(物品对象)
+                }
             }
+            tools.悬浮球描述("购买物品结束");
         },
         买物品: (物品对象) => {
             tools.常用操作.关闭所有窗口();
@@ -1247,44 +1547,36 @@ var tools = {
             var fbl = `${device.width}_${device.height}`;
             var 比奇小贩按钮 = config.zuobiao.比奇小贩按钮[fbl]
             click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2))
-            var tryCount = 0;
-            while (true) {
-                if (tryCount >= 10) {
-                    return {
-                        status: false,
-                        err: "尝试10次未获取购买物品按钮"
-                    }
-                }
-                sleep(1000);
-                var result = tools.获取区域文字(0, 0, w / 2, h / 2, 60, 255, true, false);
-                if (result != null && result.length > 0 && result.some(item => item.text === "购买物品")) {
-                    break;
-                }
-                tryCount++;
-            }
 
-            var 购买物品按钮 = config.zuobiao.比奇小贩面板.购买物品[fbl];
-            click(random(购买物品按钮.x1, 购买物品按钮.x2), random(购买物品按钮.y1, 购买物品按钮.y2))
-            tryCount = 0;
-            while (true) {
-                if (tryCount >= 10) {
-                    return {
-                        status: false,
-                        err: "尝试10次未获取卖东西面板"
-                    }
+
+            var r = tools.findImageForWaitClick("goumaiwupingBtn.png", {
+                maxTries: 6,
+                interval: 333
+            });
+            if (!r.status) {
+                return {
+                    status: false,
+                    err: "尝试6次未获取购买物品按钮"
                 }
-                sleep(1000);
-                result = tools.获取区域文字(0, 0, w / 2, h / 2, 60, 255, true, false);
-                if (result != null && result.length > 0 && result.some(item => item.text.indexOf("买什么") >= 0)) {
-                    break;
-                }
-                tryCount++;
             }
 
             var 购买物品位置 = config.zuobiao.购买物品位置[fbl];
             for (var i = 1; i < 物品对象["页码"]; i++) {
+                r = tools.findImageForWaitClick("youjiantouBtn.png", {
+                    maxTries: 6,
+                    interval: 333
+                });
+                if (r.status) {
+                    sleep(random(888, 1288))
+                }
+                else {
+                    return {
+                        status: false,
+                        err: "未找到youjiantouBtn.png"
+                    }
+                }
                 tools.findImageClick("youjiantouBtn.png");
-                sleep(random(1500, 2000))
+
             }
             var p = 购买物品位置[物品对象.顺序.toString()];
             click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]))
@@ -1344,8 +1636,7 @@ var tools = {
             });
             if (r.status) {
                 存入仓库数量++;
-            }
-            else {
+            } else {
                 return {
                     status: false,
                     err: "尝试10次未获取到存入按钮"
@@ -1405,8 +1696,7 @@ var tools = {
                             interval: 666
                         })
                         sleep(random(333, 666))
-                    }
-                    else {
+                    } else {
                         return;
                     }
                 }
@@ -1604,9 +1894,7 @@ var tools = {
             toastLog(error)
             exit();
         }
-        if (result) {
-            toastLog("申请截图成功");
-        } else {
+        if (!result) {
             toastLog("申请截图失败");
             exit();
         }
@@ -1667,8 +1955,7 @@ var tools = {
             if (result.status) {
                 //tools.悬浮球描述("找图" + fileName + "成功(" + (tryCount + 1) + ")");
                 return result
-            }
-            else {
+            } else {
                 tools.悬浮球描述(fileName + "未找到(" + (tryCount + 1) + ")");
             }
 
@@ -1997,237 +2284,189 @@ var tools = {
     }
 }
 
+
+win.ditu1.setOnCheckedChangeListener((group, checkedId) => {
+    let checkedRadio = win.ditu1.findViewById(checkedId);
+    switch (checkedRadio) {
+        case win.radio1:
+            switchRadio1(1);
+            break;
+        case win.radio2:
+            switchRadio1(2);
+            break;
+        case win.radio3:
+            switchRadio1(3);
+            break;
+        case win.radio4:
+            switchRadio1(4);
+            break;
+    }
+});
+tools.初始化参数();
 // 初始化文字识别插件(必须初始化才生效)
 utils.initOcr("谷歌")
-
-// 开启调试模式 找图、找色、识字绘制效果
-// commonStorage.put("debugModel", true)
-
-// // 开启调试模式 绘制延时
-// commonStorage.put("debugSleep", 500)
 tools.shenqiCapture();
-toast('技术支持:宁波字节飞舞科技')
-
-var w = parseInt(device.width * 0.96);
-var h = parseInt(device.height * 0.9);
-var padding_left = parseInt((device.width - w) / 2)
-var padding_top = parseInt((device.height - h) / 2);
-let tabCount = 3;
-let tabW = 0;
-var isStart = false
-var isShowConfig = false
-let windowCommon = floaty.window(
-    <frame padding="6" id="xuanFuCommon">
-        <horizontal>
-            <text id="commonText" text="" textSize="8sp" textColor="#ffffff" />
-        </horizontal>
-    </frame>
-);
-let window = floaty.window(
-    <frame padding="6" id="xuanFuPanel" w="wrap_content" h="wrap_content">
-        <horizontal>
-            <img id="img" src="@drawable/ic_android_black_48dp" w="12" h="12" marginRight="4" />
-            <text id="cpuText" text="CPU" textSize="7sp" textColor="#000000" marginRight="6" marginTop="2" />
-            <text id="startText" text="启动时间" textSize="7sp" textColor="#000000" marginRight="6" marginTop="2" />
-            <text id="cangkuText" text="仓库(0)" textSize="7sp" textColor="#000000" marginRight="6" marginTop="2" />
-            <text id="jingbiText" text="金币(未知)" textSize="7sp" textColor="#000000" marginRight="6" marginTop="2" />
-        </horizontal>
-    </frame>
-);
-var win = floaty.rawWindow(
-    <frame gravity="center" id="configFrame">
-        <vertical w="{{w}}" h="{{h}}">
-            <horizontal id="tabs" w="*">
-                <vertical id="tab1" gravity="center">
-                    <text id="text1" text="选地图" textSize="14sp" textColor="#000000" paddingBottom="5" gravity="center" />
-                    <View id="line1" h="2" bg="#ff0000" visibility="visible" />
-                </vertical>
-                <vertical id="tab2" gravity="center">
-                    <text id="text2" text="配补给" textSize="14sp" textColor="#888888" paddingBottom="5" gravity="center" />
-                    <View id="line2" h="2" bg="#ff0000" visibility="gone" />
-
-                </vertical>
-                <vertical id="tab3" gravity="center">
-                    <text id="text3" text="配卖修" textSize="14sp" textColor="#888888" paddingBottom="5" gravity="center" />
-                    <View id="line3" h="2" bg="#ff0000" visibility="gone" />
-                </vertical>
-            </horizontal>
-            <vertical id="content">
-                <vertical id="view1" visibility="visible" gravity="center">
-                    <horizontal>
-                        <radiogroup id="ditu1" orientation="horizontal" >
-                            <radio checked="true" textSize="12sp" id="radio1" text="骷髅洞" />
-                            <radio textSize="12sp" id="radio2" text="石墓阵" />
-                            <radio textSize="12sp" id="radio3" text="蜈蚣洞" />
-                            <radio textSize="12sp" id="radio4" text="僵尸洞" />
-                        </radiogroup>
-                    </horizontal>
-                    <horizontal>
-                        <View id="line11" h="1" bg="#d5d5d5" visibility="visible" />
-                    </horizontal>
-                    <horizontal id="ditu1_1" visibility="visible">
-                        <radiogroup orientation="vertical" gravity="center">
-                            <radio textSize="12sp" id="radio11" text="兽人古墓一层" />
-                            <radio textSize="12sp" id="radio22" text="兽人古墓二层" />
-                            <radio textSize="12sp" id="radio33" text="兽人古墓三层" />
-                        </radiogroup>
-                    </horizontal>
-                    <horizontal id="ditu1_2" visibility="gone">
-                        <radiogroup orientation="vertical" >
-                            <radio textSize="12sp" id="radio111" text="石墓一层" />
-                            <radio textSize="12sp" id="radio222" text="石墓二层" />
-                            <radio textSize="12sp" id="radio333" text="石墓三层" />
-                            <radio textSize="12sp" id="radio444" text="石阵四层" />
-                            <radio textSize="12sp" id="radio555" text="石墓五层" />
-                        </radiogroup>
-                    </horizontal>
-                    <horizontal id="ditu1_3" visibility="gone">
-                        <radiogroup orientation="vertical" >
-                            <radio textSize="12sp" id="radio111" text="地牢一层东" />
-                            <radio textSize="12sp" id="radio222" text="地牢一层北1" />
-                            <radio textSize="12sp" id="radio222" text="黑暗地带" />
-                            <radio textSize="12sp" id="radio333" text="连接通道八" />
-                            <radio textSize="12sp" id="radio444" text="连接通道七" />
-                            <radio textSize="12sp" id="radio444" text="连接通道六" />
-                        </radiogroup>
-                    </horizontal>
-                    <horizontal id="ditu1_4" visibility="gone">
-                        <radiogroup orientation="vertical" >
-                            <radio textSize="12sp" id="radio111" text="地牢一层东" />
-                            <radio textSize="12sp" id="radio222" text="连接通道九" />
-                            <radio textSize="12sp" id="radio333" text="连接通道八" />
-                            <radio textSize="12sp" id="radio444" text="连接通道七" />
-                            <radio textSize="12sp" id="radio444" text="连接通道六" />
-                        </radiogroup>
-                    </horizontal>
-                </vertical>
-                <vertical id="view2" visibility="gone" gravity="center" padding="8">
-                    <checkbox id="cbIsYinShen" text="超过3只怪隐藏" />
-                    <checkbox id="cbIsHuiChengYiFu" text="衣服持久0回程" />
-                    <checkbox id="cbIsHuiChengWuQi" text="武器持久0回程" />
-                    <checkbox id="cbIsFenShen" text="补给时点分身" />
-                    <horizontal>
-                        <horizontal gravity="left">
-                            <text text="蓝药中(包)" textSize="12sp" textColor="#000000" />
-                            <input id="lanYaoZhongBao" focusable="true" w="50sp" text="0" />
-                        </horizontal>
-
-                        <horizontal gravity="right">
-                            <text text="蓝药中(个)" textSize="12sp" textColor="#000000" />
-                            <input id="lanYaoZhongGe" inputType="number" w="50sp" text="0" />
-                        </horizontal>
-
-                    </horizontal>
-                    <horizontal>
-                        <horizontal gravity="left">
-                            <text text="红药中(包)" textSize="12sp" textColor="#000000" />
-                            <input id="hongYaoZhongBao" inputType="number" w="50sp" text="0" />
-                        </horizontal>
-                        <horizontal gravity="right">
-                            <text text="红药中(个)" textSize="12sp" textColor="#000000" />
-                            <input id="hongYaoZhongGe" inputType="number" w="50sp" text="0" />
-                        </horizontal>
-                    </horizontal>
-
-                    <horizontal>
-                        <horizontal gravity="left">
-                            <text text="随机卷(包)" textSize="12sp" textColor="#000000" />
-                            <input id="suiJiBao" inputType="number" w="50sp" text="0" />
-                        </horizontal>
-                        <horizontal>
-                            <text text="随机卷(个)" textSize="12sp" textColor="#000000" />
-                            <input id="suiJiGe" inputType="number" w="50sp" text="0" />
-                        </horizontal>
-                    </horizontal>
-                    <horizontal>
-                        <horizontal gravity="left">
-                            <text text="修复油(瓶)" textSize="12sp" textColor="#000000" />
-                            <input id="xiuFuYou" inputType="number" w="50sp" text="0" />
-                        </horizontal>
-                        <horizontal gravity="right">
-                            <text text="护身符(大)" textSize="12sp" textColor="#000000" />
-                            <input id="hushenhu" inputType="number" w="50sp" text="0" />
-                        </horizontal>
-                    </horizontal>
-                </vertical>
-                <vertical id="view3" visibility="gone" gravity="center">
-                    <text text="这是view3" textColor="#000000" textSize="18sp" />
-                </vertical>
-            </vertical>
-            <horizontal padding="16">
-                <button id="btnStart" text="启动" w="0" layout_weight="1" />
-                <button id="btnSave" text="保存" w="0" layout_weight="1" marginLeft="8" />
-                {/* <button id="btnClose" text="❌ 退出" w="0" layout_weight="1" marginLeft="8" /> */}
-                <button id="btnClose" text="退出" w="0" layout_weight="1" marginLeft="8" />
-            </horizontal>
-        </vertical>
-
-    </frame>
-);
-let lastDirection = context.getResources().getConfiguration().orientation;
 ui.run(() => {
     win.tab1.setOnClickListener(() => switchTab(1));
     win.tab2.setOnClickListener(() => switchTab(2));
     win.tab3.setOnClickListener(() => switchTab(3));
 
-    win.ditu1.setOnCheckedChangeListener((group, checkedId) => {
-        let checkedRadio = win.ditu1.findViewById(checkedId);
-        switch (checkedRadio) {
-            case win.radio1:
-                switchRadio1(1);
-                //toastLog("单选框1被勾选");
-                break;
-            case win.radio2:
-                switchRadio1(2);
-                break;
-            case win.radio3:
-                switchRadio1(3);
-                break;
-            case win.radio4:
-                switchRadio1(4);
-                break;
-        }
-    });
-
     win.btnStart.click(() => {
-        ui.run(() => {
-            if (isStart) {
-                isShowConfig = true
-                isStart = false
-                win.btnStart.text("启动")
-                window.img.setBackgroundColor(colors.parseColor("#ffffff"));
-            } else {
-                isShowConfig = false
-                isStart = true
-                win.btnStart.text("暂停")
-                win.setPosition(-10000, padding_top);
-                window.img.setBackgroundColor(colors.parseColor("#03e298"));
-            }
-        })
+        if (isStart) {
+            isShowConfig = true
+            isStart = false
+            ui.run(() => {
+                win.btnStart.text("启动中")
+            });
+            当前总状态 = 总状态.已启动;
+        } else {
+            isStart = true
+            isShowConfig = false;
+            win.setPosition(-10000, padding_top);
+            ui.run(() => {
+                win.btnStart.text("暂 停")
+            });
+            const now = new Date();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hour = String(now.getHours()).padStart(2, '0');
+            const minute = String(now.getMinutes()).padStart(2, '0');
+            启动时间 = `${month}-${day} ${hour}:${minute}`;
+            当前总状态 = 总状态.未启动;
+            toastLog("技术支持:宁波字节飞舞软件科技")
+            threads.start(function () {
+                sleep(3000);
+                var r = tools.常用操作.获取人物金币();
+                if (r != null) {
+                    启动金币 = r;
+                }
+            });
+        }
     })
     win.btnClose.click(() => {
         isShowConfig = false
         win.setPosition(-10000, padding_top);
     });
-    win.btnSave.click(() => {
-        threads.start(function () {
-            excuteAuto()
-        });
-        // images.showImage(img);
-        // let MLKitOCR = $plugins.load("org.autojs.autojspro.plugin.mlkit.ocr");
-        // let googleOcr = new MLKitOCR();
-        // let resultMlk = googleOcr.detect(img);
-        // let contentMlkArr = Object.values(resultMlk).map(item => item.text) || [];
-        // utils.recycleNull(img);
-        // toastLog(JSON.stringify(contentMlkArr));
-
+    win.btnSetFouse.click(() => {
+        win.requestFocus(); //设置焦点
     })
+    win.btnSave.click(() => {
+        var isSave = true;
+        let checkedId = win.ditu1.getCheckedRadioButtonId();
+        if (checkedId <= 0) {
+            isSave = false;
+            toast("未选择地图");
+            return false;
+        }
+        let radioButton = win.ditu1.findViewById(checkedId);
+        var r = radioButton.getText();
+        var ditu1 = radioButton.attr("id").split("/")[1];
+        var ditu1_1 = "";
+        var 挂机地图 = "";
+        var 挂机城市 = ""
+        switch (r) {
+            case "骷髅洞":
+                checkedId = win.group1_1.getCheckedRadioButtonId();
+                if (checkedId <= 0) {
+                    isSave = false;
+                    toast("未选择地图");
+                    return false;
+                }
+                radioButton = win.group1_1.findViewById(checkedId);
+                ditu1_1 = radioButton.attr("id").split("/")[1];
+                挂机地图 = radioButton.getText();
+                挂机城市 = "比奇"
+                break;
+            case "石墓阵":
+                checkedId = win.group1_2.getCheckedRadioButtonId();
+                if (checkedId <= 0) {
+                    isSave = false;
+                    toast("未选择地图");
+                    return false;
+                }
+                radioButton = win.group1_2.findViewById(checkedId);
+                ditu1_1 = radioButton.attr("id").split("/")[1];
+                挂机地图 = radioButton.getText();
+                挂机城市 = "盟重"
+                break;
+            case "蜈蚣洞":
+                checkedId = win.group1_3.getCheckedRadioButtonId();
+                if (checkedId <= 0) {
+                    isSave = false;
+                    toast("未选择地图");
+                    return false;
+                }
+                radioButton = win.group1_3.findViewById(checkedId);
+                ditu1_1 = radioButton.attr("id").split("/")[1];
+                挂机地图 = radioButton.getText();
+                挂机城市 = "盟重"
+                break;
+            default:
+                isSave = false;
+                toast("不支持" + r);
+                break;
+        }
+
+        挂机参数 = {
+            ditu1: ditu1,
+            ditu1_1: ditu1_1,
+            购买物品: [{
+                name: "魔法药中包",
+                num: win.t_lanYaoZhongBao.getText(),
+            },
+            {
+                name: "魔法药中个",
+                num: win.t_lanYaoZhongGe.getText(),
+            },
+            {
+                name: "金创药中个",
+                num: win.t_hongYaoZhongGe.getText(),
+            },
+            {
+                name: "金创药中包",
+                num: win.t_hongYaoZhongBao.getText(),
+            },
+            {
+                name: "随机包",
+                num: win.t_suiJiBao.getText(),
+            },
+            {
+                name: "随机",
+                num: win.t_suiJiGe.getText(),
+            },
+            {
+                name: "地牢",
+                num: win.t_diLaoGe.getText(),
+            },
+            {
+                name: "修复油",
+                num: win.t_xiuFuYou.getText(),
+            },
+            {
+                name: "护身符大",
+                num: win.t_hushenhu.getText()
+            },
+            ],
+            衣服持久0回程: win.cbIsHuiChengYiFu.isChecked() ? 1 : 0,
+            武器持久0回程: win.cbIsHuiChengWuQi.isChecked() ? 1 : 0,
+            补给时点分身: win.cbIsFenShen.isChecked() ? 1 : 0,
+            超过5只怪隐身: win.cbIsYinShen.isChecked() ? 1 : 0,
+            召唤骷髅: win.cbZhaoHuanKuLou.isChecked() ? 1 : 0,
+            召唤神兽: win.cbZhaoShenShou.isChecked() ? 1 : 0,
+            挂机地图: 挂机地图,
+            挂机城市: 挂机城市
+        }
+        commonStorage.put("peizhi", JSON.stringify(挂机参数));
+        isShowConfig = false;
+        win.setPosition(-10000, padding_top);
+        toast("保存成功")
+    })
+
+
     win.setSize(w, h);
     win.setPosition(-10000, padding_top);
     win.setTouchable(true); // 可交互
-
-
-    //win.requestFocus();
+    // win.btnStart.setSize(100,500)
 
     // 设置悬浮窗圆角背景
     let gd = new android.graphics.drawable.GradientDrawable();
@@ -2237,136 +2476,16 @@ ui.run(() => {
     win.configFrame.setBackgroundDrawable(gd);
 
     gd = new android.graphics.drawable.GradientDrawable();
-    gd.setCornerRadius(20); // 圆角半径 20dp（单位是 px）
-    gd.setColor(android.graphics.Color.parseColor("#B2FFFFFF")); // 70% 不透明白
+    gd.setCornerRadius(10); // 圆角半径 20dp（单位是 px）
+    gd.setColor(android.graphics.Color.parseColor("#B2000000")); // 70% 不透明白
     gd.setStroke(2, android.graphics.Color.parseColor("#376b00"));
 
     window.xuanFuPanel.setBackgroundDrawable(gd);
 
 
     // windowCommon.xuanFuCommon.setBackgroundDrawable(gd);
-    windowCommon.setPosition(1, -12)
+    windowCommon.setPosition(3, -5)
 });
-
-
-
-
-function excuteAuto() {
-    isShowConfig = false
-    win.setPosition(-10000, padding_top);
-    sleep(1500);
-
-
-    var r = tools.常用操作.获取人物金币();
-    if (r != null) {
-        启动金币 = r;
-        //toastLog(启动金币)
-    }
-
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hour = String(now.getHours()).padStart(2, '0');
-    const minute = String(now.getMinutes()).padStart(2, '0');
-    启动时间 = `${month}-${day} ${hour}:${minute}`;
-
-
-
-    当前总状态 = 总状态.挂机中;
-    是否启动打怪 = true;
-    是否启动挂机点跑图 = true;
-    // 启动挂机打怪;
-    threads.start(function () {
-        while (true) {
-            if (是否启动打怪 && !是否锁住打怪 && !是否检修装备中) {
-                var r = false;
-                try {
-                    r = tools.寻找打怪();
-                } catch (e) {
-                    toastLog("寻找打怪异常" + e)
-                    sleep(1000);
-                }
-                if (r) {
-                    continue;
-                }
-            }
-            sleep(0.5 * 1000);
-        }
-    });
-
-
-    //启动挂机点跑图
-    threads.start(function () {
-        while (true) {
-            if (是否启动挂机点跑图 && !是否锁住跑图 && !是否检修装备中) {
-                是否锁住打怪 = true;
-                var r = false;
-                var 人物坐标 = tools.常用操作.获取人物坐标();
-                if ((上次坐标记录.x == 0 && 上次坐标记录.y == 0) || 人物坐标 == null || (人物坐标.x == 上次坐标记录.x && 人物坐标.y == 上次坐标记录.y)) {
-                    try {
-                        //tools.悬浮球描述("OK"+JSON.stringify(人物坐标))
-                        tools.常用操作.点击挂机坐标();
-                    } catch (e) {
-                        toastLog('点击挂机坐标异常' + e)
-                        sleep(1000);
-                    }
-                }
-                if (人物坐标 != null && 人物坐标.x > 0 && 人物坐标.y > 0) {
-                    上次坐标记录 = 人物坐标;
-                } else {
-                    //toastLog("人物坐标失败"+JSON.stringify(人物坐标))
-                    // tools.人物移动.上走一步(random(1800, 2500))
-                    // tools.人物移动.左走一步(random(1800, 2500))
-                }
-                是否锁住打怪 = false;
-            }
-            sleep(2.5 * 1000);
-        }
-    });
-
-    // //检测装备
-    threads.start(function () {
-        while (true) {
-            是否检修装备中 = true;
-            if (!是否锁住检修装备) {
-                var r = tools.常用操作.判断是否需要补给();
-                if (r) {
-                    tools.回城补给在挂机();
-                } else {
-                    tools.去挂机图打怪(当前挂机地图);
-                }
-                tools.常用操作.点击召唤骷髅();
-            }
-            是否检修装备中 = false;
-            sleep(1000 * 60 * 10);
-        }
-    });
-
-    //var img = captureScreen();
-
-    //var result = tools.获取全屏文字();
-    //var result = tools.获取区域文字(200, 100,1060,518, 60, 255, true, false);
-    // var r = utils.regionalAnalysisChart3(img, 200, 100,1060,518, 60, 255, false, false, "区域识字测试代码");
-    // toastLog(r)
-
-    //  toastLog('------------')
-
-    //var savePath = `/sdcard/${index}_${index1}.png`;  // 保存路径可以自定义
-    // let options = {
-    //     threshold: 30
-    // }
-    // // 可利用工具箱生成点色数据进行测试
-    // let result = images.findMultiColors(img, "#FF0000",[
-    //     [-44, -17, "#EC0803"],
-    // ], options);
-    // toastLog(JSON.stringify(result));
-    // 保存图片
-    //images.save(img, savePath, "png");  // 保存为 PNG 格式
-    //var text = ocr.detect(img);//utils.regionalAnalysisChart2(img,卖装备背包格子["1_1"].x,卖装备背包格子["1_1"].y,w,卖装备背包格子["最底部"],60,255,false,false,"区域识字测试代码");
-    //utils.ocrGetContentStr(imgSmall);
-
-}
-
 
 function switchTab(index) {
     for (let i = 1; i <= 3; i++) {
@@ -2402,9 +2521,8 @@ function updateWindowPosition(x) {
     let windowY = window.getY();
     let 偏移量 = 0;
     if (h == 720) {
-        偏移量 = 50;
-    }
-    else {
+        偏移量 = 30;
+    } else {
         偏移量 = 100;
     }
     ui.run(() => window.setPosition(windowX, h - 偏移量));
@@ -2476,9 +2594,9 @@ function showWinConfig() {
         h
     } = tools.获取屏幕高宽();
     var w_ = parseInt(w * 0.8);
-    var h_ = parseInt(h * 0.7);
+    var h_ = parseInt(h * 0.9);
     padding_left = parseInt(w * 0.1)
-    padding_top = parseInt((h) * 0.15);
+    padding_top = parseInt((h) * 0.05);
     tabW = parseInt((w_ / tabCount));
     win.setSize(w_, h_);
     win.setPosition(padding_left, padding_top);
@@ -2486,12 +2604,82 @@ function showWinConfig() {
     win.tab1.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
     win.tab2.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
     win.tab3.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
-    win.btnStart.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
-    win.btnSave.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW - 30, -2));
-    win.btnClose.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW - 30, -2));
+    win.btnStart.setLayoutParams(android.widget.LinearLayout.LayoutParams(180, 75));
+    win.btnSave.setLayoutParams(android.widget.LinearLayout.LayoutParams(180, 75));
+    win.btnClose.setLayoutParams(android.widget.LinearLayout.LayoutParams(180, 75));
+    win.btnSetFouse.setLayoutParams(android.widget.LinearLayout.LayoutParams(180, 75));
+
 }
 
+//toastLog(挂机参数.挂机城市)
 
+
+//启动程序
+threads.start(function () {
+
+    // var r = tools.点击分身();
+    // return;
+    let 上次装备自检时间 = new Date().getTime() - (20 * 60 * 1000); // 减去 20 分钟; 
+    let 上次打怪时间 = new Date().getTime();
+    let 上次跑图时间 = new Date().getTime();
+    let 装备自检时间戳 = 5 * 60 * 1000;
+    let 打怪时间戳 = 0.5 * 1000;
+    let 跑图时间戳 = 3.5 * 1000;
+    var 上次坐标记录 = {
+        x: 0,
+        y: 0
+    }
+    while (true) {
+        if (isStart) {
+            if (new Date().getTime() - 上次装备自检时间 > 装备自检时间戳) {
+                var r = tools.常用操作.判断是否需要补给();
+                if (r) {
+                    tools.回城补给在挂机();
+                } else {
+                    tools.去挂机图打怪(挂机参数.挂机城市);
+                }
+                上次装备自检时间 = new Date().getTime();
+            }
+
+            if (new Date().getTime() - 上次打怪时间 > 打怪时间戳) {
+                var r = false;
+                while (true) {
+                    try {
+                        r = tools.寻找打怪();
+                    } catch (e) {
+                        r = false;
+                        toastLog("寻找打怪异常" + e)
+                    }
+                    if (r) {
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                上次打怪时间 = new Date().getTime();
+            }
+
+            if (new Date().getTime() - 上次跑图时间 > 跑图时间戳) {
+                var r = false;
+                var 人物坐标 = tools.常用操作.获取人物坐标();
+                if ((上次坐标记录.x == 0 && 上次坐标记录.y == 0) || 人物坐标 == null || (人物坐标.x == 上次坐标记录.x && 人物坐标.y == 上次坐标记录.y)) {
+                    try {
+                        tools.常用操作.点击挂机坐标();
+                    } catch (e) {
+                        toastLog('点击挂机坐标异常' + e);
+                    }
+                }
+                if (人物坐标 != null) {
+                    上次坐标记录 = 人物坐标;
+                }
+                上次跑图时间 = new Date().getTime();
+            }
+
+        } else {
+            sleep(1000); //3
+        }
+    }
+});
 
 
 
@@ -2502,7 +2690,7 @@ threads.start(function () {
         // 在 UI 线程中更新浮窗文字
         ui.run(() => {
             window.cpuText.setText("CPU: " + utils.getCpuPercentage());
-            // window.memText.setText("内存: " + utils.getMemoryInfo());
+            window.memText.setText("内存: " + utils.getMemoryInfo());
             window.startText.setText(当前总状态 + ": " + 启动时间);
             window.cangkuText.setText("仓库(" + 存入仓库数量 + ")");
             window.jingbiText.setText("金币(" + 启动金币 + ")");
