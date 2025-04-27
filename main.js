@@ -249,10 +249,10 @@ var win = floaty.rawWindow(
             </vertical>
             <horizontal padding="16">
                 <button id="btnStart" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="启动" />
-                <button id="btnSave" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="保存"  />
+                <button id="btnSave" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="保存" />
                 <button id="btnSetFouse" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="焦点" />
-                <button id="btnReset" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="重启"  />
-                <button id="btnClose" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="关闭"  />
+                <button id="btnReset" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="重启" />
+                <button id="btnClose" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="关闭" />
             </horizontal>
         </vertical>
 
@@ -434,6 +434,14 @@ var tools = {
                     sleep(random(1200, 1500))
                 }
             }
+            r = tools.findImageForWaitClick("fenshenxiulianBtn.png", {
+                maxTries: 10,
+                interval: 333
+            })
+            if (r.status) {
+                var 左上箭头 = config.zuobiao.按钮集合[fbl].左上箭头;
+                click(random(左上箭头.x[0], 左上箭头.x[1]), random(左上箭头.y[0], 左上箭头.y[1]));
+            }
             tools.常用操作.初始化操作模式();
             if (挂机参数.召唤骷髅 == 1 || 挂机参数.召唤骷髅 == "1") {
                 tools.常用操作.点击召唤骷髅();
@@ -441,6 +449,7 @@ var tools = {
             if (挂机参数.召唤神兽 == 1 || 挂机参数.召唤神兽 == "1") {
                 tools.常用操作.点击召唤神兽();
             }
+            tools.常用操作.关闭所有窗口();
             tools.悬浮球描述("初始化完成");
         },
         初始化攻击面板: () => {
@@ -483,19 +492,19 @@ var tools = {
             var p = config.zuobiao.按钮集合[fbl].模式;
             var s = p.找色;
             var tryCount = 0;
-            while(true){
-                if(tryCount>=10){
+            while (true) {
+                if (tryCount >= 10) {
                     break;
                 }
                 var img = captureScreen();
-                var r = images.findMultiColors(img, s[0].color, [[s[1].x, s[1].y, s[1].color],[s[2].x, s[2].y, s[2].color],[s[3].x, s[3].y, s[3].color]]);
+                var r = images.findMultiColors(img, s[0].color, [[s[1].x, s[1].y, s[1].color], [s[2].x, s[2].y, s[2].color], [s[3].x, s[3].y, s[3].color]]);
                 utils.recycleNull(img);
-                if(r!=null){
+                if (r != null) {
                     break;
                 }
-                else{
+                else {
                     click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]));
-                    sleep(random(666,999));
+                    sleep(random(666, 999));
                 }
                 tryCount++;
             }
@@ -551,19 +560,19 @@ var tools = {
             }
             var r = 挂机坐标s.result[挂机点跑图顺序];
             var msg = "";
-            if(人物坐标 == null){
+            if (人物坐标 == null) {
                 挂机坐标错误次数++;
-                if(挂机坐标错误次数>=10){
+                if (挂机坐标错误次数 >= 10) {
                     挂机点跑图顺序++;
                     挂机坐标错误次数 = 0;
                 }
-                msg = "坐标错误("+挂机坐标错误次数+"),跑第(" + (挂机点跑图顺序 + 1) + ")挂点" +JSON.stringify(人物坐标)
+                msg = "坐标错误(" + 挂机坐标错误次数 + "),跑第(" + (挂机点跑图顺序 + 1) + ")挂点" + JSON.stringify(人物坐标)
             }
             else if (人物坐标.x >= r.坐标范围.x[0] && 人物坐标.x <= r.坐标范围.x[1] && 人物坐标.y >= r.坐标范围.y[0] && 人物坐标.y <= r.坐标范围.y[1]) {
                 挂机坐标错误次数 = 0;
                 挂机点跑图顺序++;
                 msg = "到达挂点,切第(" + (挂机点跑图顺序 + 1) + ")挂点"
-            } 
+            }
             else {
                 挂机坐标错误次数 = 0;
                 msg = "继续第(" + (挂机点跑图顺序 + 1) + ")挂点"
@@ -603,7 +612,7 @@ var tools = {
             var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
             //toastLog(JSON.stringify(result))
             tools.悬浮球描述(JSON.stringify(result));
-            if (result != null && result.length == 1) {
+            if (result != null && result.length > 0) {
                 let parts = null;
                 try {
                     parts = result[0].text.split(":");
@@ -627,7 +636,7 @@ var tools = {
             var p = config.zuobiao.地点范围[fbl];
             var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
             if (result != null && result.length == 1) {
-                return result[0].text;
+                return tools.处理地图错别字(result[0].text);
             } else {
                 return result;
             }
@@ -796,7 +805,7 @@ var tools = {
             return false;
 
         },
-        点击人物:()=>{
+        点击人物: () => {
             var fbl = `${device.width}_${device.height}`;
             var 人物中心 = config.zuobiao.人物中心[fbl];
             click(人物中心.x + random(5, -5), 人物中心.y + random(5, -5))
@@ -810,12 +819,18 @@ var tools = {
             while (result) {
                 result = tools.findImageClick("closeBtn2.png");
                 if (result) {
-                    sleep(666)
+                    sleep(999)
                 } else {
-                    sleep(333)
+                    sleep(666)
                 }
             }
         },
+    },
+    处理地图错别字: (text) => {
+        if (text) {
+            text = text.replace("吉", "古");
+        }
+        return text;
     },
     点击分身: () => {
         if (挂机参数.补给时点分身 == 1 || 挂机参数.补给时点分身 == "1") {
@@ -823,12 +838,14 @@ var tools = {
             var fbl = `${device.width}_${device.height}`;
             var 左上箭头 = config.zuobiao.按钮集合[fbl].左上箭头;
             var 分身派遣 = config.zuobiao.按钮集合[fbl].分身派遣;
+            var 分身派遣2 = config.zuobiao.按钮集合[fbl].分身派遣2;
             var r = tools.findImageForWaitClick("fenshenxiulianBtn.png", {
                 maxTries: 10,
                 interval: 333
             })
             if (!r.status) {
                 click(random(左上箭头.x[0], 左上箭头.x[1]), random(左上箭头.y[0], 左上箭头.y[1]));
+                sleep(random(666, 888));
                 r = tools.findImageForWaitClick("fenshenxiulianBtn.png", {
                     maxTries: 10,
                     interval: 333
@@ -843,16 +860,38 @@ var tools = {
                 maxTries: 10,
                 interval: 333
             })
+            sleep(random(666, 999));
+
+            var 模式 = -1;
             r = tools.findImageForWait("fenshenxiulianbar.png", {
                 maxTries: 10,
                 interval: 333
             })
-            if (!r.status) {
+            if (r.status) {
+                模式 = 1;
+            }
+            else {
+                r = tools.findImageForWait("fenshenxiulianbar2.png", {
+                    maxTries: 10,
+                    interval: 333
+                })
+                if (r.status) {
+                    模式 = 2;
+                }
+            }
+            if (模式 == 1) {
+                click(random(分身派遣.x[0], 分身派遣.x[1]), random(分身派遣.y[0], 分身派遣.y[1]));
+            }
+            else if (模式 == 2) {
+                click(random(分身派遣2.x[0], 分身派遣2.x[1]), random(分身派遣2.y[0], 分身派遣2.y[1]));
+            }
+            else {
                 tools.悬浮球描述("未找到分身修炼Bar")
                 toastLog("未找到分身修炼Bar");
                 return false;
             }
-            click(random(分身派遣.x[0], 分身派遣.x[1]), random(分身派遣.y[0], 分身派遣.y[1]));
+
+
             r = tools.findImageForWaitClick("quedingxiulianBtn.png", {
                 maxTries: 10,
                 interval: 333
@@ -1255,7 +1294,7 @@ var tools = {
                 } else {
                     var 坐标 = tools.常用操作.获取人物坐标();
                     if (坐标 == null && tryCount < 10) {
-                        tools.悬浮球描述(JSON.stringify(坐标)+":tryCount = "+tryCount)
+                        tools.悬浮球描述(JSON.stringify(坐标) + ":tryCount = " + tryCount)
                         tryCount++;
                         sleep(1000 * 5);
                         continue;
@@ -1276,7 +1315,7 @@ var tools = {
                 sleep(1000 * 5);
             }
             tools.常用操作.点击人物();
-            sleep(random(666,999));
+            sleep(random(666, 999));
             toastLog("到达目的地");
             return;
         },
@@ -1303,7 +1342,7 @@ var tools = {
         var isFind = false;
         if (r.status && r.img.x > 0 && r.img.y > 0) {
             click(random(p.选择怪物攻击.x[0], p.选择怪物攻击.x[1]), random(p.选择怪物攻击.y[0], p.选择怪物攻击.y[1]));
-             r = tools.findImageAreaForWait("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1], {
+            r = tools.findImageAreaForWait("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1], {
                 maxTries: 3,
                 interval: 333
             })
@@ -1314,7 +1353,7 @@ var tools = {
                 tools.悬浮球描述("攻击中");
                 toast("攻击中");
                 click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                sleep(random(666,999));
+                sleep(random(666, 999));
                 //click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                 isFind = true;
             }
@@ -1439,9 +1478,9 @@ var tools = {
             } else if (挂机参数.挂机城市 == "盟重") {
                 tools.人物移动.去盟重小贩Loop();
             }
-            tools.点击分身();
-            tools.补给操作.卖物品Loop();
-            tools.补给操作.修理装备Loop();
+            // tools.点击分身();
+            // tools.补给操作.卖物品Loop();
+            // tools.补给操作.修理装备Loop();
             tools.补给操作.买物品Loops();
             tools.悬浮球描述("补给完成");
         },
@@ -1582,7 +1621,7 @@ var tools = {
                     var 物品对象 = 物品集合[i];
                     tools.悬浮球描述("开始购买" + JSON.stringify(物品对象));
                     tools.补给操作.买物品(物品对象)
-                    sleep(random(3000,5000));
+                    sleep(random(3000, 5000));
                 }
             }
             tools.悬浮球描述("购买物品结束");
@@ -1602,7 +1641,7 @@ var tools = {
                 maxTries: 6,
                 interval: 666
             });
-            sleep(random(666,888));
+            sleep(random(666, 888));
             if (!r.status) {
                 return {
                     status: false,
@@ -1630,16 +1669,28 @@ var tools = {
             click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]))
             sleep(random(666, 888))
             if (物品对象["是否下翻"]) {
-                tools.findImageClick("buyOkBtn.png");
-                sleep(random(666, 888))
-                p = 购买物品位置["1"];
-                click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]))
-                sleep(random(666, 888))
+                //buygoumaiBtn.png     buychakanBtn.png
+                r = tools.findImageForWaitClick("buychakanBtn.png", {
+                    maxTries: 6,
+                    interval: 666
+                });
+                if (r.status) {
+                    sleep(random(666, 888))
+                    p = 购买物品位置["1"];
+                    click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]))
+                    sleep(random(666, 888))
+                }
+                else {
+                    return {
+                        status: false,
+                        err: "未找到buychakanBtn.png"
+                    }
+                }
             }
             for (var i = 0; i < 物品对象["数量"]; i++) {
-                tools.悬浮球描述("click"+i);
-                tools.findImageClick("buyOkBtn.png");
-                sleep(random(666, 888))
+                tools.悬浮球描述("购买数" + (i + 1));
+                tools.findImageClick("buygoumaiBtn.png");
+                sleep(random(888, 1288))
             }
         },
         存仓库: (index1, index2) => {
@@ -1859,7 +1910,7 @@ var tools = {
             tools.findImageForWaitClick("xiexia.png", {
                 maxTries: 10,
                 interval: 666
-            }) 
+            })
             sleep(random(333, 666));
 
 
@@ -1903,7 +1954,7 @@ var tools = {
                                 maxTries: 6,
                                 interval: 666
                             })
-                            if (!r.status){
+                            if (!r.status) {
                                 return
                             }
                         }
@@ -2116,6 +2167,9 @@ var tools = {
             };
             if (threshold && threshold > 0) {
                 options.threshold = threshold;
+            }
+            if (targetImg == null) {
+                toastLog(fileName + '图片不存在');
             }
             var imgSize = {
                 w: targetImg.width,
@@ -2400,7 +2454,7 @@ ui.run(() => {
             const minute = String(now.getMinutes()).padStart(2, '0');
             启动时间 = `${month}-${day} ${hour}:${minute}`;
             当前总状态 = 总状态.未启动;
-            toastLog("技术支持:宁波字节飞舞软件科技")
+            tools.悬浮球描述("技术支持:宁波字节飞舞软件科技")
             threads.start(function () {
                 sleep(3000);
                 var r = tools.常用操作.获取人物金币();
@@ -2415,18 +2469,19 @@ ui.run(() => {
         win.setPosition(-10000, padding_top);
     });
     win.btnReset.click(() => {
-        if(isStart){
-            toastLog("暂停项目1分钟后在重启");
+        if (isStart) {
+            toastLog("请先停止，1分钟后重启");
             win.setPosition(-10000, padding_top);
         }
-        else{
+        else {
+            isShowConfig = false;
             engines.execScriptFile(项目路径 + "excuet.js"); // 你主脚本的名称
             exit();
         }
         // isShowConfig = false
         // win.setPosition(-10000, padding_top);
     });
-    
+
     win.btnSetFouse.click(() => {
         win.requestFocus(); //设置焦点
     })
@@ -2696,6 +2751,12 @@ function showWinConfig() {
 
 //启动程序
 threads.start(function () {
+    // sleep(2000)
+    // var fbl = `${device.width}_${device.height}`;
+    // var 左上箭头 = config.zuobiao.按钮集合[fbl].左上箭头;
+
+    // click(random(左上箭头.x[0], 左上箭头.x[1]), random(左上箭头.y[0], 左上箭头.y[1]));
+
     let 上次装备自检时间 = new Date().getTime() - (20 * 60 * 1000); // 减去 20 分钟; 
     let 上次打怪时间 = new Date().getTime();
     let 上次跑图时间 = new Date().getTime();
@@ -2737,8 +2798,8 @@ threads.start(function () {
             }
 
             if (new Date().getTime() - 上次跑图时间 > 跑图时间戳) {
-                var 当前地图 = tools.常用操作.获取人物地图;
-                if(当前地图 == 挂机参数.挂机地图){
+                var 当前地图 = tools.常用操作.获取人物地图();
+                if (当前地图 == 挂机参数.挂机地图) {
                     var 人物坐标 = tools.常用操作.获取人物坐标();
                     if ((上次坐标记录.x == 0 && 上次坐标记录.y == 0) || 人物坐标 == null || (人物坐标.x == 上次坐标记录.x && 人物坐标.y == 上次坐标记录.y)) {
                         try {
@@ -2751,11 +2812,9 @@ threads.start(function () {
                         上次坐标记录 = 人物坐标;
                     }
                 }
-                else{
+                else {
                     tools.去挂机图打怪(挂机参数.挂机城市);
                 }
-                var r = false;
-               
                 上次跑图时间 = new Date().getTime();
             }
 
