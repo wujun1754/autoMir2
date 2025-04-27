@@ -1478,9 +1478,9 @@ var tools = {
             } else if (挂机参数.挂机城市 == "盟重") {
                 tools.人物移动.去盟重小贩Loop();
             }
-            // tools.点击分身();
-            // tools.补给操作.卖物品Loop();
-            // tools.补给操作.修理装备Loop();
+            tools.点击分身();
+            tools.补给操作.卖物品Loop();
+            tools.补给操作.修理装备Loop();
             tools.补给操作.买物品Loops();
             tools.悬浮球描述("补给完成");
         },
