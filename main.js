@@ -327,7 +327,7 @@ var tools = {
         打开角色: () => {
             var r = tools.findImageForWaitClick("jiaoseBtn.png", {
                 maxTries: 10,
-                interval: 666
+                interval: 333
             });
             return r;
         },
@@ -435,7 +435,7 @@ var tools = {
                 }
             }
             r = tools.findImageForWaitClick("fenshenxiulianBtn.png", {
-                maxTries: 10,
+                maxTries: 3,
                 interval: 333
             })
             if (r.status) {
@@ -611,7 +611,7 @@ var tools = {
             var p = config.zuobiao.人物坐标范围[fbl];
             var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
             //toastLog(JSON.stringify(result))
-            tools.悬浮球描述(JSON.stringify(result));
+            //tools.悬浮球描述(JSON.stringify(result));
             if (result != null && result.length > 0) {
                 let parts = null;
                 try {
@@ -635,7 +635,7 @@ var tools = {
             var fbl = `${device.width}_${device.height}`;
             var p = config.zuobiao.地点范围[fbl];
             var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
-            if (result != null && result.length == 1) {
+            if (result != null && result.length > 0) {
                 return tools.处理地图错别字(result[0].text);
             } else {
                 return result;
@@ -659,19 +659,21 @@ var tools = {
                 interval: 666
             })
             if (r.status) {
+                sleep(666);
                 tools.findImageForWaitClick("beibaozhengliBtn.png", {
                     maxTries: 6,
                     interval: 666
                 })
-                sleep(666)
+                sleep(666);
                 var fbl = `${device.width}_${device.height}`;
-                var p = config.zuobiao.背包格子于面板偏移量[fbl]["5_6"];
+                var p = config.zuobiao.背包格子于面板偏移量[fbl]["5_7"];
                 var x = r.img.x + p.x + random(-8, 8);
                 var y = r.img.y + p.y + random(-5, 5);
                 click(x, y)
+                sleep(666);
                 r = tools.findImageForWait("beibaochuandaiBtn.png", {
                     maxTries: 3,
-                    interval: 666
+                    interval: 333
                 })
                 if (r.status) {
                     toastLog("背包已满")
@@ -679,7 +681,7 @@ var tools = {
                 }
                 r = tools.findImageForWait("beibaoshiyongBtn.png", {
                     maxTries: 3,
-                    interval: 666
+                    interval: 333
                 })
                 if (r.status) {
                     toastLog("背包已满")
@@ -779,7 +781,7 @@ var tools = {
         },
         判断是否需要补给: () => {
             var 人物所在 = tools.常用操作.获取人物地图();
-            tools.悬浮球描述(人物所在);
+            //tools.悬浮球描述(人物所在);
             if (人物所在 == "比奇城" || 人物所在 == "土城") {
                 return true;
             }
@@ -792,7 +794,8 @@ var tools = {
             if (r && r.武器 && (r.武器.满持久 - r.武器.剩持久) >= 5) {
                 var isOk = tools.喝修复油();
                 if (!isOk) {
-                    if (挂机参数.武器持久0回程 == 1 || 挂机参数.武器持久0回程 == "1" && r.武器.剩持久 <= 2) {
+                    if ((挂机参数.武器持久0回程 == 1 || 挂机参数.武器持久0回程 == "1") && r.武器.剩持久 <= 2) {
+                        toastLog("武器持久=" +r.武器.剩持久 +"回城")
                         return true;
                     }
                 }
@@ -937,8 +940,8 @@ var tools = {
         var 背包按钮 = tools.常用操作.打开背包();
         if (背包按钮.status) {
             var 修复油 = tools.findImageForWaitClick("xiufuyou1.png", {
-                maxTries: 10,
-                interval: 666
+                maxTries: 3,
+                interval: 333
             });
             if (修复油.status) {
                 let fbl = `${device.width}_${device.height}`;
@@ -1324,26 +1327,35 @@ var tools = {
         let now = new Date();
         let minute = now.getMinutes(); // 分
         let second = now.getSeconds(); // 秒
-        tools.悬浮球描述("找怪(" + minute + ":" + second + ")");
+        //tools.悬浮球描述("找怪(" + minute + ":" + second + ")");
         var fbl = `${device.width}_${device.height}`;
         var p = config.zuobiao.左攻击面板[fbl];
         var p2 = config.zuobiao.锁定怪物标识范围[fbl];
         var 按钮集合 = config.zuobiao.按钮集合[fbl];
         var 怪物集合 = config.zuobiao.左攻击面板[fbl].怪物集合;
-        // var img = captureScreen();
-        // var 找色是否有怪 = images.findMultiColors(img, 怪物集合.找色[0].color, [[怪物集合.找色[1].x, 怪物集合.找色[1].y, 怪物集合.找色[1].color]], {
-        //     region: [怪物集合.x[0], 怪物集合.y[0], 怪物集合.x[1] - 怪物集合.x[0], 怪物集合.y[1] - 怪物集合.y[0]]
-        // });
-        // utils.recycleNull(img);
-        var r = tools.findImageAreaForWait("zuoguaiwuBtn.png", 怪物集合.x[0], 怪物集合.y[0], 怪物集合.x[1], 怪物集合.y[1], {
-            maxTries: 3,
-            interval: 333
-        }) //tools.findImage("zuoguaiwuBtn.png");
+        var 找色是否有怪 = null;
+        for (var i = 0; i < 2; i++) {
+            var img = captureScreen();
+            找色是否有怪 = images.findMultiColors(img, 怪物集合.找色[0].color, [[怪物集合.找色[1].x, 怪物集合.找色[1].y, 怪物集合.找色[1].color]], {
+                region: [怪物集合.x[0], 怪物集合.y[0], 怪物集合.x[1] - 怪物集合.x[0], 怪物集合.y[1] - 怪物集合.y[0]]
+            });
+            utils.recycleNull(img);
+            if(找色是否有怪!=null){
+                break;
+            }
+            sleep(333);
+            //Things[i]
+        }
+        // var r = tools.findImageAreaForWait("zuoguaiwuBtn.png", 怪物集合.x[0], 怪物集合.y[0], 怪物集合.x[1], 怪物集合.y[1], {
+        //     maxTries: 2,
+        //     interval: 333
+        // })
         var isFind = false;
-        if (r.status && r.img.x > 0 && r.img.y > 0) {
+        var r = null;
+        if (找色是否有怪!=null) {
             click(random(p.选择怪物攻击.x[0], p.选择怪物攻击.x[1]), random(p.选择怪物攻击.y[0], p.选择怪物攻击.y[1]));
             r = tools.findImageAreaForWait("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1], {
-                maxTries: 3,
+                maxTries: 5,
                 interval: 333
             })
             // 找色是否有怪 = images.findMultiColors(img, "#D6C9A1", [[54, 14, "#FF0B00"]], {
@@ -1372,6 +1384,7 @@ var tools = {
                     tools.悬浮球描述("攻击中(" + parseInt((timeout - (new Date().getTime() - start)) / 1000) + ")");
                     sleep(random(333, 666));
                 } else {
+                    sleep(333);
                     tools.开始拾取();
                     break;
                 }
@@ -2471,10 +2484,12 @@ ui.run(() => {
     win.btnReset.click(() => {
         if (isStart) {
             toastLog("请先停止，1分钟后重启");
+            isShowConfig = false;
             win.setPosition(-10000, padding_top);
         }
         else {
             isShowConfig = false;
+            win.setPosition(-10000, padding_top);
             engines.execScriptFile(项目路径 + "excuet.js"); // 你主脚本的名称
             exit();
         }
@@ -2751,6 +2766,11 @@ function showWinConfig() {
 
 //启动程序
 threads.start(function () {
+    //  var r = tools.findImageForWaitClick("jiaoseBtn.png", {
+    //             maxTries: 10,
+    //             interval: 333
+    //         });
+    //         return;
     // sleep(2000)
     // var fbl = `${device.width}_${device.height}`;
     // var 左上箭头 = config.zuobiao.按钮集合[fbl].左上箭头;
