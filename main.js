@@ -112,7 +112,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:1.32" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:1.33" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cpuText" text="CPU" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="startText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -582,7 +582,7 @@ var tools = {
                 }
                 msg = "坐标错误(" + 挂机坐标错误次数 + "),跑第(" + (挂机点跑图顺序 + 1) + ")挂点" + JSON.stringify(人物坐标)
             }
-            else if (人物坐标.x >= r.坐标范围.x[0] && 人物坐标.x <= r.坐标范围.x[1] && 人物坐标.y >= r.坐标范围.y[0] && 人物坐标.y <= r.坐标范围.y[1]) {
+            else if (人物坐标.x >= r.x[0] && 人物坐标.x <= r.x[1] && 人物坐标.y >= r.y[0] && 人物坐标.y <= r.y[1]) {
                 挂机坐标错误次数 = 0;
                 挂机点跑图顺序++;
                 msg = "到达挂点,切第(" + (挂机点跑图顺序 + 1) + ")挂点"
@@ -2829,11 +2829,6 @@ threads.start(function () {
     let 跑图时间戳 = 3.5 * 1000;
     while (true) {
         if (isStart) {
-
-
-            var r = tools.人物移动.使用地牢();
-            toastLog(r)
-            return;
             if (!是否载加过金币) {
                 var r = tools.常用操作.获取人物金币();//这里不用多线程好像会被卡死
                 if (r != null) {
