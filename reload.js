@@ -1,6 +1,6 @@
 toastLog("初始化文件中...")
 // 更新配置 https://lemeifenqi.com/api/api/downloadmir
-let url = "http://183.249.91.105:8001/api/api/downloadmir"; // 替换为你的下载链接
+let url = "http://183.249.91.105:8001/api/api/downloadmirapk"; // 替换为你的下载链接
 let savePath = "/sdcard/Download/mir.zip";
 let extractPath = "/sdcard/Download/";
 
@@ -45,12 +45,11 @@ function unzipFile(zipPath, outputDir) {
     toastLog("解压完成");
 }
 
-// 执行更新
+// 执行更
 if (downloadZip(url, savePath)) {
     unzipFile(savePath, extractPath);
-    toastLog("运行新脚本中...");
-    sleep(1000);
-    engines.execScriptFile(extractPath + "main.js"); // 你主脚本的名称
-    //exit();
+    toastLog("运行脚本中...");
+    sleep(3000);
+    engines.execScriptFile(extractPath + "excute.js"); // 你主脚本的名称
 }
 

@@ -25,7 +25,6 @@ let ocrPladderOCR = $ocr.create()
 let 存入仓库数量 = 0;
 var 挂机点跑图顺序 = 0;
 var 上次挂机跑图坐标 = null;
-var 上次挂机跑图坐标截图 = null;
 var 启动金币 = "未知"
 var 挂机参数 = {
     ditu1: "radio1",
@@ -83,8 +82,6 @@ var 挂机参数 = {
     挂机城市: ""
 }
 var 挂机坐标错误次数 = 0;
-var 挂机坐标点跑图次数 = 0;
-var 开启强行补给 = false;
 const 总状态 = {
     未启动: "未启动",
     已启动: "已启动",
@@ -120,7 +117,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:1.35" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:1.34" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cpuText" text="CPU" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="startText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -291,16 +288,12 @@ var win = floaty.rawWindow(
                 </vertical>
             </vertical>
             <horizontal padding="16">
-                <text id="t_BuJi" textSize="12sp" text="回城补给" textColor="#012ed1" />
-            </horizontal>
-            <horizontal padding="16">
                 <button id="btnStart" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="启动" />
                 <button id="btnSave" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="保存" />
                 <button id="btnSetFouse" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="焦点" />
                 <button id="btnReset" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="重启" />
                 <button id="btnClose" textSize="12sp" style="Widget.AppCompat.Button.Colored" text="关闭" />
             </horizontal>
-
         </vertical>
 
     </frame>
@@ -395,11 +388,6 @@ var tools = {
         }
     },
     常用操作: {
-        截图当前坐标: () => {
-            var fbl = `${device.width}_${device.height}`;
-            var p = config.zuobiao.人物坐标范围[fbl];
-            return tools.截屏裁剪(null, p.x1, p.y1, p.x2, p.y2);
-        },
         打开角色: () => {
             var r = tools.findImageForWaitClick("jiaoseBtn.png", {
                 maxTries: 10,
@@ -407,7 +395,6 @@ var tools = {
             });
             return r;
         },
-
         打开背包: () => {
             var r = tools.findImageForWaitClick("beibaoBtn.png", {
                 maxTries: 10,
@@ -619,7 +606,7 @@ var tools = {
                 result: r
             }
         },
-        点击挂机坐标_2: (是否强制跑图) => {
+        点击挂机坐标: (是否强制跑图) => {
             tools.悬浮球描述("开始跑图(" + new Date().getSeconds() + ")");
             var 人物坐标 = tools.常用操作.获取人物坐标();
             var 挂机坐标s = tools.常用操作.获取挂机坐标();
@@ -674,67 +661,6 @@ var tools = {
             //toastLog(x + ":" + y)
             click(x, y)
             sleep(random(333, 666))
-            tools.常用操作.关闭所有窗口();
-        },
-        点击挂机坐标: (是否强制跑图) => {
-            var 是否跑图 = false;
-            if (是否强制跑图) {
-                是否跑图 = true;
-            }
-            else if (上次挂机跑图坐标截图 == null) {
-                是否跑图 = true;
-                上次挂机跑图坐标截图 = tools.常用操作.截图当前坐标();
-            }
-            else {
-                var 当前坐标截图 = tools.常用操作.截图当前坐标();
-                var r = tools.isSimilarImage(当前坐标截图, 上次挂机跑图坐标截图, 10, 5)
-                if (r) {
-                    utils.recycleNull(当前坐标截图);
-                    是否跑图 = true;
-                }
-                else {
-                    utils.recycleNull(上次挂机跑图坐标截图);
-                    上次挂机跑图坐标截图 = 当前坐标截图;
-                }
-            }
-            var 挂机坐标s = tools.常用操作.获取挂机坐标();
-            if (!挂机坐标s.status) {
-                return
-            }
-            if (!是否跑图) {
-                return;
-            }
-            tools.悬浮球描述("开始跑图(" + new Date().getSeconds() + ")");
-            tools.常用操作.打开大地图();
-            var r = 挂机坐标s.result[挂机点跑图顺序];
-            var msg = "";
-            if (挂机坐标点跑图次数 >= r.坐标范围.点击次数) {
-                挂机坐标点跑图次数 = 0;
-                挂机点跑图顺序++;
-                msg = "切第(" + (挂机点跑图顺序) + ")挂点"
-            }
-            else {
-                挂机坐标点跑图次数++;
-                msg = "继续跑(" + (挂机点跑图顺序 + 1) + ")挂点"
-            }
-            if (挂机点跑图顺序 >= 挂机坐标s.result.length) {
-                挂机点跑图顺序 = 0;
-            }
-            tools.悬浮球描述(msg);
-            var closeImg = null;
-            var closeBtn = tools.findImageForWait("closeBtn.png", {
-                maxTries: 10,
-                interval: 333
-            })
-            if (closeBtn.status) {
-                closeImg = closeBtn.img;
-            } else {
-                return;
-            }
-            var x = closeImg.x + random(r.x[0], r.x[1]);
-            var y = closeImg.y + random(r.y[0], r.y[1]);
-            click(x, y)
-            sleep(666)
             tools.常用操作.关闭所有窗口();
         },
         获取人物坐标: () => { //注意这个截图不能太小了，否则会造成识别失败
@@ -953,7 +879,11 @@ var tools = {
                     break;
                 }
                 result = tools.findImageClick("closeBtn2.png", 0.9);
-                sleep(999)
+                if (result) {
+                    sleep(999)
+                } else {
+                    sleep(666)
+                }
                 tyrCount++;
             }
         },
@@ -1112,12 +1042,9 @@ var tools = {
             utils.recycleNull(img);
             return r;
         },
-        随机走一步: (duration) => {
-            if (duration == null || duration <= 0) {
-                duration = 666;
-            }
+        随机走一步: () => {
             var r = random(1, 4);
-
+            var duration = 666;
             switch (r) {
                 case 1:
                     tools.人物移动.右走一步(duration);
@@ -1326,17 +1253,12 @@ var tools = {
                     sleep(3000);
                     break; //说明到了安全区
                 }
-                if (人物坐标 == null && tryCount < 5) {
+                if (人物坐标 == null && tryCount < 10) {
                     tryCount++;
-
-                    sleep(1000 * 3);
+                    sleep(1000 * 5);
                     continue;
                 }
-                if (tryCount >= 5) {
-                    tools.人物移动.随机走一步(random(1500,2500));
-                    sleep(1000 * 2);
-                }
-                if (tryCount >= 5 || 历史坐标 == null || (人物坐标.x == 历史坐标.x && 人物坐标.y == 历史坐标.y)) {
+                if (tryCount >= 10 || 历史坐标 == null || (人物坐标.x == 历史坐标.x && 人物坐标.y == 历史坐标.y)) {
                     toastLog('开始跑图(去比奇老兵)');
                     try {
                         tools.人物移动.去比奇老兵();
@@ -1411,8 +1333,7 @@ var tools = {
                     continue;
                 }
                 if (tryCount >= 5) {
-                    tools.人物移动.随机走一步(random(1500,2500));
-                    sleep(1000 * 2);
+                    tools.人物移动.随机走一步();
                 }
                 if (tryCount >= 5 || 历史坐标 == null || (人物坐标.x == 历史坐标.x && 人物坐标.y == 历史坐标.y)) {
                     toastLog('开始跑图(去盟重老兵)');
@@ -1447,10 +1368,9 @@ var tools = {
             if (closeBtn.status) {
                 var closeImg = closeBtn.img;
                 var fbl = `${device.width}_${device.height}`;
-                toastLog(当前地图 + ":" + 挂机地图)
                 var routes = config.地图路由[当前地图][挂机地图];
-                // utils.toast(挂机地图)
-                // toastLog(JSON.stringify(routes))
+                utils.toast(挂机地图)
+                toastLog(JSON.stringify(routes))
                 //toastLog(routes);
                 var 大地图坐标 = null;
                 if (挂机参数.挂机城市 == "比奇") {
@@ -1669,31 +1589,29 @@ var tools = {
         var isFind = false;
         var isShiQu = false;
         var r = null;
-        // if (直接攻击) {
-        //     click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-        // }
-        if (挂机参数.只打满血怪 == 1 || 挂机参数.只打满血怪 == "1") {
-            r = tools.找满血怪();
-            if (r && (r.x > 0 || r.y > 0)) {
-                click(r.x + random(5, 30), r.y + random(-3, 3))
-                isFind = true;
+        if (!直接攻击) {
+            if (挂机参数.只打满血怪 == 1 || 挂机参数.只打满血怪 == "1") {
+                r = tools.找满血怪();
+                if (r && (r.x > 0 || r.y > 0)) {
+                    click(r.x + random(5, 30), r.y + random(-3, 3))
+                    isFind = true;
+                }
+            }
+            else {
+                r = tools.findImageAreaClick("zuoguaiwuBtn.png", 怪物集合.x[0], 怪物集合.y[0], 怪物集合.x[1], 怪物集合.y[1]);
+                if (r.status) {
+                    isFind = true;
+                }
             }
         }
-        else {
-            r = tools.findImageAreaClick("zuoguaiwuBtn.png", 怪物集合.x[0], 怪物集合.y[0], 怪物集合.x[1], 怪物集合.y[1]);
-            if (r) {
-                isFind = true;
-            }
-        }
-        //if (直接攻击 || isFind) {
-        if (isFind) {
+        if (直接攻击 || isFind) {
             tools.悬浮球描述("攻击中");
             if (挂机参数.首次用符攻击 == 1) {
                 longClick(random(按钮集合.打符.x[0], 按钮集合.打符.x[1]), random(按钮集合.打符.y[0], 按钮集合.打符.y[1]));
                 sleep(1000);
             }
-
             click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+
             r = tools.findImageAreaForWait("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1], {
                 maxTries: 5,
                 interval: 200
@@ -1707,7 +1625,7 @@ var tools = {
         }
         if (isShiQu) {
             var timeout = 1000 * 60;
-            var 随机走动时间戳 = 1000 * 5;
+            var 随机走动时间戳 = 1000 * 10;
             var 上一次走动 = new Date().getTime();
             let start = new Date().getTime();
             while (true) {
@@ -1720,7 +1638,7 @@ var tools = {
                 r = tools.findImageArea("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1])
                 if (r.status) {
                     if (new Date().getTime() - 上一次走动 >= 随机走动时间戳) {
-                        //tools.人物移动.随机走一步();
+                        tools.人物移动.随机走一步();
                         click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                         上一次走动 = new Date().getTime();
                     }
@@ -2627,7 +2545,7 @@ var tools = {
             click(x, y)
             return true
         } else {
-            if (fileName != "closeBtn.png" && fileName != "closeBtn2.png" && fileName != "zuoguaiwuBtn.png") {
+            if (fileName != "closeBtn.png" && fileName != "closeBtn2.png") {
                 tools.悬浮球描述('找图失败' + fileName);
             }
             return false
@@ -2646,42 +2564,6 @@ var tools = {
             }
             return false
         }
-    },
-    /** 判断两张图片是否相似（用于判断人物坐标是否发生变化）
-     * @param {Image} img1 第一张图片（之前截的区域）
-     * @param {Image} img2 第二张图片（当前截图）
-     * @param {number} threshold 单个像素 RGB 差异的容忍值（默认 20），越小越严格
-     * @param {number} tolerance 允许有多少个像素超过 threshold（默认 5），越小越严格
-     * @returns {boolean} 是否足够相似（true = 没变化，false = 有变化）
-     */
-    isSimilarImage: (img1, img2, threshold, tolerance) => {
-        if (threshold == null) {
-            threshold = 20;
-        }
-        if (tolerance == null) {
-            tolerance = 5;
-        }
-        let w = img1.getWidth(), h = img1.getHeight();
-        if (w !== img2.getWidth() || h !== img2.getHeight()) return false;
-
-        let diffCount = 0;
-        for (let y = 0; y < h; y++) {
-            for (let x = 0; x < w; x++) {
-                let c1 = images.pixel(img1, x, y);
-                let c2 = images.pixel(img2, x, y);
-
-                // 计算颜色差异总和：|R1-R2| + |G1-G2| + |B1-B2|
-                let diff = Math.abs(colors.red(c1) - colors.red(c2)) +
-                    Math.abs(colors.green(c1) - colors.green(c2)) +
-                    Math.abs(colors.blue(c1) - colors.blue(c2));
-
-                if (diff > threshold) {
-                    diffCount++;
-                    if (diffCount > tolerance) return false;
-                }
-            }
-        }
-        return true;
     },
     区域找图: (fileName, x1, y1, x2, y2) => {
         var w = device.width;
@@ -2890,28 +2772,24 @@ ui.run(() => {
         win.setPosition(-10000, padding_top);
     });
     win.btnReset.click(() => {
-        isShowConfig = false;
-        win.setPosition(-10000, padding_top);
-        当前总状态 = 总状态.申请重启;
-        toastLog("正在结束当前任务,请稍后");
-        while (true) {
-            if (当前总状态 == 总状态.重启中) {
-                break;
-            }
-            sleep(666);
+        if (isStart) {
+            toastLog("请先停止，1分钟后重启");
+            isShowConfig = false;
+            win.setPosition(-10000, padding_top);
         }
-        engines.execScriptFile(项目路径 + "reload.js"); // 你主脚本的名称
-        sleep(666);
-        exit();
+        else {
+            isShowConfig = false;
+            win.setPosition(-10000, padding_top);
+            engines.execScriptFile(项目路径 + "excuet.js"); // 你主脚本的名称
+            exit();
+        }
+        // isShowConfig = false
+        // win.setPosition(-10000, padding_top);
     });
-    win.t_BuJi.click(() => {
-        开启强行补给 = true;
-        上次装备自检时间 = new Date().getTime() - (20 * 60 * 1000); // 减去 20 分钟; 
-    })
+
     win.btnSetFouse.click(() => {
         win.requestFocus(); //设置焦点
     })
-
     win.btnSave.click(() => {
         var isSave = true;
         let checkedId = win.ditu1.getCheckedRadioButtonId();
@@ -3190,8 +3068,8 @@ function showWinConfig() {
     win.btnClose.setLayoutParams(android.widget.LinearLayout.LayoutParams(180, 75));
     win.btnSetFouse.setLayoutParams(android.widget.LinearLayout.LayoutParams(180, 75));
     win.btnReset.setLayoutParams(android.widget.LinearLayout.LayoutParams(180, 75));
-
 }
+
 
 
 //启动程序
@@ -3226,31 +3104,26 @@ threads.start(function () {
                 }
             }
             var 打怪次数 = 0; //大于0则坐标移动过，需强制跑图
-            if (new Date().getTime() - 上次装备自检时间 > 装备自检时间戳) {
-                if (开启强行补给) {
-                    tools.回城补给在挂机();
-                    开启强行补给 = false;
-                }
-                else {
-                    var r = tools.常用操作.判断是否需要补给();
-                    if (r) {
-                        tools.回城补给在挂机();
-                    } else {
-                        tools.去挂机图打怪(挂机参数.挂机城市);
-                    }
-                }
-                上次装备自检时间 = new Date().getTime();
-            }
+            // if (new Date().getTime() - 上次装备自检时间 > 装备自检时间戳) {
+            //     var r = tools.常用操作.判断是否需要补给();
+            //     if (r) {
+            //         tools.回城补给在挂机();
+            //     } else {
+            //         tools.去挂机图打怪(挂机参数.挂机城市);
+            //     }
+            //     上次装备自检时间 = new Date().getTime();
+            // }
 
             if (new Date().getTime() - 上次打怪时间 > 打怪时间戳) {
                 var r = false;
                 while (true) {
-                    try {
-                        r = tools.寻找打怪(打怪次数 > 0 ? true : false);
-                    } catch (e) {
-                        r = false;
-                        toastLog("寻找打怪异常" + e)
-                    }
+                    r = tools.寻找打怪(打怪次数 > 0 ? true : false);
+                    // try {
+                    //     r = tools.寻找打怪(打怪次数 > 0 ? true : false);
+                    // } catch (e) {
+                    //     r = false;
+                    //     toastLog("寻找打怪异常" + e)
+                    // }
                     if (r) {
                         打怪次数++;
                         continue;
@@ -3268,12 +3141,22 @@ threads.start(function () {
             if (new Date().getTime() - 上次跑图时间 > 跑图时间戳) {
                 var 当前地图 = tools.常用操作.获取人物地图();
                 if (当前地图 == 挂机参数.挂机地图) {
-                    //tools.常用操作.点击挂机坐标(打怪次数 > 0 ? true : false);
                     try {
                         tools.常用操作.点击挂机坐标(打怪次数 > 0 ? true : false);
                     } catch (e) {
                         toastLog('点击挂机坐标异常' + e);
                     }
+                    // var 人物坐标 = tools.常用操作.获取人物坐标();
+                    // if ((上次坐标记录.x == 0 && 上次坐标记录.y == 0) || 人物坐标 == null || (人物坐标.x == 上次坐标记录.x && 人物坐标.y == 上次坐标记录.y)) {
+                    //     try {
+                    //         tools.常用操作.点击挂机坐标();
+                    //     } catch (e) {
+                    //         toastLog('点击挂机坐标异常' + e);
+                    //     }
+                    // }
+                    // if (人物坐标 != null) {
+                    //     上次坐标记录 = 人物坐标;
+                    // }
                 }
                 else {
                     tools.去挂机图打怪(挂机参数.挂机城市);
