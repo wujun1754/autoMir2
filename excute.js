@@ -756,7 +756,7 @@ var tools = {
         },
         启动隐身: () => {
             tools.人物移动.随机走一步(random(888, 1111));
-            sleep(1288)
+            //sleep(1288)
             tools.findImageClick("yinshenBtn.png");
         },
         开启组队: () => {
@@ -1630,7 +1630,6 @@ var tools = {
             tools.常用操作.关闭所有窗口();
             tools.常用操作.打开背包();
             sleep(666)
-            let fbl = `${device.width}_${device.height}`;
             var 地牢 = config.找色[fbl].地牢;
             var img = captureScreen();
             var r = images.findMultiColors(img, 地牢[0].color, [[地牢[1].x, 地牢[1].y, 地牢[1].color], [地牢[2].x, 地牢[2].y, 地牢[2].color]], {
@@ -2469,11 +2468,11 @@ var tools = {
                 }
                 r = tools.findImageArea("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1])
                 if (r.status) {
-                    if (new Date().getTime() - 上一次隐身 >= 隐身时间戳 && (挂机参数.是否隐身 == 1 || 挂机参数.是否隐身 == "1")) {
+                    if (new Date().getTime() - 上一次隐身 >= 隐身时间戳 && 挂机参数.是否隐身 == 1) {
                         怪物 = tools.获取身边怪物数据();
                         if (怪物 && 怪物.length >= parseInt(挂机参数.隐身数量)) {
                             tools.常用操作.启动隐身();
-                            sleep(random(2500, 3500));
+                            //sleep(random(2500, 3500));
                             //click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                             上一次隐身 = new Date().getTime();
                         }
@@ -4184,6 +4183,209 @@ function showWinConfig() {
 
 
 //启动程序
+threads.start(function () {
+    let 上次打怪时间 = new Date().getTime();
+    let 打怪时间戳 = 0.1 * 1000;
+
+    let 上次跑图时间 = new Date().getTime();
+    let 跑图时间戳 = 2.5 * 1000;
+
+    let 画面自检时间 = new Date().getTime();
+    let 画面自检时间戳 = 60 * 1000;
+    while (true) {
+        if (isStart) {
+            var 打怪次数 = 0; //大于0则坐标移动过，需强制跑图
+
+            if (!是否启动初始化过) {
+                tools.启动初始化();
+                是否启动初始化过 = true;
+            }
+            if (开启强行补给) {
+                tools.常用操作.点击人物();
+                tools.常用操作.启动隐身();
+                toastLog("强制回城补给")
+                tools.回城补给在挂机();
+                开启强行补给 = false;
+            }
+            if (new Date().getTime() - 画面自检时间 > 画面自检时间戳) {
+                ocrPladderOCR.release();
+                ocrPladderOCR = $ocr.create({
+                    models: 'slim', // 指定精度相对低但速度更快的模型，若不指定则为default模型，精度高一点但速度慢一点
+                });
+
+                tools.悬浮球描述("画面自检开始");
+                var r = tools.findImage("lianjiezhongduan.png"); //接连中断画面，可能人物死亡
+                if (r.status) {
+                    r = tools.重启游戏();
+                    if (r) {
+                        当前总状态 = 总状态.已启动;
+                        tools.去挂机图打怪(true);
+                    }
+                }
+
+                r = tools.常用操作.检测是否小退(true);
+                if (r) {
+                    var time = random(60, 120);
+                    for (let index = 0; index < time; index++) {
+                        tools.悬浮球描述("等待登录(" + (time - index) + ")");
+                        sleep(1000);
+                    }
+                    tools.常用操作.小退后开始登录();
+                    当前总状态 = 总状态.已启动;
+                    tools.去挂机图打怪(true);
+                    tools.悬浮球描述("登录成功");
+                }
+
+                画面自检时间 = new Date().getTime();
+                tools.悬浮球描述("画面自检结束");
+            }
+
+            if (new Date().getTime() - 上次检查宝宝时间 > 检查宝宝时间戳) {
+                if (挂机参数.召唤骷髅 == 1 || 挂机参数.召唤神兽 == 1) {
+                    tools.悬浮球描述("检查宝宝开始");
+                    var r = tools.常用操作.检测宝宝();
+                    if (!r) {
+                        if (挂机参数.召唤骷髅 == 1) {
+                            tools.常用操作.点击召唤骷髅();
+                        }
+                        if (挂机参数.召唤神兽 == 1) {
+                            tools.常用操作.点击召唤神兽();
+                        }
+                    }
+                    上次检查宝宝时间 = new Date().getTime();
+                    tools.悬浮球描述("检查宝宝结束");
+                }
+            }
+
+            if (new Date().getTime() - 上次检查蓝药时间 > 检查蓝药时间戳 && 挂机参数.无蓝回城 == 1) {
+                tools.悬浮球描述("检查蓝药开始");
+                var r = tools.常用操作.检测是否有蓝药();
+                if (!r) {
+                    tools.回城补给在挂机();
+                }
+                上次检查蓝药时间 = new Date().getTime();
+                tools.悬浮球描述("检查蓝药结束");
+            }
+
+            if (new Date().getTime() - 上次检查武器衣服时间 > 检查武器衣服时间戳) {
+                tools.常用操作.点击人物();
+                tools.常用操作.启动隐身();
+                tools.悬浮球描述("检查武器衣服持久开始");
+                var r = tools.常用操作.检查武器衣服持久();
+                if (r) {
+                    tools.回城补给在挂机();
+                }
+                上次检查武器衣服时间 = new Date().getTime();
+                tools.悬浮球描述("检查武器衣服持久结束");
+            }
+
+            if (new Date().getTime() - 上次设置操作模式时间 >= 操作模式时间戳) {
+                tools.悬浮球描述("设置操作模式开始");
+                tools.常用操作.初始化操作模式(2);
+                上次设置操作模式时间 = new Date().getTime();
+                tools.悬浮球描述("设置操作模式结束");
+            }
+
+            if (new Date().getTime() - 上次设置内挂时间 > 内挂时间戳) {
+                tools.悬浮球描述("设置内挂参数开始");
+                tools.常用操作.设置内挂();
+                上次设置内挂时间 = new Date().getTime();
+                tools.常用操作.关闭所有窗口();
+                tools.悬浮球描述("设置内挂参数结束");
+            }
+
+            if (new Date().getTime() - 上次设置攻击面板时间 >= 攻击面板时间戳) {
+                tools.悬浮球描述("设置攻击面板开始");
+                var r = null;
+                var tryCount = 0;
+                while (true) {
+                    if (tryCount >= 10) {
+                        break;
+                    }
+                    r = tools.常用操作.初始化攻击面板();
+                    if (r) {
+                        break;
+                    } else {
+                        sleep(random(888, 999))
+                    }
+                    tryCount++;
+                }
+                上次设置攻击面板时间 = new Date().getTime();
+                tools.悬浮球描述("设置攻击面板结束");
+            }
+
+            if (new Date().getTime() - 上次设置组队模式时间 >= 组队模式时间戳) {
+                tools.悬浮球描述("设置组队模式开始");
+                tools.常用操作.开启组队();
+                上次设置组队模式时间 = new Date().getTime();
+                tools.悬浮球描述("设置组队模式结束");
+            }
+
+            if (new Date().getTime() - 上次设置分身面板时间 >= 分身面板时间戳) {
+                tools.悬浮球描述("设置分身面板开始");
+                var r = tools.findImageForWait("fenshenxiulianBtn.png", {
+                    maxTries: 3,
+                    interval: 333
+                })
+                if (r.status) {
+                    var 左上箭头 = config.zuobiao.按钮集合[fbl].左上箭头;
+                    click(random(左上箭头.x[0], 左上箭头.x[1]), random(左上箭头.y[0], 左上箭头.y[1]));
+                }
+                上次设置分身面板时间 = new Date().getTime();
+                tools.悬浮球描述("设置分身面板结束");
+            }
+
+            if (new Date().getTime() - 上次打怪时间 > 打怪时间戳) {
+                var r = false;
+                while (当前总状态 == 总状态.已启动) {
+                    // if (打怪次数 > 5) {//不要长时间打怪，需要检测药和宝宝
+                    //     break;
+                    // }
+                    try {
+                        r = tools.寻找打怪(打怪次数 > 0 ? true : false);
+                    } catch (e) {
+                        r = false;
+                        toastLog("寻找打怪异常" + e)
+                    }
+                    if (r) {
+                        打怪次数++;
+                        tools.悬浮球描述("继续攻击")
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                if (打怪次数 > 0 && 挂机参数.一波怪物死亡拾取 == 1) {
+                    tools.开始拾取();
+                }
+                上次打怪时间 = new Date().getTime();
+            }
+
+            if (new Date().getTime() - 上次跑图时间 > 跑图时间戳) {
+                var 当前地图 = tools.常用操作.获取人物地图();
+                if (当前地图 == 挂机参数.挂机地图) {
+                    try {
+                        tools.常用操作.点击挂机坐标(打怪次数 > 0 ? true : false);
+                    } catch (e) {
+                        toastLog('点击挂机坐标异常' + e);
+                    }
+                }
+                else {
+                    tools.去挂机图打怪(true);
+                }
+                上次跑图时间 = new Date().getTime();
+            }
+
+            //sleep(50)
+
+        } else {
+            tools.悬浮球描述(当前总状态);
+            sleep(1000); //3
+        }
+    }
+});
+
+
 threads.start(function () {
     let 上次打怪时间 = new Date().getTime();
     let 打怪时间戳 = 0.1 * 1000;
