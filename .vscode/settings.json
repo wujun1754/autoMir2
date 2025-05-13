@@ -2,5 +2,5 @@
     "workbench.tree.indent": 16, // 控制缩进，可选
     "workbench.tree.renderIndentGuides": "always", // 可选
     "editor.fontSize": 14, // 编辑器字体大小（不影响左侧）
-    "window.zoomLevel": 0.5, // ⚠️调整整个 VSCode 缩放，包括侧边栏字体
+    "window.zoomLevel": 0, // ⚠️调整整个 VSCode 缩放，包括侧边栏字体
 }
