@@ -172,7 +172,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.1.9" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.2.1" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -1150,7 +1150,7 @@ var tools = {
             var closeImg = null;
             var closeBtn = tools.findImageForWait("closeBtn.png", {
                 maxTries: 10,
-                interval: 222
+                interval: 200
             })
             if (closeBtn.status) {
                 closeImg = closeBtn.img;
@@ -1394,45 +1394,37 @@ var tools = {
         检查武器衣服持久: () => {
             tools.常用操作.启动隐身();
             var r = tools.常用操作.获取装备持久();
-            if (当前总状态 == 总状态.已启动 && 挂机参数.衣服持久0回程 == 1) {
-                if (r && r.衣服 && r.衣服.剩持久 <= 2) {
-                    if (!是否用过备用衣服) {
-                        var isSuccess = false;
-                        if (挂机参数.备用男重盔 == 1) {
-                            isSuccess = tools.常用操作.使用备用装备("zhongkui_nan.png");
-                        }
-                        else if (挂机参数.备用女重盔 == 1) {
-                            isSuccess = tools.常用操作.使用备用装备("zhongkui_nv.png");
-                        }
-                        if (isSuccess) {
-                            是否用过备用衣服 = true;
-                        }
-                        else {
-                            return true;
-                        }
+            if (当前总状态 == 总状态.已启动 && 挂机参数.衣服持久0回程 == 1 && r && r.衣服 && r.衣服.剩持久 <= 2) {
+                if (!是否用过备用衣服) {
+                    var isSuccess = false;
+                    if (挂机参数.备用男重盔 == 1) {
+                        isSuccess = tools.常用操作.使用备用装备("zhongkui_nan.png");
+                    }
+                    else if (挂机参数.备用女重盔 == 1) {
+                        isSuccess = tools.常用操作.使用备用装备("zhongkui_nv.png");
+                    }
+                    if (isSuccess) {
+                        是否用过备用衣服 = true;
                     }
                     else {
                         return true;
                     }
                 }
+                else {
+                    return true;
+                }
             }
-            if (当前总状态 == 总状态.已启动 && r && r.武器 && r.武器.剩持久 <= 5) {
-                var isOk = tools.喝修复油();
-
-                if (!isOk && r.武器.剩持久 <= 2) {
-                    if (挂机参数.备用斩马 == 1 && !是否用过备用武器) {
-                        r = tools.常用操作.使用备用装备("wuqi_zhanma.png");
-                        if (r) {
-                            是否用过备用武器 = true;
-                        }
-                        else {
-                            if (挂机参数.武器持久0回程 == 1) {
-                                return true;
-                            }
-
-                        }
+            if (当前总状态 == 总状态.已启动 && 挂机参数.武器持久0回程 == 1 && r && r.武器 && r.武器.剩持久 <= 2) {
+                var isSuccess = false;
+                if (!是否用过备用武器) {
+                    isSuccess = tools.常用操作.使用备用装备("wuqi_zhanma.png");
+                    if (isSuccess) {
+                        是否用过备用武器 = true;
                     }
-                    else {
+                }
+                if (!isSuccess) {
+                    var isOk = tools.喝修复油();
+                    if (!isOk) {
                         return true;
                     }
                 }
@@ -1636,6 +1628,48 @@ var tools = {
             }
             return text;
         },
+        获取身边怪物数据: () => {
+            let img = captureScreen();
+            var color = "#DB0000";
+            var result = [];
+            var regions = [
+                [618, 202, 50, 5], // 正上方
+                [555, 202, 50, 5], // 左上方
+                [681, 202, 50, 5], // 右上方
+
+                [618, 287, 50, 5], // 正下方
+                [555, 287, 50, 5], // 左下方
+                [681, 287, 50, 5], // 右下方
+
+                [555, 245, 50, 5], // 正左方
+                [681, 245, 50, 5], // 正右方
+            ]
+            regions.forEach((reg, index) => {
+                var r = images.findAllPointsForColor(img, color, {
+                    region: reg, // 正上方
+                    threshold: 10
+                });
+                if (r && r.length > 0) {
+                    result.push({
+                        方向: index,
+                        血量: r.length
+                    })
+                }
+            })
+            utils.recycleNull(img);
+            return result;
+        },
+        身边锁定怪物: () => {
+            var imgSmall = tools.截屏裁剪(null, 555, 246, 724, 349);
+            var huiduImg = images.grayscale(imgSmall);//灰度化
+            let r = utils.ocrGetContentStr(huiduImg);
+            if (r) {
+                r = r.replace(/[0-9\/]/g, '');
+            }
+            utils.recycleNull(imgSmall);
+            utils.recycleNull(huiduImg);
+            return r;
+        },
         关闭所有窗口: (isClick, time) => {
             if (time == null) {
                 time = 500;
@@ -1770,97 +1804,6 @@ var tools = {
                 tools.悬浮球描述("画面自检结束");
             }
         },
-    },
-    点击分身: () => {
-        if (挂机参数.补给时点分身 == 1 || 挂机参数.补给时点分身 == "1") {
-            tools.常用操作.关闭所有窗口();
-            var fbl = `${device.width}_${device.height}`;
-            var 左上箭头 = config.zuobiao.按钮集合[fbl].左上箭头;
-            var 分身派遣 = config.zuobiao.按钮集合[fbl].分身派遣;
-            var 分身派遣2 = config.zuobiao.按钮集合[fbl].分身派遣2;
-            var r = tools.findImageForWaitClick("fenshenxiulianBtn.png", {
-                maxTries: 10,
-                interval: 333
-            })
-            if (!r.status) {
-                click(random(左上箭头.x[0], 左上箭头.x[1]), random(左上箭头.y[0], 左上箭头.y[1]));
-                sleep(random(666, 888));
-                r = tools.findImageForWaitClick("fenshenxiulianBtn.png", {
-                    maxTries: 10,
-                    interval: 333
-                })
-            }
-            if (!r.status) {
-                tools.悬浮球描述("未找到分身修炼按钮")
-                toastLog("未找到分身修炼按钮");
-                return false;
-            }
-            r = tools.findImageForWaitClick("lingqujiangliBtn.png", {
-                maxTries: 10,
-                interval: 333
-            })
-            sleep(random(666, 999));
-
-            var 模式 = -1;
-            r = tools.findImageForWait("fenshenxiulianbar.png", {
-                maxTries: 10,
-                interval: 333
-            })
-            if (r.status) {
-                模式 = 1;
-            }
-            else {
-                r = tools.findImageForWait("fenshenxiulianbar2.png", {
-                    maxTries: 10,
-                    interval: 333
-                })
-                if (r.status) {
-                    模式 = 2;
-                }
-            }
-            if (模式 == 1) {
-                click(random(分身派遣.x[0], 分身派遣.x[1]), random(分身派遣.y[0], 分身派遣.y[1]));
-            }
-            else if (模式 == 2) {
-                click(random(分身派遣2.x[0], 分身派遣2.x[1]), random(分身派遣2.y[0], 分身派遣2.y[1]));
-            }
-            else {
-                tools.悬浮球描述("未找到分身修炼Bar")
-                toastLog("未找到分身修炼Bar");
-                return false;
-            }
-
-
-            r = tools.findImageForWaitClick("quedingxiulianBtn.png", {
-                maxTries: 10,
-                interval: 333
-            })
-            if (!r.status) {
-                tools.悬浮球描述("未找到分身修炼确定按钮")
-                toastLog("未找到分身修炼确定按钮");
-                return false;
-            }
-            while (true) {
-                r = tools.findImageForWaitClick("fenshenjiashiBtn.png", {
-                    maxTries: 10,
-                    interval: 333
-                })
-
-                if (r.status) {
-                    r = tools.findImageForWaitClick("fenshenquedingjiashiBtn.png", {
-                        maxTries: 10,
-                        interval: 333
-                    })
-                    if (!r.status) {
-                        break;
-                    }
-                }
-                else {
-                    break;
-                }
-            }
-            return true;
-        }
     },
     去挂机图打怪: (isTwo) => {
         if (当前总状态 == 总状态.已启动 && isTwo) {
@@ -2504,7 +2447,6 @@ var tools = {
             var 是否跑图 = false;
             var 是否召唤宝宝 = false;
             tools.常用操作.关闭所有窗口();
-            sleep(888)
             var 当前地图 = tools.常用操作.获取人物地图();
             tools.悬浮球描述("开始去挂机地图(" + 当前地图 + ")");
             if (当前地图 == 挂机参数.挂机地图) { //说明到目的地
@@ -2527,6 +2469,7 @@ var tools = {
                 var last = routes[routes.length - 1];
                 var 目的地 = (index == routesGroup.length - 1 ? last[0] : last[1]);
                 while (当前总状态 == 总状态.已启动) {
+                    tools.执行时间戳.检测认证();
                     当前地图 = tools.常用操作.获取人物地图();
                     var 是否沿途打怪 = config.沿途打怪点.some(item => item === 当前地图)
                     if (当前地图 == 目的地) { //说明到目的地
@@ -2793,7 +2736,7 @@ var tools = {
         var img = captureScreen();
         var r = images.findMultiColors(img, p.找色[0].color, [[p.找色[1].x, p.找色[1].y, p.找色[1].color], [p.找色[2].x, p.找色[2].y, p.找色[2].color]], {
             region: [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]],
-            threshold: 55
+            threshold: 25
         });
         utils.recycleNull(img);
         return r;
@@ -2886,6 +2829,7 @@ var tools = {
             var 总次数 = 0;
             var 血量阈值次数 = 0;
             var 是否走动过 = false;
+            var 锁定的怪物 = "";
             while (当前总状态 == 总状态.已启动) {
                 总次数++;
                 var 时间戳 = new Date().getTime() - start;
@@ -2897,26 +2841,20 @@ var tools = {
                 }
                 r = tools.findImageArea("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1])
                 if (r.status) {
-                    var isChange = tools.常用操作.怪物血量是否变化();
                     血量 = tools.常用操作.获取人物血量();
-                    怪物 = tools.获取身边怪物数据();
-
-                    if (怪物.length > 0) {
-                        怪物大于0次数++;
-                    }
-                    if (挂机参数.只打满血怪 == 1 && 怪物大于0次数 <= 0 && 怪物.length <= 0 && isChange) {
-                        click(random(726, 736), random(25, 35));
-                        return true;
-                        // if (!是否走动过) {
-                        //     var r1 = random(0, 1);
-                        //     if (r1 == 0) {
-                        //         tools.人物移动.左上走一步(1200);
-                        //     } else {
-                        //         tools.人物移动.右下走一步(1200);
-                        //     }
-                        //     click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                        //     是否走动过 = true;
-                        // }
+                    怪物 = tools.常用操作.获取身边怪物数据();
+                    // if (怪物.length > 0) {
+                    //     怪物大于0次数++;
+                    // }
+                    if (挂机参数.只打满血怪 == 1) {
+                        var isChange = tools.常用操作.怪物血量是否变化();
+                        if (isChange && 锁定的怪物.length <= 0) {
+                            锁定的怪物 = tools.常用操作.身边锁定怪物();
+                            if (锁定的怪物.length <= 0) {
+                                click(random(726, 736), random(25, 35));
+                                return true;
+                            }
+                        }
                     }
 
                     if (挂机参数.隐身数量 > 0 && (new Date().getTime() - 上一次隐身 >= 隐身时间戳 || !是否点击过隐身)) {
@@ -3059,7 +2997,7 @@ var tools = {
                 tools.补给操作.替换装备();
             }
             if (当前总状态 == 总状态.已启动) {
-                tools.点击分身();
+                tools.补给操作.点击分身();
             }
             if (当前总状态 == 总状态.已启动) {
                 tools.补给操作.卖物品Loop();
@@ -3071,6 +3009,97 @@ var tools = {
                 tools.补给操作.买物品Loops();
             }
             tools.悬浮球描述("补给完成");
+        },
+        点击分身: () => {
+            if (挂机参数.补给时点分身 == 1 || 挂机参数.补给时点分身 == "1") {
+                tools.常用操作.关闭所有窗口();
+                var fbl = `${device.width}_${device.height}`;
+                var 左上箭头 = config.zuobiao.按钮集合[fbl].左上箭头;
+                var 分身派遣 = config.zuobiao.按钮集合[fbl].分身派遣;
+                var 分身派遣2 = config.zuobiao.按钮集合[fbl].分身派遣2;
+                var r = tools.findImageForWaitClick("fenshenxiulianBtn.png", {
+                    maxTries: 10,
+                    interval: 333
+                })
+                if (!r.status) {
+                    click(random(左上箭头.x[0], 左上箭头.x[1]), random(左上箭头.y[0], 左上箭头.y[1]));
+                    sleep(random(666, 888));
+                    r = tools.findImageForWaitClick("fenshenxiulianBtn.png", {
+                        maxTries: 10,
+                        interval: 333
+                    })
+                }
+                if (!r.status) {
+                    tools.悬浮球描述("未找到分身修炼按钮")
+                    toastLog("未找到分身修炼按钮");
+                    return false;
+                }
+                r = tools.findImageForWaitClick("lingqujiangliBtn.png", {
+                    maxTries: 10,
+                    interval: 333
+                })
+                sleep(random(666, 999));
+
+                var 模式 = -1;
+                r = tools.findImageForWait("fenshenxiulianbar.png", {
+                    maxTries: 10,
+                    interval: 333
+                })
+                if (r.status) {
+                    模式 = 1;
+                }
+                else {
+                    r = tools.findImageForWait("fenshenxiulianbar2.png", {
+                        maxTries: 10,
+                        interval: 333
+                    })
+                    if (r.status) {
+                        模式 = 2;
+                    }
+                }
+                if (模式 == 1) {
+                    click(random(分身派遣.x[0], 分身派遣.x[1]), random(分身派遣.y[0], 分身派遣.y[1]));
+                }
+                else if (模式 == 2) {
+                    click(random(分身派遣2.x[0], 分身派遣2.x[1]), random(分身派遣2.y[0], 分身派遣2.y[1]));
+                }
+                else {
+                    tools.悬浮球描述("未找到分身修炼Bar")
+                    toastLog("未找到分身修炼Bar");
+                    return false;
+                }
+
+
+                r = tools.findImageForWaitClick("quedingxiulianBtn.png", {
+                    maxTries: 10,
+                    interval: 333
+                })
+                if (!r.status) {
+                    tools.悬浮球描述("未找到分身修炼确定按钮")
+                    toastLog("未找到分身修炼确定按钮");
+                    return false;
+                }
+                while (true) {
+                    r = tools.findImageForWaitClick("fenshenjiashiBtn.png", {
+                        maxTries: 10,
+                        interval: 333
+                    })
+
+                    if (r.status) {
+                        r = tools.findImageForWaitClick("fenshenquedingjiashiBtn.png", {
+                            maxTries: 10,
+                            interval: 333
+                        })
+                        if (!r.status) {
+                            break;
+                        }
+                    }
+                    else {
+                        break;
+                    }
+                }
+                return true;
+            }
         },
         卖物品Loop: () => {
             tools.悬浮球描述("开始卖物品");
@@ -3096,7 +3125,7 @@ var tools = {
             click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2))
             var r = tools.findImageForWaitClick("chushouwupingBtn.png", {
                 maxTries: 10,
-                interval: 333
+                interval: 200
             });
             if (!r.status) {
                 return {
@@ -3106,7 +3135,7 @@ var tools = {
             }
             r = tools.findImageForWaitClick("beibaozhengliBtn.png", {
                 maxTries: 10,
-                interval: 333
+                interval: 200
             });
             if (!r.status) {
                 tools.常用操作.关闭所有窗口();//这里尝试购买一下物品，整理按钮会出现
@@ -3135,6 +3164,7 @@ var tools = {
             var 是否保留过武器 = false;
             for (let index = 1; index <= 5; index++) {
                 for (let index1 = 1; index1 <= 8; index1++) {
+                    tools.执行时间戳.检测认证();
                     if (当前总状态 != 总状态.已启动) {
                         return {
                             status: false,
@@ -3147,19 +3177,6 @@ var tools = {
                     var randomX = random(-5, 5);
                     var randomY = random(-5, 5);
                     click(整理P.x + p.x + randomX, 整理P.y + p.y + randomY)
-                    // if (index == 1 && index1 == 1) {
-                    //     r = tools.findImageForWait("OKBtn.png", {
-                    //         maxTries: 10,
-                    //         interval: 500
-                    //     });
-                    //     if (!r.status) {
-                    //         当前总状态 = 总状态.重启中;
-                    //         return {
-                    //             status: true,
-                    //             err: "花屏了"
-                    //         }
-                    //     }
-                    // }
                     r = tools.findImageForWait("beibaofangruBtn.png", {
                         maxTries: 10,
                         interval: 200
@@ -3282,6 +3299,7 @@ var tools = {
             if (物品集合 != null && 物品集合.length > 0) {
                 for (var i = 0; i < 物品集合.length; i++) {
                     if (当前总状态 == 总状态.已启动) {
+                        tools.执行时间戳.检测认证();
                         var 物品对象 = 物品集合[i];
                         tools.悬浮球描述("开始购买" + JSON.stringify(物品对象));
                         tools.补给操作.买物品(物品对象)
@@ -3451,6 +3469,7 @@ var tools = {
             for (let index = 1; index <= 5; index++) {
                 for (let index1 = 1; index1 <= 8; index1++) {
                     tools.常用操作.关闭所有窗口();
+                    tools.执行时间戳.检测认证();
                     tools.悬浮球描述(`开始修理${index}_${index1}格子`);
                     click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2))
                     result = tools.findImageForWaitClick("putongxiuliBtn.png", {
@@ -3624,6 +3643,7 @@ var tools = {
                 var p = config.zuobiao.背包格子于面板偏移量[fbl];
                 for (let index = 1; index <= 5; index++) {
                     for (let index1 = 1; index1 <= 8; index1++) {
+                        tools.执行时间戳.检测认证();
                         tools.悬浮球描述("穿戴" + index + "_" + index1 + "格");
                         var p1 = p[index + "_" + index1];
                         var x = result.img.x + p1.x + random(-8, 8);
@@ -3797,16 +3817,16 @@ var tools = {
         },
         处理认证: () => {
             var r = tools.验证码认证.点开认证();
-            tools.悬浮球描述("点开认证执行结果 = " + r.toString());
-            tools.错误日志("认证 = " + r.toString(), 5);
+            // tools.悬浮球描述("点开认证执行结果 = " + r.toString());
+            // tools.错误日志("认证 = " + r.toString(), 5);
             if (r) {
-                tools.错误日志("开始请求", 5);
+                //tools.错误日志("开始请求", 5);
                 r = tools.验证码认证.超级鹰认证();
-                tools.悬浮球描述("超级鹰 = " + JSON.stringify(r));
-                tools.错误日志("超级鹰 = " + JSON.stringify(r), 5);
+                // tools.悬浮球描述("超级鹰 = " + JSON.stringify(r));
+                // tools.错误日志("超级鹰 = " + JSON.stringify(r), 5);
                 if (r.status) {
                     tools.验证码认证.滑动验证码(r.value.x, r.value.y);
-                    sleep(1200);
+                    sleep(1000);
                     var r = tools.常用操作.读取聊天框信息()
                     tools.悬浮球描述(r);
                     tools.错误日志(r, 5);
@@ -3814,7 +3834,7 @@ var tools = {
             }
             else {
                 tools.错误日志("认证失败", 5);
-                toastLog("点开认证失败")
+                //toastLog("点开认证失败")
             }
             // if (img == null) {
             //     img = captureScreen();
@@ -3838,11 +3858,11 @@ var tools = {
                 y: 485 + random(-3, 3),
             }
             click(认证P.x, 认证P.y);
-            var closeBtn = tools.findImageForWait("closeBtn.png", {
+            var btn = tools.findImageForWait("renzhengtuodongtiao.png", {
                 maxTries: 10,
                 interval: 200
             });
-            return closeBtn.status;
+            return btn.status;
         },
         超级鹰认证: () => {
             var img = captureScreen();
@@ -3912,61 +3932,6 @@ var tools = {
         },
     },
 
-    获取自身血量: () => {
-        let img = captureScreen();
-        var color = "#00C500";
-        var xue = 0;
-        var r = images.findAllPointsForColor(img, color, {
-            region: [618, 240, 50, 8], // 正上方
-            threshold: 10
-        });
-        if (r && r.length > 0) {
-            xue = r.length;
-        }
-        utils.recycleNull(img);
-        return xue;
-    },
-    获取身边怪物数据: () => {
-        let img = captureScreen();
-        var color = "#DB0000";
-        var result = [];
-        var regions = [
-            [618, 202, 50, 5], // 正上方
-            [555, 202, 50, 5], // 左上方
-            [681, 202, 50, 5], // 右上方
-
-            [618, 287, 50, 5], // 正下方
-            [555, 287, 50, 5], // 左下方
-            [681, 287, 50, 5], // 右下方
-
-            [555, 245, 50, 5], // 正左方
-            [681, 245, 50, 5], // 正右方
-        ]
-        regions.forEach((reg, index) => {
-            var r = images.findAllPointsForColor(img, color, {
-                region: reg, // 正上方
-                threshold: 10
-            });
-            if (r && r.length > 0) {
-                result.push({
-                    方向: index,
-                    血量: r.length
-                })
-            }
-        })
-        utils.recycleNull(img);
-        return result;
-    },
-    获取锁定怪物血量: () => {
-        let img = captureScreen();
-        var color = "#FF1000";
-        var r = images.findAllPointsForColor(img, color, {
-            region: [569, 40, 143, 1], // 正上方
-            threshold: 15
-        });
-        utils.recycleNull(img);
-        return r;
-    },
     shenqiCapture: () => {
         var result = false;
         try {
@@ -4843,11 +4808,8 @@ function showWinConfig() {
 
 
 // while (true) {
-//     //findRedBarsFast: (img, region, targetColor, threshold = 40, yStep = 2, minLength = 10)
-//     // let targetColor = colors.parseColor("#FF0000");
-//     // let img = captureScreen();
-//     var r = tools.获取身边怪物数据()
-//     tools.悬浮球描述(JSON.stringify(r));
+//     var r = tools.身边锁定怪物()
+//     tools.悬浮球描述(r);
 //     sleep(1000);
 // }
 
