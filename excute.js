@@ -45,6 +45,10 @@ var 检查宝宝时间戳 = 1000 * 60 * 2;
 var 上次检查宝宝时间 = new Date().getTime() - (20 * 60 * 1000); // 减去 20 分钟; 
 
 
+var 无地牢时间戳 = 1000 * 60 * 60 * 24;
+var 上次检测地牢时间 = new Date().getTime() - (1000 * 60 * 60 * 48); // 减去 1000 分钟;
+
+
 var 内挂时间戳 = 1000 * 60 * 60 * 24;
 var 上次设置内挂时间 = new Date().getTime() - (1000 * 60 * 60 * 48); // 减去 1000 分钟;
 
@@ -115,7 +119,7 @@ var 挂机参数 = {
     只打满血怪: 1,
     随机跑图: 0,
     无蓝回城: 0,
-    无蓝等待: 1,
+    无飞回城: 1,
     替换男重盔: 0,
     替换女重盔: 0,
     替换男灵魂: 0,
@@ -172,7 +176,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.2.3" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.2.5" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -339,7 +343,7 @@ var win = floaty.rawWindow(
                             <checkbox id="cbIsWuLanHuiCheng" text="无蓝回城" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="right">
-                            <checkbox id="cbIsWuLanDengDai" text="无蓝等待" textSize="10sp" />
+                            <checkbox id="cbIsWuFeiHuiCheng" text="无飞回城" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="right">
                             <checkbox id="cbIsFenShen" text="点击分身" textSize="10sp" />
@@ -348,6 +352,7 @@ var win = floaty.rawWindow(
                         <horizontal gravity="right">
                             <checkbox id="cbDiTuTuoDong" text="地图拖动" textSize="10sp" />
                         </horizontal>
+
                     </horizontal>
                     <horizontal>
                         <horizontal gravity="right">
@@ -584,8 +589,8 @@ var tools = {
         if (挂机参数.无蓝回城 == 1 || 挂机参数.无蓝回城 == "1") {
             win.cbIsWuLanHuiCheng.setChecked(true);
         }
-        if (挂机参数.无蓝等待 == 1 || 挂机参数.无蓝等待 == "1") {
-            win.cbIsWuLanDengDai.setChecked(true);
+        if (挂机参数.无飞回城 == 1 || 挂机参数.无飞回城 == "1") {
+            win.cbIsWuFeiHuiCheng.setChecked(true);
         }
         if (挂机参数.备用男重盔 == 1 || 挂机参数.备用男重盔 == "1") {
             win.cbBeiYongNanZhongKui.setChecked(true);
@@ -944,12 +949,26 @@ var tools = {
         初始化挂机: () => {
             let start = new Date().getTime();
             tools.常用操作.关闭所有窗口();
+            上次检测地牢时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
             上次检查蓝药时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
             上次检查武器衣服时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
             上次检查宝宝时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
             上次设置内挂时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
             上次设置组队模式时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
             上次设置操作模式时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
+
+
+            tools.执行时间戳.检测画面();
+
+            tools.执行时间戳.检测认证();
+
+            tools.执行时间戳.检测蓝药();
+
+            tools.执行时间戳.检测武器衣服();
+
+            tools.执行时间戳.检测无地牢补给();
+
+
         },
         初始化攻击面板loops: () => {
             tools.悬浮球描述("设置攻击面板开始");
@@ -1821,7 +1840,7 @@ var tools = {
                     }
                     tools.常用操作.小退后开始登录();
                     当前总状态 = 总状态.已启动;
-                    tools.去挂机图打怪(true);
+                    tools.去挂机图打怪();
                     tools.悬浮球描述("登录成功");
                 }
                 tools.常用操作.初始化攻击面板loops();
@@ -1829,17 +1848,41 @@ var tools = {
                 tools.悬浮球描述("画面自检结束");
             }
         },
+        检测无地牢补给: () => {
+            if (new Date().getTime() - 上次检测地牢时间 > 无地牢时间戳) {
+                tools.悬浮球描述("画面自检开始");
+                var isOk = false;
+                tools.常用操作.打开背包();
+                sleep(1200)
+                var 地牢 = config.找色[fbl].地牢;
+                var img = captureScreen();
+                var r = images.findMultiColors(img, 地牢[0].color, [[地牢[1].x, 地牢[1].y, 地牢[1].color], [地牢[2].x, 地牢[2].y, 地牢[2].color]], {
+                    threshold: 50
+                });
+                utils.recycleNull(img);
+                tools.常用操作.关闭所有窗口();
+                if (r == null || r.x <= 0 || r.y <= 0) {
+                    r = tools.常用操作.检测是否在游戏画面();
+                    if (r) {
+                        tools.回城补给在挂机();
+                    }
+                }
+                上次检测地牢时间 = new Date().getTime();
+                tools.悬浮球描述("画面自检结束");
+            }
+
+        }
     },
-    去挂机图打怪: (isTwo) => {
-        if (当前总状态 == 总状态.已启动 && isTwo) {
+    去挂机图打怪: () => {
+        if (当前总状态 == 总状态.已启动) {
             tools.常用操作.初始化挂机();
         }
         if (当前总状态 == 总状态.已启动) {
             tools.人物移动.去挂机地图Loop();
         }
-        if (当前总状态 == 总状态.已启动) {
-            tools.常用操作.初始化挂机();
-        }
+        // if (当前总状态 == 总状态.已启动) {
+        //     tools.常用操作.初始化挂机();
+        // }
     },
     悬浮球描述: (text) => {
         ui.run(() => {
@@ -1876,7 +1919,7 @@ var tools = {
         使用地牢: () => {
             var isOk = false;
             tools.常用操作.打开背包();
-            sleep(666)
+            sleep(1200)
             var 地牢 = config.找色[fbl].地牢;
             var img = captureScreen();
             var r = images.findMultiColors(img, 地牢[0].color, [[地牢[1].x, 地牢[1].y, 地牢[1].color], [地牢[2].x, 地牢[2].y, 地牢[2].color]], {
@@ -2007,16 +2050,28 @@ var tools = {
             }
         },
         左上走一步: (duration) => {
-            tools.人物移动.左走一步(duration)
-            var d = parseInt(duration / 2);
-            sleep(d + random(-100, 100));
-            tools.人物移动.上走一步(duration)
+            if (duration > 0) {
+                var p = config.zuobiao.遥感中心位置[fbl];
+                let dx1 = random(-5, 5);
+                let dx2 = random(40, 70);
+                gestures(
+                    [0, duration, [p.x - dx1, p.y - dx1],
+                        [p.x - dx2, p.y - dx2]
+                    ]
+                );
+            }
         },
         右下走一步: (duration) => {
-            tools.人物移动.右走一步(duration)
-            var d = parseInt(duration / 2);
-            sleep(d + random(-100, 100));
-            tools.人物移动.下走一步(duration)
+            if (duration > 0) {
+                var p = config.zuobiao.遥感中心位置[fbl];
+                let dx1 = random(-5, 5);
+                let dx2 = random(40, 70);
+                gestures(
+                    [0, duration, [p.x - dx1, p.y - dx1],
+                        [p.x + dx2, p.y + dx2]
+                    ]
+                );
+            }
         },
         比奇安全区到小贩: (人物坐标) => {
             var 比奇小贩坐标 = config.zuobiao.比奇小贩坐标;
@@ -2839,7 +2894,7 @@ var tools = {
             }
             timeout = timeout * 1000;
             var 人物是否移动 = false;
-            var 移动时间戳 = 1000 * 3;
+            var 移动时间戳 = 1000 * 1.5;
             var 上一次移动 = new Date().getTime();
 
             var 攻击时间戳 = 1000 * 5;
@@ -2898,17 +2953,21 @@ var tools = {
                         }
                     }
 
-                    if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
+                    if (new Date().getTime() - 上一次移动 >= 移动时间戳 && 锁定的怪物.length <= 0) {
                         人物是否移动 = tools.跑图坐标是否变化();
                         if (人物是否移动) {
                             var 当前坐标截图 = tools.常用操作.截图当前坐标();
                             utils.recycleNull(上次坐标截图);
                             上次坐标截图 = 当前坐标截图;
-                            tools.悬浮球描述("人物跑动中")
                         }
                         else {
-                            是否跑图 = true;
-                            tools.悬浮球描述("人物未移动")
+                            if (random(0, 1) == 0) {
+                                tools.人物移动.左上走一步(random(1200, 2500));
+                            }
+                            else {
+                                tools.人物移动.右下走一步(random(1200, 2500));
+                            }
+                            click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                         }
                         上一次移动 = new Date().getTime();
                     }
@@ -3002,7 +3061,7 @@ var tools = {
     },
     回城补给在挂机: () => {
         tools.补给操作.回城补给();
-        tools.去挂机图打怪(true);
+        tools.去挂机图打怪();
     },
     补给操作: {
         回城补给: () => {
@@ -4643,7 +4702,7 @@ ui.run(() => {
 
 
             无蓝回城: win.cbIsWuLanHuiCheng.isChecked() ? 1 : 0,
-            无蓝等待: win.cbIsWuLanDengDai.isChecked() ? 1 : 0,
+            无飞回城: win.cbIsWuFeiHuiCheng.isChecked() ? 1 : 0,
             隐身走动: win.cbYinShenZouDong.isChecked() ? 1 : 0,
             攻击检查宝宝: win.cbJianChaBaoBao.isChecked() ? 1 : 0,
             攻击检查武器衣服: win.cbJianChaWuQi.isChecked() ? 1 : 0,
@@ -4841,9 +4900,6 @@ function showWinConfig() {
 
 //启动程序
 threads.start(function () {
-    let 上次打怪时间 = new Date().getTime();
-    let 打怪时间戳 = 0.1 * 1000;
-
     let 上次跑图时间 = new Date().getTime();
     let 跑图时间戳 = 1.5 * 1000;
 
@@ -4869,6 +4925,8 @@ threads.start(function () {
             tools.执行时间戳.检测宝宝();
 
             tools.执行时间戳.检测蓝药();
+
+            tools.执行时间戳.检测无地牢补给();
 
             tools.执行时间戳.检测武器衣服();
 
@@ -4908,7 +4966,7 @@ threads.start(function () {
                     }
                 }
                 else {
-                    tools.去挂机图打怪(false);
+                    tools.去挂机图打怪();
                 }
                 上次跑图时间 = new Date().getTime();
             }
