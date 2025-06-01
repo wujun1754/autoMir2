@@ -172,7 +172,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.2.1" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.2.3" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -745,9 +745,9 @@ var tools = {
         return res.body.string();
     },
     常用方法: {
-        是否为数字: (str) => {
+        是否为正整数: (str) => {
             if (str) {
-                return /^-?\d+$/.test(str);
+                return /^\d+$/.test(str);
             }
             return false;
         }
@@ -815,7 +815,7 @@ var tools = {
             tools.常用操作.点击人物();
             for (let index = 0; index < 6; index++) {
                 tools.findImageClick("zhaohuankulouBtn.png");
-                sleep(150)
+                sleep(100)
             }
         },
         点击召唤神兽: () => {
@@ -826,7 +826,7 @@ var tools = {
             // });
             for (let index = 0; index < 6; index++) {
                 tools.findImageClick("zhaohuanshenshouBtn.png");
-                sleep(150)
+                sleep(100)
             }
         },
         获取角色面板: () => {
@@ -864,7 +864,7 @@ var tools = {
             }
             for (let index = 0; index < 6; index++) {
                 tools.findImageClick("yinshenBtn.png");
-                sleep(150)
+                sleep(100)
             }
         },
         开启组队: () => {
@@ -1172,8 +1172,6 @@ var tools = {
         获取人物坐标: () => { //注意这个截图不能太小了，否则会造成识别失败
             var p = config.zuobiao.人物坐标范围[fbl];
             var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
-            //toastLog(JSON.stringify(result))
-            //tools.悬浮球描述(JSON.stringify(result));
             if (result != null && result.length > 0) {
                 var r = result[0].text;
                 r = tools.常用操作.处理坐标错别字(r);
@@ -1394,7 +1392,7 @@ var tools = {
         检查武器衣服持久: () => {
             tools.常用操作.启动隐身();
             var r = tools.常用操作.获取装备持久();
-            if (当前总状态 == 总状态.已启动 && 挂机参数.衣服持久0回程 == 1 && r && r.衣服 && r.衣服.剩持久 <= 2) {
+            if (挂机参数.衣服持久0回程 == 1 && r && r.衣服 && r.衣服.剩持久 <= 2) {
                 if (!是否用过备用衣服) {
                     var isSuccess = false;
                     if (挂机参数.备用男重盔 == 1) {
@@ -1403,28 +1401,43 @@ var tools = {
                     else if (挂机参数.备用女重盔 == 1) {
                         isSuccess = tools.常用操作.使用备用装备("zhongkui_nv.png");
                     }
+
                     if (isSuccess) {
+                        toastLog("使用备用衣服成功")
                         是否用过备用衣服 = true;
                     }
                     else {
+                        toastLog("使用备用衣服失败")
                         return true;
                     }
                 }
                 else {
+                    toastLog("是否用过备用衣服 = true")
                     return true;
                 }
             }
-            if (当前总状态 == 总状态.已启动 && 挂机参数.武器持久0回程 == 1 && r && r.武器 && r.武器.剩持久 <= 2) {
+            if (挂机参数.武器持久0回程 == 1 && r && r.武器 && r.武器.剩持久 <= 2) {
                 var isSuccess = false;
                 if (!是否用过备用武器) {
                     isSuccess = tools.常用操作.使用备用装备("wuqi_zhanma.png");
                     if (isSuccess) {
+                        toastLog("使用备用武器成功")
                         是否用过备用武器 = true;
                     }
+                    else {
+                        toastLog("使用备用武器失败")
+                    }
+                }
+                else {
+                    toastLog("是否用过备用武器 = true")
                 }
                 if (!isSuccess) {
                     var isOk = tools.喝修复油();
-                    if (!isOk) {
+                    if (isOk) {
+                        toastLog("喝修复油成功")
+                    }
+                    else {
+                        toastLog("喝修复油失败")
                         return true;
                     }
                 }
@@ -1506,7 +1519,19 @@ var tools = {
         },
         处理坐标错别字: (text) => {
             if (!text) return text;
-            text = text.replace("-", "").replace("\"", "").replace("i", "1").replace("]", "1").replace("S", "6").replace("s", "6").replace("T", "1").replace(".", ":").replace("o", "0").replace("O", "0").replace("Ö", "0");
+            text = text.replace(/-/g, "").replace(/\\/g, "").replace(/\./g, "").replace(/,/g, "").replace(/l/g, "1").replace(/i/g, "1").replace(/]/g, "1").replace(/G/g, "6").replace(/S/g, "6").replace(/s/g, "6").replace(/T/g, "1").replace(/t/g, "1").replace(/o/g, "0").replace(/O/g, "0").replace(/Ö/g, "0");
+            //toastLog(text)
+            if (text) {
+                var r = tools.常用方法.是否为正整数(text);
+                if (r) {
+                    if (text.length == 6) {
+                        text = text.substring(0, 3) + ":" + text.substring(3, 6)
+                    }
+                    else if (text.length == 7) {
+                        text = text.substring(0, 3) + ":" + text.substring(4, 7)
+                    }
+                }
+            }
             return text;
         },
         处理地图错别字: (text) => {
@@ -2736,7 +2761,7 @@ var tools = {
         var img = captureScreen();
         var r = images.findMultiColors(img, p.找色[0].color, [[p.找色[1].x, p.找色[1].y, p.找色[1].color], [p.找色[2].x, p.找色[2].y, p.找色[2].color]], {
             region: [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]],
-            threshold: 25
+            threshold: 20
         });
         utils.recycleNull(img);
         return r;
@@ -2798,6 +2823,7 @@ var tools = {
             if (r.status) {
                 utils.recycleNull(被攻击怪物血量截图);
                 被攻击怪物血量截图 = tools.常用操作.截图被攻击怪物血量();
+                上次坐标截图 = tools.常用操作.截图当前坐标();
                 isShiQu = true;
             }
             else {
@@ -2812,24 +2838,22 @@ var tools = {
                 timeout = 300;
             }
             timeout = timeout * 1000;
-            var 走动时间戳 = 1000 * 5;
-            var 上一次走动 = new Date().getTime();
+            var 人物是否移动 = false;
+            var 移动时间戳 = 1000 * 3;
+            var 上一次移动 = new Date().getTime();
 
             var 攻击时间戳 = 1000 * 5;
             var 上一次攻击 = new Date().getTime();
 
             var 隐身时间戳 = 1000 * 10;
             var 上一次隐身 = new Date().getTime() - (60 * 1000);
-            var 是否点击过隐身 = false;
             let start = new Date().getTime();
             var 怪物 = [];
             var 血量 = 0;
-            var 怪物为0次数 = 0;
-            var 怪物大于0次数 = 0;
             var 总次数 = 0;
             var 血量阈值次数 = 0;
-            var 是否走动过 = false;
             var 锁定的怪物 = "";
+            var isChange = false;
             while (当前总状态 == 总状态.已启动) {
                 总次数++;
                 var 时间戳 = new Date().getTime() - start;
@@ -2842,25 +2866,21 @@ var tools = {
                 r = tools.findImageArea("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1])
                 if (r.status) {
                     血量 = tools.常用操作.获取人物血量();
-                    怪物 = tools.常用操作.获取身边怪物数据();
-                    // if (怪物.length > 0) {
-                    //     怪物大于0次数++;
-                    // }
+                    isChange = tools.常用操作.怪物血量是否变化();
+                    if (锁定的怪物.length <= 0) {
+                        锁定的怪物 = tools.常用操作.身边锁定怪物();
+                    }
                     if (挂机参数.只打满血怪 == 1) {
-                        var isChange = tools.常用操作.怪物血量是否变化();
                         if (isChange && 锁定的怪物.length <= 0) {
-                            锁定的怪物 = tools.常用操作.身边锁定怪物();
-                            if (锁定的怪物.length <= 0) {
-                                click(random(726, 736), random(25, 35));
-                                return true;
-                            }
+                            click(random(726, 736), random(25, 35));
+                            return true;
                         }
                     }
 
-                    if (挂机参数.隐身数量 > 0 && (new Date().getTime() - 上一次隐身 >= 隐身时间戳 || !是否点击过隐身)) {
+                    if (挂机参数.隐身数量 > 0 && (new Date().getTime() - 上一次隐身 >= 隐身时间戳)) {
+                        怪物 = tools.常用操作.获取身边怪物数据();
                         if (怪物 && 怪物.length >= parseInt(挂机参数.隐身数量)) {
                             tools.常用操作.启动隐身();
-                            是否点击过隐身 = true;
                             上一次隐身 = new Date().getTime();
                         }
                     }
@@ -2878,15 +2898,20 @@ var tools = {
                         }
                     }
 
-                    // if (怪物.length <= 0 && new Date().getTime() - 上一次走动 >= 走动时间戳) {
-                    //     怪物为0次数++;
-                    //     if (怪物为0次数 > 1) {
-                    //         tools.人物移动.随机走一步(random(777, 999));
-                    //         click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                    //         上一次走动 = new Date().getTime();
-                    //         怪物为0次数 = 0;
-                    //     }
-                    // }
+                    if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
+                        人物是否移动 = tools.跑图坐标是否变化();
+                        if (人物是否移动) {
+                            var 当前坐标截图 = tools.常用操作.截图当前坐标();
+                            utils.recycleNull(上次坐标截图);
+                            上次坐标截图 = 当前坐标截图;
+                            tools.悬浮球描述("人物跑动中")
+                        }
+                        else {
+                            是否跑图 = true;
+                            tools.悬浮球描述("人物未移动")
+                        }
+                        上一次移动 = new Date().getTime();
+                    }
 
                     if (new Date().getTime() - 上一次攻击 >= 攻击时间戳) {
                         click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
@@ -2909,7 +2934,7 @@ var tools = {
                     //var t1 = new Date().getTime();
                     //var t2 = new Date().getTime();
                     //tools.悬浮球临时描述("(" + ((t2 - t1) / 1000).toString() + ")");
-                    tools.悬浮球描述("攻击中(" + parseInt((timeout - (时间戳)) / 1000) + "),怪物(" + 怪物.length + "),血量(" + 血量 + "),isChange(" + isChange + ")[" + 总次数 + "]");
+                    tools.悬浮球描述("攻击中(" + parseInt((timeout - (时间戳)) / 1000) + "),怪物(" + 锁定的怪物 + "),血量(" + 血量 + ")[" + 总次数 + "]");
                     //sleep(111);
                 } else {
                     if (挂机参数.一波怪物死亡拾取 == 0) {
@@ -3833,7 +3858,7 @@ var tools = {
                 }
             }
             else {
-                tools.错误日志("认证失败", 5);
+                tools.错误日志("未找到滑动条", 5);
                 //toastLog("点开认证失败")
             }
             // if (img == null) {
@@ -4808,8 +4833,8 @@ function showWinConfig() {
 
 
 // while (true) {
-//     var r = tools.身边锁定怪物()
-//     tools.悬浮球描述(r);
+//     var r = tools.找满血怪()
+//     tools.悬浮球描述(JSON.stringify(r));
 //     sleep(1000);
 // }
 
