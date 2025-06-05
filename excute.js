@@ -3258,6 +3258,10 @@ var tools = {
                         }
                     }
                 }
+                return {
+                    status: false,
+                    msg: ""
+                }
             }
             else {
                 return {
@@ -3289,6 +3293,10 @@ var tools = {
                         }
                     }
                 }
+                return {
+                    status: false,
+                    msg: ""
+                }
             }
             else {
                 return {
@@ -3308,7 +3316,7 @@ var tools = {
                 var img = tools.截屏裁剪(null, p.x + 装备属性明细.x, p.y - 10, p.x, p.y + 装备属性明细.y);
                 var r = images.findMultiColors(img, "#FF0000", [[49, 0, "#FF0000"]], {
                     threshold: 35
-                });  
+                });
                 utils.recycleNull(img);
                 if (r && r.x > 0 && r.y > 0) {
                     return true
@@ -3452,11 +3460,6 @@ var tools = {
         },
         卖物品: () => {
             tools.常用操作.关闭所有窗口();
-            var {
-                w,
-                h
-            } = tools.获取屏幕高宽();
-            var fbl = `${device.width}_${device.height}`;
             var 比奇小贩按钮 = config.zuobiao.比奇小贩按钮[fbl]
             click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2))
             var r = tools.findImageForWaitClick("chushouwupingBtn.png", {
@@ -3490,8 +3493,6 @@ var tools = {
                 x: r.img.x,
                 y: r.img.y
             }
-            var 是否保留过衣服 = false;
-            var 是否保留过武器 = false;
             for (let index = 1; index <= 5; index++) {
                 for (let index1 = 1; index1 <= 8; index1++) {
                     tools.执行时间戳.检测认证();
@@ -3501,7 +3502,9 @@ var tools = {
                             err: "程序未启动"
                         }
                     }
-                    sleep(random(1288, 1588))
+                    if (index == 1 && index1 == 1) {
+                        sleep(random(1288, 1588))
+                    }
                     tools.悬浮球描述(`开始出售${index}_${index1}格子`)
                     var p = 卖装备背包格子[`${index}_${index1}`];
                     var randomX = random(-5, 5);
@@ -3520,78 +3523,37 @@ var tools = {
                         fangruName = "beibaofangruBtn1.png";
                     }
                     if (r.status) {
-                        var 物品信息 = tools.补给操作.获取物品信息(fangruName);
-                        if (物品信息.status) {
-                            var allText = 物品信息.value;
-                            tools.悬浮球描述(allText);
-                            if (allText.indexOf("极品") >= 0) {
-                                tools.悬浮球描述(`${index}_${index1}存仓库`)
-                                tools.补给操作.存仓库(index, index1);
-                                return {
-                                    status: false,
-                                    err: "重新卖装备"
-                                }
-                            }
-                            else {
-                                var is需存仓库装备 = false;
-                                config.需存仓库装备.forEach(item => {
-                                    if (allText.indexOf(item) >= 0) {
-                                        is需存仓库装备 = true;
-                                    }
-                                })
-                                if (is需存仓库装备) {
-                                    tools.悬浮球描述(`${index}_${index1}发现需存仓库装备`)
-                                    tools.补给操作.存仓库(index, index1);
-                                    return {
-                                        status: false,
-                                        err: "重新卖装备"
-                                    }
-                                } else {
-                                    if (allText.indexOf("护身符") >= 0) {
-                                        toastLog("护身符跳过")
-                                        continue;
-                                    }
-                                    if ((allText.indexOf("魔") >= 0 || allText.indexOf("法") >= 0) && (allText.indexOf("药") >= 0 || allText.indexOf("约") >= 0) && allText.indexOf("中") >= 0) {
-                                        toastLog("魔法药跳过")
-                                        continue;
-                                    }
-                                    if ((allText.indexOf("修") >= 0 || allText.indexOf("复") >= 0) && allText.indexOf("油") >= 0) {
-                                        toastLog("修复油跳过")
-                                        continue;
-                                    }
-                                    if (挂机参数.备用男重盔 == 1 && !是否保留过衣服) {
-                                        if (allText.indexOf("重盔") >= 0 && allText.indexOf("男") >= 0) {
-                                            是否保留过衣服 = true;
-                                            toastLog("备用男重盔跳过")
-                                            continue;
-                                        }
-                                    }
-                                    if (挂机参数.备用女重盔 == 1 && !是否保留过衣服) {
-                                        if (allText.indexOf("重盔") >= 0 && allText.indexOf("女") >= 0) {
-                                            是否保留过衣服 = true;
-                                            toastLog("备用女重盔跳过")
-                                            continue;
-                                        }
-                                    }
-                                    if (挂机参数.备用斩马 == 1 && !是否保留过武器) {
-                                        if (allText.indexOf("斩") >= 0 || allText.indexOf("马") >= 0) {
-                                            是否保留过武器 = true;
-                                            toastLog("备用斩马跳过")
-                                            continue;
-                                        }
-                                    }
-                                    r = tools.findImageForWaitClick("beibaofangruBtn.png", {
-                                        maxTries: 10,
-                                        interval: 666
-                                    });
-                                    sleep(random(555, 666));
-                                    r = tools.findImageForWaitClick("OKBtn.png", {
-                                        maxTries: 10,
-                                        interval: 666
-                                    });
-                                }
+                        var 是否极品 = tools.补给操作.判断选中格子是否极品(fangruName);
+                        if (是否极品) {
+                            tools.悬浮球描述(`发现极品${index}_${index1}存仓库`)
+                            tools.补给操作.存仓库(index, index1);
+                            return {
+                                status: false,
+                                err: "重新卖装备"
                             }
                         }
+                        var 存仓库 = tools.补给操作.判断选中格子是否存仓库();
+                        if (存仓库.status) {
+                            tools.悬浮球描述(`${index}_${index1}发现${存仓库.msg}需存仓库装备`)
+                            return {
+                                status: false,
+                                err: "重新卖装备"
+                            }
+                        }
+                        var 跳过 = tools.补给操作.判断选中格子是否跳过();
+                        if (跳过.status) {
+                            toastLog(跳过.msg);
+                            continue;
+                        }
+                        r = tools.findImageForWaitClick("beibaofangruBtn.png", {
+                            maxTries: 10,
+                            interval: 500
+                        });
+                        sleep(random(555, 666));
+                        r = tools.findImageForWaitClick("OKBtn.png", {
+                            maxTries: 10,
+                            interval: 500
+                        });
                     } else {
                         return {
                             status: true,
@@ -4454,8 +4416,6 @@ var tools = {
         }
     },
     findImageAreaForWait: (fileName, x1, y1, x2, y2, options) => {
-        var w = device.width;
-        var h = device.height;
         let timeout, interval, maxTries, log;
         if (options) {
             timeout = options.timeout !== undefined ? options.timeout : 1000 * 60;
@@ -4492,20 +4452,23 @@ var tools = {
             var img = captureScreen();
             var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${fileName}`;
             var targetImg = images.read(targetImgPath);
-            var imgSize = {
-                w: targetImg.width,
-                h: targetImg.height
+            if (targetImg) {
+                var imgSize = {
+                    w: targetImg.width,
+                    h: targetImg.height
+                }
+                var r = utils.regionalFindImg2(img, targetImg, x1, y1, x2, y2, 60, 255, 0.7, false, false, "");
+                utils.recycleNull(img);
+                utils.recycleNull(targetImg);
+                if (r != null && (r.x > 0 || r.y > 0)) {
+                    return {
+                        status: true,
+                        img: r,
+                        size: imgSize
+                    };
+                }
             }
-            var r = utils.regionalFindImg2(img, targetImg, x1, y1, x2, y2, 60, 255, 0.7, false, false, "");
-            utils.recycleNull(img);
-            utils.recycleNull(targetImg);
-            if (r != null && (r.x > 0 || r.y > 0)) {
-                return {
-                    status: true,
-                    img: r,
-                    size: imgSize
-                };
-            }
+
             tryCount++;
         }
     },
@@ -4519,34 +4482,22 @@ var tools = {
         return result;
     },
     findImage: (fileName, threshold) => {
-        var w = device.width;
-        var h = device.height;
-        var exists = config.youxiaoFBL.some(item => item.w === w && item.h === h);
-        if (exists) {
-            //tools.shenqiCapture();
-            var img = captureScreen();
-            var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${fileName}`;
-            var targetImg = images.read(targetImgPath);
+        //tools.shenqiCapture();
+        var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${fileName}`;
+        var targetImg = images.read(targetImgPath);
+        if (targetImg) {
             var options = {
                 threshold: 0.7
             };
             if (threshold && threshold > 0) {
                 options.threshold = threshold;
             }
-            if (targetImg == null) {
-                //tools.悬浮球描述(fileName + '图片不存在')
-                toastLog(fileName + '图片不存在');
-            }
             var imgSize = {
                 w: targetImg.width,
                 h: targetImg.height
             }
-            var result = null;
-            try {
-                result = images.findImage(img, targetImg, options);
-            } catch (e) {
-                toastLog('findImage异常');
-            }
+            var img = captureScreen();
+            var result = images.findImage(img, targetImg, options);
             utils.recycleNull(img);
             utils.recycleNull(targetImg);
             if (result != null && (result.x > 0 || result.y > 0)) {
@@ -4555,33 +4506,23 @@ var tools = {
                     img: result,
                     size: imgSize
                 };
-            } else {
-                return {
-                    status: false,
-                    img: null,
-                    err: '未找到对应的图片'
-                }
             }
-        } else {
-            return {
-                status: false,
-                img: null,
-                err: '不支持' + w + 'x' + h + '分辨率'
-            }
+        }
+        return {
+            status: false,
+            img: null,
+            err: '未找到对应的图片'
         }
     },
     findImageArea(fileName, x1, y1, x2, y2) {
-        var w = device.width;
-        var h = device.height;
-        var exists = config.youxiaoFBL.some(item => item.w === w && item.h === h);
-        if (exists) {
-            var img = captureScreen();
-            var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${fileName}`;
-            var targetImg = images.read(targetImgPath);
+        var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${fileName}`;
+        var targetImg = images.read(targetImgPath);
+        if (targetImg) {
             var imgSize = {
                 w: targetImg.width,
                 h: targetImg.height
             }
+            var img = captureScreen();
             var r = utils.regionalFindImg2(img, targetImg, x1, y1, x2, y2, 60, 255, 0.7, false, false, "");
             utils.recycleNull(img);
             utils.recycleNull(targetImg);
@@ -4591,19 +4532,12 @@ var tools = {
                     img: r,
                     size: imgSize
                 };
-            } else {
-                return {
-                    status: false,
-                    img: null,
-                    err: '未找到对应的图片'
-                }
             }
-        } else {
-            return {
-                status: false,
-                img: null,
-                err: '不支持' + w + 'x' + h + '分辨率'
-            }
+        }
+        return {
+            status: false,
+            img: null,
+            err: '未找到对应的图片'
         }
     },
     findImageAreaClick(fileName, x1, y1, x2, y2) {
