@@ -147,7 +147,7 @@ var 挂机参数 = {
 }
 var 挂机坐标点跑图次数 = 0;
 var 开启强行补给 = false;
-const 总状态 = {
+var 总状态 = {
     未启动: "未启动",
     已启动: "已启动",
     小退中: "小退中",
@@ -1234,7 +1234,7 @@ var tools = {
             var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
             if (result != null && result.length > 0) {
                 result = tools.常用操作.处理地图错别字(result[0].text);
-                if (上次所在地图 != null && 上次所在地图.length > 0 && 上次所在地图 != result) {
+                if (上次所在地图 != result) {
                     上次所在地图 = result;
                     tools.常用操作.初始化攻击面板loops();
                     tools.执行时间戳.检测无地牢补给(true);
@@ -1252,18 +1252,30 @@ var tools = {
                 return null;
             }
         },
-        获取人物血量: () => {
-            var p = config.zuobiao.血量范围[fbl];
-            var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
-            var xue = null;
-            if (result != null && result.length > 0) {
-                try {
-                    xue = parseInt(result[0].text);
-                } catch (error) {
-                    xue = null;
-                }
+        获取人物血量是否飞随机: () => {
+            let img = captureScreen();
+            var r = images.findMultiColors(img, "#00BF00", [[15, 0, "#00BF00"]], {
+                region: [619, 245, 40, 3],
+                threshold: 35
+            });
+            utils.recycleNull(img);
+            if (r && (r.x > 0 || r.y > 0)) {
+                return false;
             }
-            return xue;
+            else {
+                return true;
+            }
+            // var p = config.zuobiao.血量范围[fbl];
+            // var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
+            // var xue = null;
+            // if (result != null && result.length > 0) {
+            //     try {
+            //         xue = parseInt(result[0].text);
+            //     } catch (error) {
+            //         xue = null;
+            //     }
+            // }
+            // return xue;
         },
         检查背包是否有东西: (格子) => {
             tools.常用操作.关闭所有窗口();
@@ -2999,7 +3011,6 @@ var tools = {
             var 上一次隐身 = new Date().getTime() - (60 * 1000);
             let start = new Date().getTime();
             var 怪物 = [];
-            var 血量 = 0;
             var 总次数 = 0;
             var 血量阈值次数 = 0;
             var 锁定的怪物 = "";
@@ -3054,8 +3065,8 @@ var tools = {
                     }
 
                     if (挂机参数.随机血量 > 0) {
-                        血量 = tools.常用操作.获取人物血量();
-                        if (血量 != null && 血量 > 10 && 血量 <= 挂机参数.随机血量) {
+                        var 是否随机 = tools.常用操作.获取人物血量是否飞随机();
+                        if (是否随机) {
                             if (血量阈值次数 > 0) {
                                 血量阈值次数 = 0;
                                 tools.人物移动.使用随机();
@@ -3211,7 +3222,7 @@ var tools = {
                 value: null
             }
         },
-        判断选中格子是否跳过: () => {
+        判断选中格子是否跳过: (排查装备) => {
             var arr = [{
                 name: "中蓝包",
                 pic: "lanyaobao.png"
@@ -3226,19 +3237,19 @@ var tools = {
                 name: "修复油",
                 pic: "xiufuyou1.png"
             }];
-            if (挂机参数.备用斩马 == 1) {
+            if (挂机参数.备用斩马 == 1 && !排查装备) {
                 arr.push({
                     name: "斩马",
                     pic: "wuqi_zhanma.png"
                 })
             }
-            if (挂机参数.备用男重盔 == 1) {
+            if (挂机参数.备用男重盔 == 1 && !排查装备) {
                 arr.push({
                     name: "重盔甲（男）",
                     pic: "zhongkui_nan.png"
                 })
             }
-            if (挂机参数.备用女重盔 == 1) {
+            if (挂机参数.备用女重盔 == 1 && !排查装备) {
                 arr.push({
                     name: "重盔甲（女）",
                     pic: "zhongkui_nv.png"
@@ -3249,7 +3260,7 @@ var tools = {
             utils.recycleNull(img);
             if (r && r.x > 0 && r.y > 0) {
                 for (let index = 0; index < arr.length; index++) {
-                    const item = arr[index];
+                    var item = arr[index];
                     var result = tools.findImageArea(item.pic, r.x, r.y, r.x + 57, r.y + 56);
                     if (result.status) {
                         return {
@@ -3284,7 +3295,7 @@ var tools = {
             utils.recycleNull(img);
             if (r && r.x > 0 && r.y > 0) {
                 for (let index = 0; index < arr.length; index++) {
-                    const item = arr[index];
+                    var item = arr[index];
                     var result = tools.findImageArea(item.pic, r.x, r.y, r.x + 57, r.y + 56);
                     if (result.status) {
                         return {
@@ -3505,6 +3516,9 @@ var tools = {
                     if (index == 1 && index1 == 1) {
                         sleep(random(1288, 1588))
                     }
+                    else {
+                        sleep(random(555, 666))
+                    }
                     tools.悬浮球描述(`开始出售${index}_${index1}格子`)
                     var p = 卖装备背包格子[`${index}_${index1}`];
                     var randomX = random(-5, 5);
@@ -3535,6 +3549,7 @@ var tools = {
                         var 存仓库 = tools.补给操作.判断选中格子是否存仓库();
                         if (存仓库.status) {
                             tools.悬浮球描述(`${index}_${index1}发现${存仓库.msg}需存仓库装备`)
+                            tools.补给操作.存仓库(index, index1);
                             return {
                                 status: false,
                                 err: "重新卖装备"
@@ -3542,7 +3557,7 @@ var tools = {
                         }
                         var 跳过 = tools.补给操作.判断选中格子是否跳过();
                         if (跳过.status) {
-                            toastLog(跳过.msg);
+                            tools.悬浮球描述(跳过.msg)
                             continue;
                         }
                         r = tools.findImageForWaitClick("beibaofangruBtn.png", {
@@ -3798,23 +3813,26 @@ var tools = {
                 maxTries: 10,
                 interval: 666
             })
+            var 是否从头打开 = true;
             for (let index = 1; index <= 5; index++) {
                 for (let index1 = 1; index1 <= 8; index1++) {
-                    tools.常用操作.关闭所有窗口();
-                    tools.执行时间戳.检测认证();
                     tools.悬浮球描述(`开始修理${index}_${index1}格子`);
-                    click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2))
-                    result = tools.findImageForWaitClick("putongxiuliBtn.png", {
-                        maxTries: 10,
-                        interval: 666
-                    })
-                    if (!result.status) {
-                        continue;
+                    if (是否从头打开) {
+                        tools.常用操作.关闭所有窗口();
+                        tools.执行时间戳.检测认证();
+                        click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2));
+                        result = tools.findImageForWaitClick("putongxiuliBtn.png", {
+                            maxTries: 10,
+                            interval: 666
+                        })
+                        if (!result.status) {
+                            return;
+                        }
                     }
-                    sleep(random(666, 888));
+                    sleep(random(333, 555));
                     result = tools.findImageForWait("beibaozhengliBtn.png", {
                         maxTries: 10,
-                        interval: 666
+                        interval: 500
                     })
                     var 整理P = {
                         x: result.img.x,
@@ -3824,30 +3842,30 @@ var tools = {
                     var randomX = random(-5, 5);
                     var randomY = random(-5, 5);
                     click(整理P.x + p.x + randomX, 整理P.y + p.y + randomY)
-                    sleep(random(555, 666));
-                    var 物品信息 = tools.补给操作.获取物品信息("beibaofangruBtn.png");
-                    if (物品信息.status) {
-                        var allText = 物品信息.value;
-                        tools.悬浮球描述(allText);
-                        if ((allText.indexOf("魔") >= 0 || allText.indexOf("法") >= 0) && (allText.indexOf("药") >= 0 || allText.indexOf("约") >= 0 || allText.indexOf("中") >= 0)) {
-                            toastLog("魔法药跳过")
+                    var btn = tools.findImageForWait("beibaofangruBtn.png", {
+                        maxTries: 6,
+                        interval: 500
+                    });
+                    if (btn.status) {
+                        var 跳过 = tools.补给操作.判断选中格子是否跳过();
+                        if (跳过.status) {
+                            是否从头打开 = false;
+                            tools.悬浮球描述(跳过.msg);
                             continue;
                         }
-                        if ((allText.indexOf("修") >= 0 || allText.indexOf("复") >= 0) && allText.indexOf("油") >= 0) {
-                            toastLog("修复油跳过")
-                            continue;
+                        else {
+                            result = tools.findImageForWaitClick("beibaofangruBtn.png", {
+                                maxTries: 6,
+                                interval: 666
+                            })
+
+                            tools.findImageForWaitClick("OKBtn.png", {
+                                maxTries: 10,
+                                interval: 666
+                            })
+                            是否从头打开 = true;
+                            sleep(random(333, 666))
                         }
-
-                        result = tools.findImageForWaitClick("beibaofangruBtn.png", {
-                            maxTries: 6,
-                            interval: 666
-                        })
-
-                        tools.findImageForWaitClick("OKBtn.png", {
-                            maxTries: 10,
-                            interval: 666
-                        })
-                        sleep(random(333, 666))
                     }
                     else {
                         return;
@@ -4175,7 +4193,7 @@ var tools = {
                 }
             ]
             for (let index = 0; index < colorArr.length; index++) {
-                const item = colorArr[index];
+                var item = colorArr[index];
                 var r = images.findMultiColors(img, item.c1, [[item.x2, item.y2, item.c2], [item.x3, item.y3, item.c3]], {
                     region: [p.x1, p.y1, p.x2 - p.x1, p.y2 - p.y1],
                     threshold: 50
@@ -4388,7 +4406,6 @@ var tools = {
             var msg = "";
             if (maxTries && tryCount >= maxTries) {
                 msg = "超过最大尝试次数，未找到图像：" + fileName;
-                if (log) toastLog(msg);
                 return {
                     status: false,
                     img: null,
@@ -4397,7 +4414,6 @@ var tools = {
             }
             if (new Date().getTime() - start > timeout) {
                 msg = "超时未找到图像：" + fileName;
-                if (log) log(msg);
                 return {
                     status: false,
                     img: null,
@@ -4406,7 +4422,6 @@ var tools = {
             }
             let result = tools.findImage(fileName, threshold);
             if (result.status) {
-                //tools.悬浮球描述("找图" + fileName + "成功(" + (tryCount + 1) + ")");
                 return result
             } else {
                 tools.悬浮球描述(fileName + "未找到(" + (tryCount + 1) + ")");
@@ -4416,6 +4431,8 @@ var tools = {
         }
     },
     findImageAreaForWait: (fileName, x1, y1, x2, y2, options) => {
+        var w = device.width;
+        var h = device.height;
         let timeout, interval, maxTries, log;
         if (options) {
             timeout = options.timeout !== undefined ? options.timeout : 1000 * 60;
@@ -4449,7 +4466,6 @@ var tools = {
                     err: msg
                 }
             }
-            var img = captureScreen();
             var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${fileName}`;
             var targetImg = images.read(targetImgPath);
             if (targetImg) {
@@ -4457,6 +4473,7 @@ var tools = {
                     w: targetImg.width,
                     h: targetImg.height
                 }
+                var img = captureScreen();
                 var r = utils.regionalFindImg2(img, targetImg, x1, y1, x2, y2, 60, 255, 0.7, false, false, "");
                 utils.recycleNull(img);
                 utils.recycleNull(targetImg);
@@ -4468,7 +4485,13 @@ var tools = {
                     };
                 }
             }
-
+            else {
+                return {
+                    status: false,
+                    img: null,
+                    err: "本地无" + fileName
+                }
+            }
             tryCount++;
         }
     },
@@ -4482,7 +4505,8 @@ var tools = {
         return result;
     },
     findImage: (fileName, threshold) => {
-        //tools.shenqiCapture();
+        var w = device.width;
+        var h = device.height;
         var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${fileName}`;
         var targetImg = images.read(targetImgPath);
         if (targetImg) {
@@ -4515,6 +4539,8 @@ var tools = {
         }
     },
     findImageArea(fileName, x1, y1, x2, y2) {
+        var w = device.width;
+        var h = device.height;
         var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${fileName}`;
         var targetImg = images.read(targetImgPath);
         if (targetImg) {
