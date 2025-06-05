@@ -177,7 +177,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.5.5" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.5.8" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -1253,18 +1253,23 @@ var tools = {
             }
         },
         获取人物血量是否飞随机: () => {
-            let img = captureScreen();
+            var result = false;
+            var img = captureScreen();
             var r = images.findMultiColors(img, "#00BF00", [[15, 0, "#00BF00"]], {
                 region: [619, 245, 40, 3],
                 threshold: 35
             });
+            if (r == null || r.x <= 0 || r.y <= 0) {
+                r = images.findMultiColors(img, "#00BF00", [[4, 0, "#00BF00"]], { //如果能找到说明确实没有血了
+                    region: [619, 245, 40, 3],
+                    threshold: 35
+                });
+                if (r && (r.x > 0 || r.y > 0)) {
+                    result = true;
+                }
+            }
             utils.recycleNull(img);
-            if (r && (r.x > 0 || r.y > 0)) {
-                return false;
-            }
-            else {
-                return true;
-            }
+            return result;
             // var p = config.zuobiao.血量范围[fbl];
             // var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
             // var xue = null;
@@ -1523,35 +1528,6 @@ var tools = {
                 interval: 200
             });
             return r.status;
-        },
-        检测是否有蓝药: () => {
-            if (当前总状态 == 总状态.已启动) {
-                var r = tools.findImageForWait("lanyaoge.png", { //药品格子没蓝就回
-                    maxTries: 5,
-                    interval: 200
-                });
-                if (r.status) {
-                    return true;
-                }
-
-                // tools.常用操作.关闭所有窗口();
-                // tools.常用操作.打开背包();
-                // r = tools.findImageForWait("lanyaoge.png", {
-                //     maxTries: 5,
-                //     interval: 300
-                // });
-                // if (r.status) {
-                //     return true;
-                // }
-                // r = tools.findImageForWait("lanyaobao.png", {
-                //     maxTries: 5,
-                //     interval: 300
-                // });
-                // if (r.status) {
-                //     return true;
-                // }
-            }
-            return false;
         },
         怪物血量是否变化: () => {
             // x: [505, 760],
@@ -1940,29 +1916,12 @@ var tools = {
         检测无地牢补给: (强制检测) => {
             if (new Date().getTime() - 上次检测地牢时间 > 无地牢时间戳 || 强制检测) {
                 tools.悬浮球描述("检测无地牢开始");
-                var 背包按钮 = tools.常用操作.打开背包();
-                if (背包按钮.status) {
-                    var 地牢 = config.找色[fbl].地牢;
-                    var tryCount = 0;
-                    while (true) {
-                        if (tryCount >= 6) {
-                            r = tools.常用操作.检测是否在游戏画面();
-                            if (r) {
-                                tools.回城补给在挂机("检测无地牢");
-                            }
-                        }
-                        sleep(666)
-                        var img = captureScreen();
-                        var r = images.findMultiColors(img, 地牢[0].color, [[地牢[1].x, 地牢[1].y, 地牢[1].color], [地牢[2].x, 地牢[2].y, 地牢[2].color]], {
-                            threshold: 50
-                        });
-                        utils.recycleNull(img);
-                        if (r != null && r.x > 0 && r.y > 0) {
-                            break;
-                        }
-                        tryCount++;
+                var r = tools.补给操作.找地牢();
+                if (!r) {
+                    r = tools.常用操作.检测是否在游戏画面();
+                    if (r) {
+                        tools.回城补给在挂机("检测无地牢");
                     }
-                    上次检测地牢时间 = new Date().getTime();
                 }
                 tools.常用操作.关闭所有窗口();
                 tools.悬浮球描述("检测无地牢结束");
@@ -3012,7 +2971,6 @@ var tools = {
             let start = new Date().getTime();
             var 怪物 = [];
             var 总次数 = 0;
-            var 血量阈值次数 = 0;
             var 锁定的怪物 = "";
             var isChange = false;
             var 是否隐身等待 = false;
@@ -3067,14 +3025,7 @@ var tools = {
                     if (挂机参数.随机血量 > 0) {
                         var 是否随机 = tools.常用操作.获取人物血量是否飞随机();
                         if (是否随机) {
-                            if (血量阈值次数 > 0) {
-                                血量阈值次数 = 0;
-                                tools.人物移动.使用随机();
-                            }
-                            血量阈值次数++;
-                        }
-                        else {
-                            血量阈值次数 = 0;
+                            tools.人物移动.使用随机();
                         }
                     }
 
@@ -3192,6 +3143,65 @@ var tools = {
         tools.去挂机图打怪();
     },
     补给操作: {
+        找地牢: () => {
+            var 格子P = config.zuobiao.药品格子面板[fbl];
+            var r = tools.findImageAreaForWait("dilao_gezi.png", 格子P.x1, 格子P.y1, 格子P.x2, 格子P.y2, {
+                maxTries: 5,
+                interval: 200,
+                threshold: 0.8
+            });
+            if (r.status) {
+                return true;
+            }
+
+            var 背包按钮 = tools.常用操作.打开背包();
+            if (背包按钮.status) {
+                r = tools.findImageForWait("dilao.png", {
+                    maxTries: 5,
+                    interval: 200
+                }, 0.8);
+                if (r.status) {
+                    tools.常用操作.关闭所有窗口();
+                    return true;
+                }
+
+                var 地牢 = config.找色[fbl].地牢;
+                var img = captureScreen();
+                var r = images.findMultiColors(img, 地牢[0].color, [[地牢[1].x, 地牢[1].y, 地牢[1].color], [地牢[2].x, 地牢[2].y, 地牢[2].color]], {
+                    threshold: 50
+                });
+                utils.recycleNull(img);
+                if (r != null && r.x > 0 && r.y > 0) {
+                    tools.常用操作.关闭所有窗口();
+                    return true;
+                }
+            }
+
+            tools.常用操作.关闭所有窗口();
+            return false;
+        },
+        // 检测是否有蓝药: () => {
+        找蓝个: () => {
+            var 格子P = config.zuobiao.药品格子面板[fbl];
+            var r = tools.findImageAreaForWait("lanyaoge.png", 格子P.x1, 格子P.y1, 格子P.x2, 格子P.y2, {
+                maxTries: 5,
+                interval: 200
+            });
+            if (r.status) {
+                return true;
+            }
+            var 背包按钮 = tools.常用操作.打开背包();
+            if (背包按钮.status) {
+                r = tools.findImageForWait("lanyaoge.png", {
+                    maxTries: 5,
+                    interval: 200
+                }, 0.8);
+                if (r.status) {
+                    return true;
+                }
+            }
+            return false;
+        },
         获取物品信息: (btnName) => {
             var btn = tools.findImageForWait(btnName, {
                 maxTries: 6,
@@ -3561,7 +3571,7 @@ var tools = {
                         var 跳过 = tools.补给操作.判断选中格子是否跳过(false);
                         if (跳过.status) {
                             tools.悬浮球描述(跳过.msg)
-                            sleep(2000)
+                            // sleep(2000)
                             continue;
                         }
                         r = tools.findImageForWaitClick("beibaofangruBtn.png", {
@@ -3814,6 +3824,7 @@ var tools = {
             // sleep(333, 666);
 
             var 是否从头打开 = true;
+            var 整理P = null;
             for (let index = 1; index <= 5; index++) {
                 for (let index1 = 1; index1 <= 8; index1++) {
                     tools.悬浮球描述(`开始修理${index}_${index1}格子`);
@@ -3835,18 +3846,20 @@ var tools = {
                             maxTries: 10,
                             interval: 500
                         })
+                        整理P = {
+                            x: result.img.x,
+                            y: result.img.y
+                        }
                         sleep(1000)
                     }
                     else {
-                        result = tools.findImageForWait("beibaozhengliBtn.png", {
-                            maxTries: 10,
-                            interval: 500
-                        })
+                        sleep(500)
+                        // result = tools.findImageForWait("beibaozhengliBtn.png", {
+                        //     maxTries: 10,
+                        //     interval: 500
+                        // })
                     }
-                    var 整理P = {
-                        x: result.img.x,
-                        y: result.img.y
-                    }
+
                     var p = 卖装备背包格子[`${index}_${index1}`];
                     var randomX = random(-5, 5);
                     var randomY = random(-5, 5);
@@ -4434,16 +4447,18 @@ var tools = {
     findImageAreaForWait: (fileName, x1, y1, x2, y2, options) => {
         var w = device.width;
         var h = device.height;
-        let timeout, interval, maxTries, log;
+        let timeout, interval, maxTries, log, threshold;
         if (options) {
             timeout = options.timeout !== undefined ? options.timeout : 1000 * 60;
             interval = options.interval !== undefined ? options.interval : 500;
             maxTries = options.maxTries !== undefined ? options.maxTries : 6;
+            threshold = options.threshold !== undefined ? options.threshold : 0.7;
             log = options.log !== undefined ? options.log : false;
         } else {
             timeout = 1000 * 60;
             interval = 500;
             maxTries = 6;
+            threshold = 0.7;
             log = false;
         }
         let start = new Date().getTime();
@@ -4475,7 +4490,7 @@ var tools = {
                     h: targetImg.height
                 }
                 var img = captureScreen();
-                var r = utils.regionalFindImg2(img, targetImg, x1, y1, x2, y2, 60, 255, 0.7, false, false, "");
+                var r = utils.regionalFindImg2(img, targetImg, x1, y1, x2, y2, 60, 255, threshold, false, false, "");
                 utils.recycleNull(img);
                 utils.recycleNull(targetImg);
                 if (r != null && (r.x > 0 || r.y > 0)) {
