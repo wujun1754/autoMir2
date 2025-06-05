@@ -177,7 +177,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.5.1" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.5.5" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -3120,7 +3120,7 @@ var tools = {
                     //var t1 = new Date().getTime();
                     //var t2 = new Date().getTime();
                     //tools.悬浮球临时描述("(" + ((t2 - t1) / 1000).toString() + ")");
-                    tools.悬浮球描述("攻击中(" + parseInt((timeout - (时间戳)) / 1000) + "),怪物(" + 锁定的怪物 + "),血量(" + 血量 + "),isChange(" + isChange + ")[" + 总次数 + "]");
+                    tools.悬浮球描述("攻击中(" + parseInt((timeout - (时间戳)) / 1000) + "),怪物(" + 锁定的怪物 + "),isChange(" + isChange + ")[" + 总次数 + "]");
                     //sleep(111);
                 } else {
                     if (挂机参数.一波怪物死亡拾取 == 0) {
@@ -3222,7 +3222,7 @@ var tools = {
                 value: null
             }
         },
-        判断选中格子是否跳过: (排查装备) => {
+        判断选中格子是否跳过: (排除装备) => {
             var arr = [{
                 name: "中蓝包",
                 pic: "lanyaobao.png"
@@ -3231,25 +3231,28 @@ var tools = {
                 name: "中蓝个",
                 pic: "lanyaoge.png"
             }, {
-                name: "护身符大",
-                pic: "fushenfu.png"
-            }, {
                 name: "修复油",
                 pic: "xiufuyou1.png"
             }];
-            if (挂机参数.备用斩马 == 1 && !排查装备) {
+            if (!排除装备) {
+                arr.push({
+                    name: "护身符大",
+                    pic: "fushenfu.png"
+                })
+            }
+            if (挂机参数.备用斩马 == 1 && !排除装备) {
                 arr.push({
                     name: "斩马",
                     pic: "wuqi_zhanma.png"
                 })
             }
-            if (挂机参数.备用男重盔 == 1 && !排查装备) {
+            if (挂机参数.备用男重盔 == 1 && !排除装备) {
                 arr.push({
                     name: "重盔甲（男）",
                     pic: "zhongkui_nan.png"
                 })
             }
-            if (挂机参数.备用女重盔 == 1 && !排查装备) {
+            if (挂机参数.备用女重盔 == 1 && !排除装备) {
                 arr.push({
                     name: "重盔甲（女）",
                     pic: "zhongkui_nv.png"
@@ -3261,7 +3264,7 @@ var tools = {
             if (r && r.x > 0 && r.y > 0) {
                 for (let index = 0; index < arr.length; index++) {
                     var item = arr[index];
-                    var result = tools.findImageArea(item.pic, r.x, r.y, r.x + 57, r.y + 56);
+                    var result = tools.findImageArea(item.pic, r.x, r.y, r.x + 57, r.y + 56, 0.85);
                     if (result.status) {
                         return {
                             status: true,
@@ -3555,9 +3558,10 @@ var tools = {
                                 err: "重新卖装备"
                             }
                         }
-                        var 跳过 = tools.补给操作.判断选中格子是否跳过();
+                        var 跳过 = tools.补给操作.判断选中格子是否跳过(false);
                         if (跳过.status) {
                             tools.悬浮球描述(跳过.msg)
+                            sleep(2000)
                             continue;
                         }
                         r = tools.findImageForWaitClick("beibaofangruBtn.png", {
@@ -3606,10 +3610,9 @@ var tools = {
                 };
             });
             if (物品集合 != null && 物品集合.length > 0) {
-
                 tools.常用操作.关闭所有窗口();
                 tools.常用操作.打开背包();
-                sleep(666);
+                sleep(1200);
                 var 蓝包数量 = tools.补给操作.获取匹配图片的数量("lanyaobao.png");
                 var 蓝个数量 = tools.补给操作.获取匹配图片的数量("lanyaoge.png");
                 var 护身符数量 = tools.补给操作.获取匹配图片的数量("fushenfu.png");
@@ -3806,13 +3809,10 @@ var tools = {
             var 卖装备背包格子 = config.zuobiao.背包格子于面板偏移量[fbl];
             var 比奇小贩按钮 = config.zuobiao.比奇小贩按钮[fbl]
 
-            tools.常用操作.关闭所有窗口();
-            tools.常用操作.打开背包();
-            sleep(333, 666);
-            tools.findImageForWaitClick("beibaozhengliBtn.png", {
-                maxTries: 10,
-                interval: 666
-            })
+            // tools.常用操作.关闭所有窗口();
+            // tools.常用操作.打开背包();
+            // sleep(333, 666);
+
             var 是否从头打开 = true;
             for (let index = 1; index <= 5; index++) {
                 for (let index1 = 1; index1 <= 8; index1++) {
@@ -3830,10 +3830,19 @@ var tools = {
                         }
                     }
                     sleep(random(333, 555));
-                    result = tools.findImageForWait("beibaozhengliBtn.png", {
-                        maxTries: 10,
-                        interval: 500
-                    })
+                    if (index == 1 && index1 == 1) {
+                        result = tools.findImageForWaitClick("beibaozhengliBtn.png", {
+                            maxTries: 10,
+                            interval: 500
+                        })
+                        sleep(1000)
+                    }
+                    else {
+                        result = tools.findImageForWait("beibaozhengliBtn.png", {
+                            maxTries: 10,
+                            interval: 500
+                        })
+                    }
                     var 整理P = {
                         x: result.img.x,
                         y: result.img.y
@@ -3847,7 +3856,7 @@ var tools = {
                         interval: 500
                     });
                     if (btn.status) {
-                        var 跳过 = tools.补给操作.判断选中格子是否跳过();
+                        var 跳过 = tools.补给操作.判断选中格子是否跳过(true);
                         if (跳过.status) {
                             是否从头打开 = false;
                             tools.悬浮球描述(跳过.msg);
@@ -4024,18 +4033,10 @@ var tools = {
                                 break;
                             }
                             else {
-                                var 物品信息 = tools.补给操作.获取物品信息("beibaoshiyongBtn.png");
-                                if (物品信息.status) {
-                                    var allText = 物品信息.value;
-                                    tools.悬浮球描述(allText);
-                                    if ((allText.indexOf("魔") >= 0 || allText.indexOf("法") >= 0) && (allText.indexOf("药") >= 0 || allText.indexOf("约") >= 0 || allText.indexOf("中") >= 0)) {
-                                        toastLog("魔法药跳过")
-                                        break;
-                                    }
-                                    if ((allText.indexOf("修") >= 0 || allText.indexOf("复") >= 0) && allText.indexOf("油") >= 0) {
-                                        toastLog("修复油跳过")
-                                        break;
-                                    }
+                                var 跳过 = tools.补给操作.判断选中格子是否跳过(true);
+                                if (跳过.status) {
+                                    tools.悬浮球描述(跳过.msg);
+                                    break;
                                 }
                                 r = tools.findImageClick("beibaoshiyongBtn.png");
                                 if (r) {
@@ -4057,7 +4058,7 @@ var tools = {
             var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${picName}`;
             var targetImg = images.read(targetImgPath);
             var r = images.matchTemplate(img, targetImg, {
-                threshold: 0.7,
+                threshold: 0.85,
                 max: 30
             });
             utils.recycleNull(img);
@@ -4538,7 +4539,13 @@ var tools = {
             err: '未找到对应的图片'
         }
     },
-    findImageArea(fileName, x1, y1, x2, y2) {
+    findImageArea(fileName, x1, y1, x2, y2, threshold) {
+        var options = {
+            threshold: 0.7
+        };
+        if (threshold && threshold > 0) {
+            options.threshold = threshold;
+        }
         var w = device.width;
         var h = device.height;
         var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${fileName}`;
@@ -4549,7 +4556,7 @@ var tools = {
                 h: targetImg.height
             }
             var img = captureScreen();
-            var r = utils.regionalFindImg2(img, targetImg, x1, y1, x2, y2, 60, 255, 0.7, false, false, "");
+            var r = utils.regionalFindImg2(img, targetImg, x1, y1, x2, y2, 60, 255, options.threshold, false, false, "");
             utils.recycleNull(img);
             utils.recycleNull(targetImg);
             if (r != null && (r.x > 0 || r.y > 0)) {
