@@ -3266,6 +3266,37 @@ var tools = {
                 }
             }
         },
+        判断选中格子是否存仓库: () => {
+            var arr = [{
+                name: "万年雪霜",
+                pic: "wannianxueshuang.png"
+            },
+            {
+                name: "组队卷",
+                pic: "zuduijuan.png"
+            }];
+            var img = captureScreen();
+            var r = images.findMultiColors(img, "#FFDD3C", [[57, 0, "#FFDD3C"], [0, 56, "#FFDD3C"], [57, 56, "#FFDD3C"]]);
+            utils.recycleNull(img);
+            if (r && r.x > 0 && r.y > 0) {
+                for (let index = 0; index < arr.length; index++) {
+                    const item = arr[index];
+                    var result = tools.findImageArea(item.pic, r.x, r.y, r.x + 57, r.y + 56);
+                    if (result.status) {
+                        return {
+                            status: true,
+                            msg: item.name
+                        }
+                    }
+                }
+            }
+            else {
+                return {
+                    status: false,
+                    msg: "未找到格子选中框"
+                }
+            }
+        },
         判断选中格子是否极品: (btnName) => {
             var btn = tools.findImageForWait(btnName, {
                 maxTries: 6,
@@ -3275,13 +3306,15 @@ var tools = {
                 var p = btn.img;
                 var 装备属性明细 = config.zuobiao.人物面板[fbl].装备属性明细;
                 var img = tools.截屏裁剪(null, p.x + 装备属性明细.x, p.y - 10, p.x, p.y + 装备属性明细.y);
-                
+                var r = images.findMultiColors(img, "#FF0000", [[49, 0, "#FF0000"]], {
+                    threshold: 35
+                });  
+                utils.recycleNull(img);
+                if (r && r.x > 0 && r.y > 0) {
+                    return true
+                }
             }
-            return {
-                status: false,
-                持久: null,
-                value: null
-            }
+            return false;
         },
         回城补给: () => {
             tools.悬浮球描述("回城补给");
