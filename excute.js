@@ -28,36 +28,36 @@ let ocrPladderOCR = $ocr.create({
 let 存入仓库数量 = 0;
 var 挂机点跑图顺序 = 0;
 
-let 认证自检时间 = new Date().getTime() - (20 * 60 * 1000);;
+let 认证自检时间 = new Date().getTime();
 let 认证自检时间戳 = 10 * 1000;
 
-let 画面自检时间 = new Date().getTime() - (20 * 60 * 1000);;
-let 画面自检时间戳 = 60 * 1000 * 2;
+let 画面自检时间 = new Date().getTime();
+let 画面自检时间戳 = 60 * 1000 * 3;
 
 
 var 检查蓝药时间戳 = 1000 * 60;
-var 上次检查蓝药时间 = new Date().getTime() - (20 * 60 * 1000); // 减去 20 分钟; 
+var 上次检查蓝药时间 = new Date().getTime(); // 减去 20 分钟; 
 
 // var 检查武器衣服时间戳 = 1000 * 60 * 6;
-var 上次检查武器衣服时间 = new Date().getTime() - (1000 * 60 * 60 * 48); // 减去 20 分钟; 
+var 上次检查武器衣服时间 = new Date().getTime(); // 减去 20 分钟; 
 
 var 检查宝宝时间戳 = 1000 * 60 * 2;
-var 上次检查宝宝时间 = new Date().getTime() - (20 * 60 * 1000); // 减去 20 分钟; 
+var 上次检查宝宝时间 = new Date().getTime(); // 减去 20 分钟; 
 
 
 var 无地牢时间戳 = 1000 * 60 * 60 * 24;
-var 上次检测地牢时间 = new Date().getTime() - (1000 * 60 * 60 * 48); // 减去 1000 分钟;
+var 上次检测地牢时间 = new Date().getTime(); // 减去 1000 分钟;
 
 
 var 内挂时间戳 = 1000 * 60 * 60 * 24;
-var 上次设置内挂时间 = new Date().getTime() - (1000 * 60 * 60 * 48); // 减去 1000 分钟;
+var 上次设置内挂时间 = new Date().getTime(); // 减去 1000 分钟;
 
 var 组队模式时间戳 = 1000 * 60 * 60 * 24;
-var 上次设置组队模式时间 = new Date().getTime() - (1000 * 60 * 60 * 48); // 减去 1000 分钟;
+var 上次设置组队模式时间 = new Date().getTime(); // 减去 1000 分钟;
 
 
 var 操作模式时间戳 = 1000 * 60 * 60 * 24;
-var 上次设置操作模式时间 = new Date().getTime() - (1000 * 60 * 60 * 48); // 减去 1000 分钟;
+var 上次设置操作模式时间 = new Date().getTime(); // 减去 1000 分钟;
 
 var 上次所在地图 = "";
 var 上次坐标截图 = null;
@@ -177,7 +177,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.6.3" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.6.6" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -963,28 +963,25 @@ var tools = {
             tools.常用操作.关闭所有窗口();
         },
         初始化挂机: () => {
-            let start = new Date().getTime();
-            tools.常用操作.关闭所有窗口();
-            上次检测地牢时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            上次检查蓝药时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            上次检查武器衣服时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            上次检查宝宝时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            上次设置内挂时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            上次设置组队模式时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            上次设置操作模式时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
+            // let start = new Date().getTime();
+            // tools.常用操作.关闭所有窗口();
+            // 上次检测地牢时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
+            // 上次检查蓝药时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
+            // 上次检查武器衣服时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
+            // 上次检查宝宝时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
+            // 上次设置内挂时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
+            // 上次设置组队模式时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
+            // 上次设置操作模式时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
 
+            tools.执行时间戳.检测宝宝(true);
 
-            tools.执行时间戳.检测画面();
+            tools.执行时间戳.检测无地牢补给(true);
 
-            tools.执行时间戳.检测认证();
+            tools.执行时间戳.检测操作模式(true);
 
-            tools.执行时间戳.检测蓝药();
+            tools.执行时间戳.检测内挂(true);
 
-            tools.执行时间戳.检测武器衣服();
-
-            tools.执行时间戳.检测无地牢补给();
-
-
+            tools.执行时间戳.检测组队模式(true);
         },
         初始化攻击面板loops: () => {
             tools.悬浮球描述("设置攻击面板开始");
@@ -1416,7 +1413,7 @@ var tools = {
                 if (r) {
                     r = tools.常用操作.读取聊天框最后一行信息();
                     tools.悬浮球描述(r + "(" + tryCount + ")");
-                    if ((r.indexOf("行") >= 0 || r.indexOf("动") >= 0 || r.indexOf("属") >= 0 || r.indexOf("下") >= 0) && (r.indexOf("攻") >= 0 || r.indexOf("击") >= 0)) {                       
+                    if ((r.indexOf("行") >= 0 || r.indexOf("动") >= 0 || r.indexOf("属") >= 0 || r.indexOf("下") >= 0) && (r.indexOf("攻") >= 0 || r.indexOf("击") >= 0)) {
                         tools.常用操作.初始化攻击面板loops();
                         return true;
                     }
@@ -1719,25 +1716,16 @@ var tools = {
                 r: null
             };
             var regions = [
-                [50, 32, 1100, 3],
-                [50, 75, 1100, 3],
-                [50, 117, 1100, 3],
-                [50, 159, 1100, 3],
-                [50, 201, 1100, 3],
-                [50, 245, 557, 3],
-                [670, 245, 430, 3],
-                [50, 287, 1100, 3],
-                [50, 330, 1100, 3],
-                [50, 373, 1100, 3],
-                [50, 415, 1100, 3],
-                [50, 457, 1100, 3],
-                [50, 500, 1100, 3],
+                [0, 0, 617, 720],
+                [663, 0, 617, 720],
+                [617, 0, 43, 240],
+                [617, 250, 43, 470],
             ]
             for (let index = 0; index < regions.length; index++) {
                 var reg = regions[index];
-                var r = images.findMultiColors(img, color, [[10, 0, color], [24, 0, color]], {
+                var r = images.findMultiColors(img, color, [[20, 0, color]], {
                     region: reg,
-                    threshold: 50
+                    threshold: 30
                 });
                 if (r && (r.x > 0 || r.y > 0)) {
                     result = {
@@ -1753,17 +1741,25 @@ var tools = {
         向宝宝移动: (result) => {
             var r = result.r;
             var 人物中心 = config.zuobiao.人物中心[fbl];
-            if (r.y < 人物中心.y && (人物中心.y - r.y) > 43) {
-                tools.人物移动.上走一步(parseInt((人物中心.y - r.y) / 43 * 1000));
+            var 是否移动 = false;
+            if (r.y < 人物中心.y && (人物中心.y - r.y) > 40) {
+                tools.人物移动.上走一步(parseInt((人物中心.y - r.y) / 40 * 1000));
+                是否移动 = true;
             }
-            if (r.y > 人物中心.y && (r.y - 人物中心.y) > 43) {
-                tools.人物移动.下走一步(parseInt((r.y - 人物中心.y) / 43 * 1000));
+            if (r.y > 人物中心.y && (r.y - 人物中心.y) > 40) {
+                tools.人物移动.下走一步(parseInt((r.y - 人物中心.y) / 40 * 1000));
+                是否移动 = true;
             }
             if (r.x < 人物中心.x && (人物中心.x - r.x) > 65) {
                 tools.人物移动.左走一步(parseInt((人物中心.x - r.x) / 65 * 1000));
+                是否移动 = true;
             }
             if (r.x > 人物中心.x && (r.x - 人物中心.x) > 65) {
                 tools.人物移动.右走一步(parseInt((r.x - 人物中心.x) / 65 * 1000));
+                是否移动 = true;
+            }
+            if (!是否移动) {
+                tools.人物移动.随机走一步(random(1500, 2500));
             }
         },
         身边锁定怪物: () => {
@@ -1775,6 +1771,7 @@ var tools = {
             }
             utils.recycleNull(imgSmall);
             utils.recycleNull(huiduImg);
+
             return r;
         },
         关闭所有窗口: (isClick, time) => {
@@ -1814,8 +1811,8 @@ var tools = {
                 tools.悬浮球描述("认证自检结束");
             }
         },
-        检测宝宝: () => {
-            if (new Date().getTime() - 上次检查宝宝时间 > 检查宝宝时间戳) {
+        检测宝宝: (强制检测) => {
+            if (new Date().getTime() - 上次检查宝宝时间 > 检查宝宝时间戳 || 强制检测) {
                 if (挂机参数.召唤骷髅 == 1 || 挂机参数.召唤神兽 == 1) {
                     tools.悬浮球描述("检查宝宝开始");
                     var r = tools.常用操作.检测宝宝();
@@ -1865,7 +1862,7 @@ var tools = {
                 tools.悬浮球描述("检查武器衣服持久结束");
             }
         },
-        检测操作模式: () => {
+        检测操作模式: (强制检测) => {
             if (new Date().getTime() - 上次设置操作模式时间 >= 操作模式时间戳) {
                 tools.悬浮球描述("设置操作模式开始");
                 tools.常用操作.初始化操作模式(2);
@@ -1882,8 +1879,8 @@ var tools = {
                 tools.悬浮球描述("设置内挂参数结束");
             }
         },
-        检测组队模式: () => {
-            if (new Date().getTime() - 上次设置组队模式时间 >= 组队模式时间戳) {
+        检测组队模式: (强制检测) => {
+            if (new Date().getTime() - 上次设置组队模式时间 >= 组队模式时间戳 || 强制检测) {
                 tools.悬浮球描述("设置组队模式开始");
                 tools.常用操作.开启组队();
                 上次设置组队模式时间 = new Date().getTime();
@@ -2938,7 +2935,7 @@ var tools = {
             }
             click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
             r = tools.findImageAreaForWait("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1], {
-                maxTries: 3,
+                maxTries: 5,
                 interval: 100
             })
             if (r.status) {
@@ -2948,7 +2945,7 @@ var tools = {
                 isShiQu = true;
             }
             else {
-                //tools.悬浮球描述("锁定失败");
+                tools.悬浮球描述("锁定失败");
                 isFind = false;
             }
         }
@@ -2986,7 +2983,12 @@ var tools = {
                     }
                     return false;
                 }
-                r = tools.findImageArea("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1])
+                //     r = tools.findImageArea("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1], 0.6)
+                r = tools.findImageAreaForWait("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1], {
+                    maxTries: 2,
+                    interval: 100,
+                    threshold: 0.7
+                })
                 if (r.status) {
                     isChange = tools.常用操作.怪物血量是否变化();
                     if (锁定的怪物.length <= 0) {
@@ -2994,8 +2996,11 @@ var tools = {
                     }
                     if (挂机参数.只打满血怪 == 1) {
                         if (isChange && 锁定的怪物.length <= 0) {
-                            click(random(726, 736), random(25, 35));
-                            return true;
+                            锁定的怪物 = tools.常用操作.身边锁定怪物().replace(/\./g, "").replace(/,/g, "").replace(/:/g, "");
+                            if (锁定的怪物.length <= 0) {
+                                click(random(726, 736), random(25, 35));
+                                return true;
+                            }
                         }
                     }
                     怪物 = tools.常用操作.获取身边怪物数据();
@@ -3009,17 +3014,18 @@ var tools = {
                             tools.常用操作.启动隐身();
                             上一次隐身 = new Date().getTime();
                         }
-                        if (挂机参数.隐身走动 == 1 && !是否隐身等待) {
-                            var r = tools.常用操作.扫描宝宝();
-                            if (r.status) {
-                                tools.常用操作.向宝宝移动(r);
-                                //tools.悬浮球临时描述(JSON.stringify(r));
-                                //tools.常用操作.点击人物();
-                                click(random(726, 736), random(25, 35));
-                                sleep(random(666, 999));
-                                click(random(选择怪物攻击.x[0], 选择怪物攻击.x[1]), random(选择怪物攻击.y[0], 选择怪物攻击.y[1]))//防止点到人物，再次选择怪物
-                                是否隐身等待 = true;
-                            }
+
+                    }
+                    if (挂机参数.隐身走动 == 1 && !是否隐身等待 && 锁定的怪物.length > 0) {
+                        var r = tools.常用操作.扫描宝宝();
+                        if (r.status) {
+                            //tools.常用操作.点击人物();
+                            tools.常用操作.向宝宝移动(r);
+                            //tools.悬浮球临时描述(JSON.stringify(r));
+                            // click(random(726, 736), random(25, 35));
+                            // sleep(random(666, 999));
+                            // click(random(选择怪物攻击.x[0], 选择怪物攻击.x[1]), random(选择怪物攻击.y[0], 选择怪物攻击.y[1]))//防止点到人物，再次选择怪物
+                            是否隐身等待 = true;
                         }
                     }
 
@@ -3078,6 +3084,8 @@ var tools = {
                     if (挂机参数.一波怪物死亡拾取 == 0) {
                         tools.开始拾取();
                     }
+                    toastLog("怪物死亡")
+                    //tools.悬浮球临时描述("")
                     break;
                 }
             }
@@ -3239,7 +3247,7 @@ var tools = {
                 value: null
             }
         },
-        判断选中格子是否跳过: (排除装备) => {
+        判断选中格子是否跳过: (排除装备, btnName) => {
             var arr = [{
                 name: "中蓝包",
                 pic: "lanyaobao.png"
@@ -3283,10 +3291,17 @@ var tools = {
                     var item = arr[index];
                     var result = tools.findImageArea(item.pic, r.x, r.y, r.x + 57, r.y + 56, 0.85);
                     if (result.status) {
-                        return {
-                            status: true,
-                            msg: item.name + "跳过"
+                        if (item.name == "wuqi_zhanma.png" && btnName != null && btnName.length > 0) {
+                            var info = tools.补给操作.获取物品信息(btnName);
+                            if (info.status && info.value.indexOf("马")) {
+                                return {
+                                    status: true,
+                                    msg: item.name + "跳过",
+                                    pic: item.name
+                                }
+                            }
                         }
+
                     }
                 }
                 return {
@@ -3346,7 +3361,7 @@ var tools = {
                 var 装备属性明细 = config.zuobiao.人物面板[fbl].装备属性明细;
                 //var img = tools.截屏裁剪(null, p.x + 装备属性明细.x, p.y - 10, p.x, p.y + 装备属性明细.y);
                 var img = captureScreen();
-                var r = images.findMultiColors(img, "#FF0000", [[30, 0, "#FF0000"], [38, 0, "#FF0000"],[49, 0, "#FF0000"]], {
+                var r = images.findMultiColors(img, "#FF0000", [[30, 0, "#FF0000"], [38, 0, "#FF0000"], [49, 0, "#FF0000"]], {
                     region: [p.x + 装备属性明细.x, p.y - 10, 装备属性明细.x * -1, 装备属性明细.y],
                     threshold: 30
                 });
@@ -3526,6 +3541,8 @@ var tools = {
                 x: r.img.x,
                 y: r.img.y
             }
+            var 是否已跳过衣服 = false;
+            var 是否已跳过武器 = false;
             for (let index = 1; index <= 5; index++) {
                 for (let index1 = 1; index1 <= 8; index1++) {
                     tools.执行时间戳.检测认证();
@@ -3558,12 +3575,20 @@ var tools = {
                         });
                         fangruName = "beibaofangruBtn1.png";
                     }
-                    if (r.status) { 
-                        var 跳过 = tools.补给操作.判断选中格子是否跳过(false);
-                        if (跳过.status) {
-                            tools.悬浮球描述(跳过.msg)
-                            // sleep(2000)
-                            continue;
+                    if (r.status) {
+                        var info = tools.补给操作.判断选中格子是否跳过(false, fangruName);
+                        if (info.status) {
+                            var 是否跳过 = true;
+                            if (info.pic == "wuqi_zhanma.png" && 是否已跳过武器) {
+                                是否跳过 = false;
+                            }
+                            if ((info.pic == "zhongkui_nan.png" || info.pic == "zhongkui_nv.png") && 是否已跳过衣服) {
+                                是否跳过 = false;
+                            }
+                            if (是否跳过) {
+                                tools.悬浮球描述(跳过.msg)
+                                continue;
+                            }
                         }
                         var 是否极品 = tools.补给操作.判断选中格子是否极品(fangruName);
                         if (是否极品) {
@@ -3583,7 +3608,7 @@ var tools = {
                                 err: "重新卖装备"
                             }
                         }
-                       
+
                         r = tools.findImageForWaitClick("beibaofangruBtn.png", {
                             maxTries: 10,
                             interval: 500
