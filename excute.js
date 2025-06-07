@@ -968,27 +968,6 @@ var tools = {
             }
             tools.常用操作.关闭所有窗口();
         },
-        初始化挂机: () => {
-            // let start = new Date().getTime();
-            // tools.常用操作.关闭所有窗口();
-            // 上次检测地牢时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            // 上次检查蓝药时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            // 上次检查武器衣服时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            // 上次检查宝宝时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            // 上次设置内挂时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            // 上次设置组队模式时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            // 上次设置操作模式时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-
-            //tools.执行时间戳.检测宝宝(true);
-
-            tools.执行时间戳.检测无地牢补给(true);
-
-            tools.执行时间戳.检测操作模式(true);
-
-            tools.执行时间戳.检测内挂(true);
-
-            tools.执行时间戳.检测组队模式(true);
-        },
         初始化攻击面板loops: () => {
             tools.悬浮球描述("设置攻击面板开始");
             var r = null;
@@ -1111,6 +1090,14 @@ var tools = {
                 r = config.zuobiao.盟重大地图偏移[fbl].石墓四层.打怪点;
             } else if (挂机参数.挂机地图 == "石墓五层") {
                 r = config.zuobiao.盟重大地图偏移[fbl].石墓五层.打怪点;
+            } else if (挂机参数.挂机地图 == "牛魔寺庙二层") {
+                r = config.zuobiao.苍月大地图偏移[fbl].牛魔寺庙二层.打怪点;
+            } else if (挂机参数.挂机地图 == "牛魔寺庙三层") {
+                r = config.zuobiao.苍月大地图偏移[fbl].牛魔寺庙三层.打怪点;
+            } else if (挂机参数.挂机地图 == "牛魔寺庙四层") {
+                r = config.zuobiao.苍月大地图偏移[fbl].牛魔寺庙四层.打怪点;
+            } else if (挂机参数.挂机地图 == "牛魔寺庙五层") {
+                r = config.zuobiao.苍月大地图偏移[fbl].牛魔寺庙五层.打怪点;
             }
             else {
                 toastLog("不支持" + 挂机参数.挂机地图 + "地图")
@@ -1123,89 +1110,6 @@ var tools = {
                 status: true,
                 result: r
             }
-        },
-        点击挂机坐标: (是否强制跑图) => {
-            var 是否跑图 = false;
-            if (是否强制跑图) {
-                toastLog("强制跑图")
-                是否跑图 = true;
-            }
-            else if (上次坐标截图 == null) {
-                是否跑图 = true;
-                上次坐标截图 = tools.常用操作.截图当前坐标();
-            }
-            else {
-                var r = tools.人物移动.跑图坐标是否变化();
-                if (r) {
-                    var 当前坐标截图 = tools.常用操作.截图当前坐标();
-                    utils.recycleNull(上次坐标截图);
-                    上次坐标截图 = 当前坐标截图;
-                    是否跑图 = false;
-                    tools.悬浮球描述("人物跑动中")
-                }
-                else {
-                    是否跑图 = true;
-                    tools.悬浮球描述("人物未移动")
-                }
-            }
-            var 挂机坐标s = tools.常用操作.获取挂机坐标();
-            if (!挂机坐标s.status) {
-                return
-            }
-            if (!是否跑图) {
-                return;
-            }
-            if (挂机参数.地图拖动 == 1) {
-                tools.人物移动.拖动大地图到中心();
-            }
-            else {
-                tools.常用操作.打开大地图();
-            }
-            var r = null;
-            if (挂机参数.随机跑图 == 1) {
-                var index = random(0, 挂机坐标s.result.length - 1)
-                r = 挂机坐标s.result[index];
-                msg = "随机(" + (index + 1) + ")挂点"
-            }
-            else {
-                r = 挂机坐标s.result[挂机点跑图顺序];
-                var msg = "";
-                if (挂机坐标点跑图次数 >= r.坐标范围.点击次数) {
-                    挂机坐标点跑图次数 = 0;
-                    挂机点跑图顺序++;
-                    msg = "切第(" + (挂机点跑图顺序) + ")挂点"
-                }
-                else {
-                    挂机坐标点跑图次数++;
-                    msg = "继续跑(" + (挂机点跑图顺序 + 1) + ")挂点"
-                }
-                if (挂机点跑图顺序 >= 挂机坐标s.result.length) {
-                    挂机点跑图顺序 = 0;
-                }
-            }
-
-            tools.悬浮球描述(msg);
-            var closeImg = null;
-            var closeBtn = tools.findImageForWait("closeBtn.png", {
-                maxTries: 10,
-                interval: 200
-            })
-            if (closeBtn.status) {
-                closeImg = closeBtn.img;
-            } else {
-                return;
-            }
-            var x = closeImg.x + random(r.x[0], r.x[1]);
-            var y = closeImg.y + random(r.y[0], r.y[1]);
-            click(x, y)
-            if (挂机参数.地图拖动 == 1) {
-                sleep(200);
-                tools.人物移动.拖动大地图到边缘();
-            }
-            else {
-                tools.常用操作.关闭所有窗口();
-            }
-            tools.挂机打怪.激活拾取后操作();
         },
         获取人物坐标: () => { //注意这个截图不能太小了，否则会造成识别失败
             var p = config.zuobiao.人物坐标范围[fbl];
@@ -1254,36 +1158,6 @@ var tools = {
             } else {
                 return null;
             }
-        },
-        获取人物血量是否飞随机: () => {
-            var result = false;
-            var img = captureScreen();
-            var r = images.findMultiColors(img, "#00BF00", [[15, 0, "#00BF00"]], {
-                region: [619, 245, 40, 3],
-                threshold: 35
-            });
-            if (r == null || r.x <= 0 || r.y <= 0) {
-                r = images.findMultiColors(img, "#00BF00", [[4, 0, "#00BF00"]], { //如果能找到说明确实没有血了
-                    region: [619, 245, 40, 3],
-                    threshold: 35
-                });
-                if (r && (r.x > 0 || r.y > 0)) {
-                    result = true;
-                }
-            }
-            utils.recycleNull(img);
-            return result;
-            // var p = config.zuobiao.血量范围[fbl];
-            // var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
-            // var xue = null;
-            // if (result != null && result.length > 0) {
-            //     try {
-            //         xue = parseInt(result[0].text);
-            //     } catch (error) {
-            //         xue = null;
-            //     }
-            // }
-            // return xue;
         },
         检查背包是否有东西: (格子) => {
             tools.常用操作.关闭所有窗口();
@@ -2046,7 +1920,7 @@ var tools = {
                     if (时间戳 > timeout) {
                         var isok = tools.人物移动.使用随机();
                         if (!isok) {
-                            tools.常用操作.点击挂机坐标(true);
+                            tools.挂机打怪.点击挂机坐标(true);
                             sleep(1000 * 30);
                         }
                         return false;
@@ -2197,9 +2071,6 @@ var tools = {
             if (当前总状态 == 总状态.已启动) {
                 tools.人物移动.去挂机地图Loop();
             }
-            // if (当前总状态 == 总状态.已启动) {
-            //     tools.常用操作.初始化挂机();
-            // }
         },
         开始拾取: () => {
             var 按钮集合 = config.zuobiao.按钮集合[fbl];
@@ -2245,6 +2116,134 @@ var tools = {
                     tools.悬浮球描述("拾取(" + parseInt(((挂机参数.拾取时长 * 1000) - (new Date().getTime() - start)) / 1000) + ")");
                 }
             }
+        },
+        初始化挂机: () => {
+            // let start = new Date().getTime();
+            // tools.常用操作.关闭所有窗口();
+            // 上次检测地牢时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
+            // 上次检查蓝药时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
+            // 上次检查武器衣服时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
+            // 上次检查宝宝时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
+            // 上次设置内挂时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
+            // 上次设置组队模式时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
+            // 上次设置操作模式时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
+
+            //tools.执行时间戳.检测宝宝(true);
+
+            tools.执行时间戳.检测无地牢补给(true);
+
+            tools.执行时间戳.检测操作模式(true);
+
+            tools.执行时间戳.检测内挂(true);
+
+            tools.执行时间戳.检测组队模式(true);
+        },
+        点击挂机坐标: (是否强制跑图) => {
+            var 是否跑图 = false;
+            if (是否强制跑图) {
+                toastLog("强制跑图")
+                是否跑图 = true;
+            }
+            else if (上次坐标截图 == null) {
+                是否跑图 = true;
+                上次坐标截图 = tools.常用操作.截图当前坐标();
+            }
+            else {
+                var r = tools.人物移动.跑图坐标是否变化();
+                if (r) {
+                    var 当前坐标截图 = tools.常用操作.截图当前坐标();
+                    utils.recycleNull(上次坐标截图);
+                    上次坐标截图 = 当前坐标截图;
+                    是否跑图 = false;
+                    tools.悬浮球描述("人物跑动中")
+                }
+                else {
+                    是否跑图 = true;
+                    tools.悬浮球描述("人物未移动")
+                }
+            }
+            var 挂机坐标s = tools.常用操作.获取挂机坐标();
+            if (!挂机坐标s.status) {
+                return
+            }
+            if (!是否跑图) {
+                return;
+            }
+            if (挂机参数.地图拖动 == 1) {
+                tools.人物移动.拖动大地图到中心();
+            }
+            else {
+                tools.常用操作.打开大地图();
+            }
+            var r = null;
+            if (挂机参数.随机跑图 == 1) {
+                var index = random(0, 挂机坐标s.result.length - 1)
+                r = 挂机坐标s.result[index];
+                msg = "随机(" + (index + 1) + ")挂点"
+            }
+            else {
+                r = 挂机坐标s.result[挂机点跑图顺序];
+                var msg = "";
+                if (挂机坐标点跑图次数 >= r.坐标范围.点击次数) {
+                    挂机坐标点跑图次数 = 0;
+                    挂机点跑图顺序++;
+                    msg = "切第(" + (挂机点跑图顺序) + ")挂点"
+                }
+                else {
+                    挂机坐标点跑图次数++;
+                    msg = "继续跑(" + (挂机点跑图顺序 + 1) + ")挂点"
+                }
+                if (挂机点跑图顺序 >= 挂机坐标s.result.length) {
+                    挂机点跑图顺序 = 0;
+                }
+            }
+
+            tools.悬浮球描述(msg);
+            var closeImg = null;
+            var closeBtn = tools.findImageForWait("closeBtn.png", {
+                maxTries: 10,
+                interval: 200
+            })
+            if (closeBtn.status) {
+                closeImg = closeBtn.img;
+            } else {
+                return;
+            }
+            var x = closeImg.x + random(r.x[0], r.x[1]);
+            var y = closeImg.y + random(r.y[0], r.y[1]);
+            click(x, y)
+            if (挂机参数.地图拖动 == 1) {
+                sleep(200);
+                tools.人物移动.拖动大地图到边缘();
+            }
+            else {
+                tools.常用操作.关闭所有窗口();
+            }
+            tools.挂机打怪.激活拾取后操作();
+        },
+        获取人物血量是否飞随机: () => {
+            var result = false;
+            var img = captureScreen();
+            var r = images.findMultiColors(img, "#BC0916", [[0, -24, "#FF4246"]], {
+                region: [365, 618, 3, 26],
+                threshold: 35
+            });
+            utils.recycleNull(img);
+            if (r && (r.x > 0 || r.y > 0)) {
+                result = true;
+            }
+            return result;
+            // var p = config.zuobiao.血量范围[fbl];
+            // var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
+            // var xue = null;
+            // if (result != null && result.length > 0) {
+            //     try {
+            //         xue = parseInt(result[0].text);
+            //     } catch (error) {
+            //         xue = null;
+            //     }
+            // }
+            // return xue;
         },
     },
     人物移动: {
@@ -2905,7 +2904,7 @@ var tools = {
                     当前地图 = tools.常用操作.获取人物地图();
                     var 是否沿途打怪 = config.沿途打怪点.some(item => item === 当前地图)
                     if (当前地图 == 目的地) { //说明到目的地
-                        tools.常用操作.初始化挂机();
+                        tools.挂机打怪.初始化挂机();
                         break;
                     }
                     if (上次坐标截图 == null) {
@@ -2955,8 +2954,8 @@ var tools = {
                             }
                             if (r) {
                                 打怪次数++;
-                                toast("继续攻击");
-                                //tools.悬浮球描述("继续攻击")
+                                //toast("继续攻击");
+                                tools.悬浮球描述("继续攻击")
                                 continue;
                             } else {
                                 break;
@@ -4830,11 +4829,6 @@ var tools = {
         utils.recycleNull(img);
         return newImg;
     },
-    点击游戏固定按钮: (btnName) => {
-        var fbl = `${device.width}_${device.height}`;
-        var 按钮 = config.zuobiao.按钮集合[fbl][btnName];
-        click(random(按钮.x[0], 按钮.x[1]), random(按钮.y[0], 按钮.y[1]))
-    },
     获取屏幕高宽: () => { // 获取当前屏幕方向
         let rotation = context.getSystemService(context.WINDOW_SERVICE)
             .getDefaultDisplay()
@@ -5344,7 +5338,7 @@ threads.start(function () {
                 var 当前地图 = tools.常用操作.获取人物地图();
                 if (当前地图 == 挂机参数.挂机地图) {
                     try {
-                        tools.常用操作.点击挂机坐标(打怪次数 > 0 ? true : false);
+                        tools.挂机打怪.点击挂机坐标(打怪次数 > 0 ? true : false);
                     } catch (e) {
                         toastLog('点击挂机坐标异常' + e);
                     }
