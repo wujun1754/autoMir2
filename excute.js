@@ -14,7 +14,6 @@ if (!floaty.checkPermission()) {
 }
 let fbl = `${device.width}_${device.height}`;
 let 项目路径 = "/sdcard/Download/";
-const { toast } = require("./common/utils");
 // 配置类
 let config = require("/sdcard/Download/common/config.js")
 // 工具类
@@ -167,6 +166,10 @@ let tabW = 0;
 var 是否启动初始化过 = false;
 var isStart = false
 var isShowConfig = false
+var 宝宝位置信息 = {
+    p: null,
+    time: null
+}
 let windowCommon = floaty.window(
     <frame padding="2" id="xuanFuCommon" bg="#000000">
         <horizontal>
@@ -831,24 +834,6 @@ var tools = {
             }
             return isok;
         },
-        点击召唤骷髅: () => {
-            tools.常用操作.点击人物();
-            for (let index = 0; index < 10; index++) {
-                tools.findImageClick("zhaohuankulouBtn.png");
-                sleep(110)
-            }
-        },
-        点击召唤神兽: () => {
-            tools.常用操作.点击人物();
-            // var r = tools.findImageForWaitClick("zhaohuanshenshouBtn.png", {
-            //     maxTries: 5,
-            //     interval: 666
-            // });
-            for (let index = 0; index < 10; index++) {
-                tools.findImageClick("zhaohuanshenshouBtn.png");
-                sleep(110)
-            }
-        },
         获取角色面板: () => {
             var r = tools.findImageForWaitClick("rewumianbanBtn.png", {
                 maxTries: 10,
@@ -877,22 +862,6 @@ var tools = {
                 interval: 222
             });
             return 卸下按钮;
-        },
-        启动隐身: () => {
-            // if (挂机参数.隐身走动 == 1) {
-            //     tools.常用操作.点击人物();
-            // }
-            for (let index = 0; index < 8; index++) {
-                tools.findImageClick("yinshenBtn.png");
-                sleep(110)
-            }
-        },
-        打符: () => {
-            var 按钮集合 = config.zuobiao.按钮集合[fbl];
-            for (let index = 0; index < 8; index++) {
-                click(random(按钮集合.打符.x[0], 按钮集合.打符.x[1]), random(按钮集合.打符.y[0], 按钮集合.打符.y[1]));
-                sleep(110)
-            }
         },
         开启组队: () => {
             var p = config.zuobiao.按钮集合[fbl].组队;
@@ -1914,6 +1883,7 @@ var tools = {
                 var isChange = false;
                 var 血量预警 = false;
                 var 是否隐身等待 = false;
+                var 血量阈值次数 = 0;
                 while (当前总状态 == 总状态.已启动) {
                     总次数++;
                     var 时间戳 = new Date().getTime() - start;
@@ -1973,9 +1943,15 @@ var tools = {
                         }
 
                         if (挂机参数.随机血量 > 0) {
-                            var 血量预警 = tools.常用操作.获取人物血量是否飞随机();
+                            var 血量预警 = tools.挂机打怪.获取人物血量是否飞随机();
                             if (血量预警) {
-                                tools.人物移动.使用随机();
+                                血量阈值次数++;
+                                if (血量阈值次数 >= 2) {
+                                    tools.人物移动.使用随机();
+                                }
+                            }
+                            else {
+                                血量阈值次数 = 0;
                             }
                         }
 
@@ -2018,13 +1994,10 @@ var tools = {
 
                         tools.执行时间戳.检测蓝药();
 
-                        tools.执行时间戳.检测无地牢补给();
+                        //tools.执行时间戳.检测无地牢补给();
 
                         tools.执行时间戳.检测武器衣服();
 
-                        if (挂机参数.无蓝回城 == 1) {
-
-                        }
                         //var t1 = new Date().getTime();
                         //var t2 = new Date().getTime();
                         //tools.悬浮球临时描述("(" + ((t2 - t1) / 1000).toString() + ")");
@@ -2224,12 +2197,12 @@ var tools = {
         获取人物血量是否飞随机: () => {
             var result = false;
             var img = captureScreen();
-            var r = images.findMultiColors(img, "#BC0916", [[0, -24, "#FF4246"]], {
+            var r = images.findMultiColors(img, "#FF4246", [[0, -24, "#BC0916"]], {
                 region: [365, 618, 3, 26],
                 threshold: 35
             });
             utils.recycleNull(img);
-            if (r && (r.x > 0 || r.y > 0)) {
+            if (r == null || r.x <= 0 || r.y <= 0) {
                 result = true;
             }
             return result;
@@ -2244,6 +2217,22 @@ var tools = {
             //     }
             // }
             // return xue;
+        },
+        启动隐身: () => {
+            // if (挂机参数.隐身走动 == 1) {
+            //     tools.常用操作.点击人物();
+            // }
+            for (let index = 0; index < 7; index++) {
+                tools.findImageClick("yinshenBtn.png");
+                sleep(110)
+            }
+        },
+        打符: () => {
+            var 按钮集合 = config.zuobiao.按钮集合[fbl];
+            for (let index = 0; index < 8; index++) {
+                click(random(按钮集合.打符.x[0], 按钮集合.打符.x[1]), random(按钮集合.打符.y[0], 按钮集合.打符.y[1]));
+                sleep(110)
+            }
         },
     },
     人物移动: {
