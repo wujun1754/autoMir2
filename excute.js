@@ -14,6 +14,7 @@ if (!floaty.checkPermission()) {
 }
 let fbl = `${device.width}_${device.height}`;
 let 项目路径 = "/sdcard/Download/";
+const { toast } = require("./common/utils");
 // 配置类
 let config = require("/sdcard/Download/common/config.js")
 // 工具类
@@ -1494,7 +1495,7 @@ var tools = {
                     toastLog("是否用过备用武器 = true")
                 }
                 if (!isSuccess) {
-                    var isOk = tools.喝修复油();
+                    var isOk = tools.补给操作.喝修复油();
                     if (isOk) {
                         toastLog("喝修复油成功")
                     }
@@ -1861,7 +1862,7 @@ var tools = {
                 if (!r) {
                     r = tools.常用操作.检测是否在游戏画面();
                     if (r) {
-                        tools.回城补给在挂机("检测蓝药");
+                        tools.挂机打怪.回城补给在挂机("检测蓝药");
                     }
                 }
                 上次检查蓝药时间 = new Date().getTime();
@@ -1880,7 +1881,7 @@ var tools = {
                 if (r) {
                     r = tools.常用操作.检测是否在游戏画面();
                     if (r) {
-                        tools.回城补给在挂机("检测武器衣服");
+                        tools.挂机打怪.回城补给在挂机("检测武器衣服");
                     }
                 }
                 上次检查武器衣服时间 = new Date().getTime();
@@ -1929,7 +1930,7 @@ var tools = {
                     }
                     tools.常用操作.小退后开始登录();
                     当前总状态 = 总状态.已启动;
-                    tools.去挂机图打怪();
+                    tools.挂机打怪.去挂机图打怪();
                     tools.悬浮球描述("登录成功");
                 }
                 tools.常用操作.初始化攻击面板loops();
@@ -1944,7 +1945,7 @@ var tools = {
             //     if (!r) {
             //         r = tools.常用操作.检测是否在游戏画面();
             //         if (r) {
-            //             tools.回城补给在挂机("检测无地牢");
+            //             tools.挂机打怪.回城补给在挂机("检测无地牢");
             //         }
             //     }
             //     tools.悬浮球描述("检测无地牢结束");
@@ -1966,7 +1967,7 @@ var tools = {
                 // if (r) {
                 //     isFind = true;
                 // }
-                r = tools.找满血怪();
+                r = tools.挂机打怪.找满血怪();
                 if (r && (r.x > 0 || r.y > 0)) {
                     click(r.x + random(12, 20), r.y + random(-3, 3))
                     isFind = true;
@@ -1978,7 +1979,7 @@ var tools = {
                     isFind = true;
                     click(random(选择怪物攻击.x[0], 选择怪物攻击.x[1]), random(选择怪物攻击.y[0], 选择怪物攻击.y[1]))
                 }
-                // r = tools.找非满血怪();
+                // r = tools.挂机打怪.找非满血怪();
                 // if (r && (r.x > 0 || r.y > 0)) {
                 //     click(random(选择怪物攻击.x[0], 选择怪物攻击.x[1]), random(选择怪物攻击.y[0], 选择怪物攻击.y[1]))
                 //     isFind = true;
@@ -2169,15 +2170,42 @@ var tools = {
             //tools.悬浮球描述("("+minute+":"+second+")");
             return isFind;
         },
+        找满血怪: () => {
+            var p = config.zuobiao.左攻击面板[fbl].怪物集合;
+            var img = captureScreen();
+            var r = images.findMultiColors(img, p.找色[0].color, [[p.找色[1].x, p.找色[1].y, p.找色[1].color], [p.找色[2].x, p.找色[2].y, p.找色[2].color], [p.找色[3].x, p.找色[3].y, p.找色[3].color]], {
+                region: [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]],
+                threshold: 50
+            });
+            utils.recycleNull(img);
+            return r;
+        },
+        找非满血怪: () => {
+            let fbl = `${device.width}_${device.height}`;
+            var p = config.zuobiao.左攻击面板[fbl].怪物集合;
+            var img = captureScreen();
+            var r = images.findMultiColors(img, p.找色非满血[0].color, [[p.找色非满血[1].x, p.找色非满血[1].y, p.找色非满血[1].color]], {
+                region: [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]],
+                threshold: 55
+            });
+            utils.recycleNull(img);
+            return r;
+        },
+        回城补给在挂机: (来源) => {
+            tools.错误日志(来源, 2)
+            tools.补给操作.回城补给();
+            tools.挂机打怪.去挂机图打怪();
+        },
+        去挂机图打怪: () => {
+            if (当前总状态 == 总状态.已启动) {
+                tools.人物移动.去挂机地图Loop();
+            }
+            // if (当前总状态 == 总状态.已启动) {
+            //     tools.常用操作.初始化挂机();
+            // }
+        },
     },
-    去挂机图打怪: () => {
-        if (当前总状态 == 总状态.已启动) {
-            tools.人物移动.去挂机地图Loop();
-        }
-        // if (当前总状态 == 总状态.已启动) {
-        //     tools.常用操作.初始化挂机();
-        // }
-    },
+   
     悬浮球描述: (text) => {
         if (text) {
             ui.run(() => {
@@ -2189,27 +2217,6 @@ var tools = {
         ui.run(() => {
             window.tempText.setText(text);
         });
-    },
-    喝修复油: () => {
-        var 背包按钮 = tools.常用操作.打开背包();
-        if (背包按钮.status) {
-            var 修复油 = tools.findImageForWaitClick("xiufuyou1.png", {
-                maxTries: 5,
-                interval: 200
-            });
-            if (修复油.status) {
-                if (修复油.img.y < config.zuobiao.药品格子面板[fbl].y1) {
-                    tools.findImageForWaitClick("shiyongBtn.png", {
-                        maxTries: 5,
-                        interval: 200
-                    });
-                }
-                tools.常用操作.关闭所有窗口();
-                return true;
-            }
-        }
-        tools.常用操作.关闭所有窗口();
-        return false;
     },
     人物移动: {
         使用地牢: () => {
@@ -2901,24 +2908,20 @@ var tools = {
                         var r = false;
                         while (当前总状态 == 总状态.已启动) {
                             try {
-                                r = tools.寻找打怪(打怪次数 > 0 ? true : false);
+                                r = tools.挂机打怪.寻找打怪(打怪次数 > 0 ? true : false);
                             } catch (e) {
                                 r = false;
-                                toastLog("寻找打怪异常" + e)
+                                toastLog("打怪异常" + e)
                             }
                             if (r) {
                                 打怪次数++;
-                                tools.悬浮球描述("继续攻击")
+                                toast("继续攻击");
+                                //tools.悬浮球描述("继续攻击")
                                 continue;
                             } else {
                                 break;
                             }
                         }
-                        // try {
-                        //     tools.寻找打怪();
-                        // } catch (e) {
-                        //     toastLog("半路寻找打怪异常" + e)
-                        // }
                     }
 
                     sleep(1000 * 2.5);
@@ -3133,27 +3136,7 @@ var tools = {
         var path = "/sdcard/Download/crop_" + timestamp + ".png";
         images.save(pic, path);// 保存图片
     },
-    找满血怪: () => {
-        var p = config.zuobiao.左攻击面板[fbl].怪物集合;
-        var img = captureScreen();
-        var r = images.findMultiColors(img, p.找色[0].color, [[p.找色[1].x, p.找色[1].y, p.找色[1].color], [p.找色[2].x, p.找色[2].y, p.找色[2].color], [p.找色[3].x, p.找色[3].y, p.找色[3].color]], {
-            region: [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]],
-            threshold: 50
-        });
-        utils.recycleNull(img);
-        return r;
-    },
-    找非满血怪: () => {
-        let fbl = `${device.width}_${device.height}`;
-        var p = config.zuobiao.左攻击面板[fbl].怪物集合;
-        var img = captureScreen();
-        var r = images.findMultiColors(img, p.找色非满血[0].color, [[p.找色非满血[1].x, p.找色非满血[1].y, p.找色非满血[1].color]], {
-            region: [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]],
-            threshold: 55
-        });
-        utils.recycleNull(img);
-        return r;
-    },
+   
     激活拾取后操作: () => {
         var 拾取延时 = 0;
         if (挂机参数.拾取延时 != null && 挂机参数.拾取延时 > 0) {
@@ -3178,7 +3161,7 @@ var tools = {
                 if (挂机参数.装备实际未满下线 == 1) {
                     var r1 = tools.常用操作.检查背包是否有东西("5_7");
                     if (r1) {
-                        tools.回城补给在挂机("拾取发现装备已满");
+                        tools.挂机打怪.回城补给在挂机("拾取发现装备已满");
                     } else {
                         tools.常用操作.小退();
                         break;
@@ -3207,12 +3190,28 @@ var tools = {
         var y2 = random(config.zuobiao.丢东西范围[fbl].y[0], config.zuobiao.丢东西范围[fbl].y[1]);
         gesture(时间戳, [x1, y1], [x2, y2]);
     },
-    回城补给在挂机: (来源) => {
-        tools.错误日志(来源, 2)
-        tools.补给操作.回城补给();
-        tools.去挂机图打怪();
-    },
     补给操作: {
+        喝修复油: () => {
+            var 背包按钮 = tools.常用操作.打开背包();
+            if (背包按钮.status) {
+                var 修复油 = tools.findImageForWaitClick("xiufuyou1.png", {
+                    maxTries: 5,
+                    interval: 200
+                });
+                if (修复油.status) {
+                    if (修复油.img.y < config.zuobiao.药品格子面板[fbl].y1) {
+                        tools.findImageForWaitClick("shiyongBtn.png", {
+                            maxTries: 5,
+                            interval: 200
+                        });
+                    }
+                    tools.常用操作.关闭所有窗口();
+                    return true;
+                }
+            }
+            tools.常用操作.关闭所有窗口();
+            return false;
+        },
         找地牢: () => {
             var 格子P = config.zuobiao.药品格子面板[fbl];
             var r = tools.findImageAreaForWait("dilao_gezi.png", 格子P.x1, 格子P.y1, 格子P.x2, 格子P.y2, {
@@ -5392,7 +5391,7 @@ threads.start(function () {
                 tools.常用操作.点击人物();
                 tools.常用操作.启动隐身();
                 toastLog("强制回城补给")
-                tools.回城补给在挂机("强行补给");
+                tools.挂机打怪.回城补给在挂机("强行补给");
             }
 
             tools.执行时间戳.检测认证();
@@ -5406,10 +5405,10 @@ threads.start(function () {
             var r = false;
             while (当前总状态 == 总状态.已启动) {
                 try {
-                    r = tools.寻找打怪(打怪次数 > 0 ? true : false);
+                    r = tools.挂机打怪.寻找打怪(打怪次数 > 0 ? true : false);
                 } catch (e) {
                     r = false;
-                    toastLog("寻找打怪异常" + e)
+                    toastLog("打怪异常" + e)
                 }
                 if (r) {
                     打怪次数++;
@@ -5433,7 +5432,7 @@ threads.start(function () {
                     }
                 }
                 else {
-                    tools.去挂机图打怪();
+                    tools.挂机打怪.去挂机图打怪();
                 }
                 上次跑图时间 = new Date().getTime();
             }
