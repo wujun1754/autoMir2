@@ -166,7 +166,7 @@ let tabW = 0;
 var 是否启动初始化过 = false;
 var isStart = false
 var isShowConfig = false
-var 宝宝位置信息 = {
+var 宝宝最后位置信息 = {
     p: null,
     time: null
 }
@@ -773,7 +773,59 @@ var tools = {
                 return /^\d+$/.test(str);
             }
             return false;
-        }
+        },
+        申请截图: () => {
+            var result = false;
+            try {
+                images.stopScreenCapture()
+                result = images.requestScreenCapture()
+                // sleep(1000)
+            } catch (error) {
+                toast("请求截图错误");
+                toastLog(error)
+                exit();
+            }
+            if (!result) {
+                toastLog("申请截图失败");
+                exit();
+            }
+        },
+        送检YoLo: (img, mode) => {
+            //var img = images.read("/sdcard/screenshot.png");
+            var base64Str = android.util.Base64.encodeToString(images.toBytes(img, "png"), 0);
+    
+            var url = "";
+            if (mode == "jipin") {
+                url = "http://183.249.84.44:9850/jipin"
+            } else {
+                return {
+                    status: false,
+                    err: "无匹配模型",
+                }
+            }
+            var headers = {
+                "Content-Type": "application/json"
+            };
+            var data = {
+                image: base64Str
+            };
+            var response = http.postJson(url, data, {
+                headers: headers,
+                timeout: 10000
+            });
+            if (response.statusCode == 200) {
+                return {
+                    status: true,
+                    value: response.body.string(),
+                }
+            } else {
+                return {
+                    status: false,
+                    err: "状态码:" + response.statusCode,
+                }
+            }
+    
+        },
     },
     常用操作: {
         截图当前坐标: () => {
@@ -1298,19 +1350,6 @@ var tools = {
             });
             return r.status;
         },
-        怪物血量是否变化: () => {
-            // x: [505, 760],
-            // y: [2, 62],
-            var img = captureScreen();
-            var p = config.zuobiao.锁定怪物标识范围[fbl];
-            var r = utils.regionalFindImg2(img, 被攻击怪物血量截图, p.x[0], p.y[0], p.x[1], p.y[1], 60, 255, 0.95, false, false, "");
-            utils.recycleNull(img);
-            if (r != null && (r.x > 0 || r.y > 0)) {
-                return false;
-            } else {
-                return true;
-            }
-        },
         处理坐标错别字: (text) => {
             if (!text) return text;
             text = text.replace(/-/g, "").replace(/\\/g, "").replace(/\./g, "").replace(/,/g, "").replace(/l/g, "1").replace(/i/g, "1").replace(/]/g, "1").replace(/G/g, "6").replace(/B/g, "3").replace(/S/g, "6").replace(/s/g, "6").replace(/T/g, "1").replace(/t/g, "1").replace(/o/g, "0").replace(/O/g, "0").replace(/Ö/g, "0");
@@ -1466,69 +1505,6 @@ var tools = {
                 }
             }
             return text;
-        },
-        获取身边怪物数据: () => {
-            let img = captureScreen();
-            var color = "#DB0000";
-            var result = [];
-            var regions = [
-                [618, 202, 50, 5], // 正上方
-                [555, 202, 50, 5], // 左上方
-                [681, 202, 50, 5], // 右上方
-
-                [618, 287, 50, 5], // 正下方
-                [555, 287, 50, 5], // 左下方
-                [681, 287, 50, 5], // 右下方
-
-                [555, 245, 50, 5], // 正左方
-                [681, 245, 50, 5], // 正右方
-            ]
-            regions.forEach((reg, index) => {
-                var r = images.findAllPointsForColor(img, color, {
-                    region: reg, // 正上方
-                    threshold: 10
-                });
-                if (r && r.length > 0) {
-                    result.push({
-                        方向: index,
-                        血量: r.length
-                    })
-                }
-            })
-            utils.recycleNull(img);
-            return result;
-        },
-        向宝宝移动: (result) => {
-            var r = result.r;
-            var 人物中心 = config.zuobiao.人物中心[fbl];
-            if (r.y < 人物中心.y) {
-                var juli = 人物中心.y - r.y > 40 ? 人物中心.y - r.y : 40;
-                tools.人物移动.上走一步(parseInt(juli / 40 * 1000));
-            }
-            if (r.y > 人物中心.y) {
-                var juli = r.y - 人物中心.y > 40 ? r.y - 人物中心.y : 40;
-                tools.人物移动.下走一步(parseInt(juli / 40 * 1000));
-            }
-            if (r.x < 人物中心.x) {
-                var juli = 人物中心.x - r.x > 65 ? 人物中心.x - r.x : 65;
-                tools.人物移动.左走一步(parseInt(juli / 65 * 1000));
-            }
-            if (r.x > 人物中心.x) {
-                var juli = r.x - 人物中心.x > 65 ? r.x - 人物中心.x : 65;
-                tools.人物移动.右走一步(parseInt(juli / 65 * 1000));
-            }
-        },
-        身边锁定怪物: () => {
-            var imgSmall = tools.截屏裁剪(null, 555, 246, 724, 349);
-            var huiduImg = images.grayscale(imgSmall);//灰度化
-            let r = utils.ocrGetContentStr(huiduImg);
-            if (r) {
-                r = r.replace(/[0-9\/]/g, '');
-            }
-            utils.recycleNull(imgSmall);
-            utils.recycleNull(huiduImg);
-
-            return r;
         },
         关闭所有窗口: (isClick, time) => {
             if (time == null) {
@@ -1789,20 +1765,20 @@ var tools = {
                         threshold: 0.7
                     })
                     if (r.status) {
-                        isChange = tools.常用操作.怪物血量是否变化();
+                        isChange = tools.挂机打怪.怪物血量是否变化();
                         if (锁定的怪物.length <= 0) {
-                            锁定的怪物 = tools.常用操作.身边锁定怪物().replace(/\./g, "").replace(/,/g, "").replace(/:/g, "");
+                            锁定的怪物 = tools.挂机打怪.身边锁定怪物().replace(/\./g, "").replace(/,/g, "").replace(/:/g, "");
                         }
                         if (挂机参数.只打满血怪 == 1) {
                             if (isChange && 锁定的怪物.length <= 0) {
-                                锁定的怪物 = tools.常用操作.身边锁定怪物().replace(/\./g, "").replace(/,/g, "").replace(/:/g, "");
+                                锁定的怪物 = tools.挂机打怪.身边锁定怪物().replace(/\./g, "").replace(/,/g, "").replace(/:/g, "");
                                 if (锁定的怪物.length <= 0) {
                                     click(random(726, 736), random(25, 35));
                                     return true;
                                 }
                             }
                         }
-                        怪物 = tools.常用操作.获取身边怪物数据();
+                        怪物 = tools.挂机打怪.获取身边怪物数据();
                         // if (是否隐身等待 && 怪物 && 怪物.length > 0) {
                         //     tools.常用操作.启动隐身();
                         //     上一次隐身 = new Date().getTime();
@@ -1816,11 +1792,11 @@ var tools = {
 
                         }
                         if (挂机参数.隐身走动 == 1 && !是否隐身等待 && 锁定的怪物.length > 0) {
-                            var r = tools.常用操作.扫描宝宝();
+                            var r = tools.挂机打怪.扫描宝宝();
                             if (r.status) {
 
                                 //tools.常用操作.点击人物();
-                                tools.常用操作.向宝宝移动(r);
+                                tools.挂机打怪.向宝宝移动(r);
                                 //tools.悬浮球临时描述(JSON.stringify(r));
                                 // click(random(726, 736), random(25, 35));
                                 // sleep(random(666, 999));
@@ -2186,7 +2162,7 @@ var tools = {
             }
         },
         宝宝是否存在: () => {
-            var r = tools.常用操作.扫描宝宝();
+            var r = tools.挂机打怪.扫描宝宝();
             if (r.status) {
                 return true;
             }
@@ -2209,6 +2185,112 @@ var tools = {
             }
             tools.常用操作.初始化攻击面板loops();
             return false;
+        },
+        扫描宝宝: () => {
+            let img = captureScreen();
+            var color = "#00BF00";
+            var result = {
+                status: false,
+                r: null
+            };
+            var regions = [
+                [0, 0, 617, 720],
+                [663, 0, 617, 720],
+                [617, 0, 43, 240],
+                [617, 250, 43, 470],
+            ]
+            for (let index = 0; index < regions.length; index++) {
+                var reg = regions[index];
+                var r = images.findMultiColors(img, color, [[20, 0, color]], {
+                    region: reg,
+                    threshold: 30
+                });
+                if (r && (r.x > 0 || r.y > 0)) {
+                    result = {
+                        status: true,
+                        r: r
+                    }
+                    break;
+                }
+            }
+            utils.recycleNull(img);
+            return result;
+        },
+        向宝宝移动: (result) => {
+            var r = result.r;
+            var 人物中心 = config.zuobiao.人物中心[fbl];
+            if (r.y < 人物中心.y) {
+                var juli = 人物中心.y - r.y > 40 ? 人物中心.y - r.y : 40;
+                tools.人物移动.上走一步(parseInt(juli / 40 * 1000));
+            }
+            if (r.y > 人物中心.y) {
+                var juli = r.y - 人物中心.y > 40 ? r.y - 人物中心.y : 40;
+                tools.人物移动.下走一步(parseInt(juli / 40 * 1000));
+            }
+            if (r.x < 人物中心.x) {
+                var juli = 人物中心.x - r.x > 65 ? 人物中心.x - r.x : 65;
+                tools.人物移动.左走一步(parseInt(juli / 65 * 1000));
+            }
+            if (r.x > 人物中心.x) {
+                var juli = r.x - 人物中心.x > 65 ? r.x - 人物中心.x : 65;
+                tools.人物移动.右走一步(parseInt(juli / 65 * 1000));
+            }
+        },
+        获取身边怪物数据: () => {
+            let img = captureScreen();
+            var color = "#DB0000";
+            var result = [];
+            var regions = [
+                [618, 202, 50, 5], // 正上方
+                [555, 202, 50, 5], // 左上方
+                [681, 202, 50, 5], // 右上方
+
+                [618, 287, 50, 5], // 正下方
+                [555, 287, 50, 5], // 左下方
+                [681, 287, 50, 5], // 右下方
+
+                [555, 245, 50, 5], // 正左方
+                [681, 245, 50, 5], // 正右方
+            ]
+            regions.forEach((reg, index) => {
+                var r = images.findAllPointsForColor(img, color, {
+                    region: reg, // 正上方
+                    threshold: 10
+                });
+                if (r && r.length > 0) {
+                    result.push({
+                        方向: index,
+                        血量: r.length
+                    })
+                }
+            })
+            utils.recycleNull(img);
+            return result;
+        },
+        身边锁定怪物: () => {
+            var imgSmall = tools.截屏裁剪(null, 555, 246, 724, 349);
+            var huiduImg = images.grayscale(imgSmall);//灰度化
+            let r = utils.ocrGetContentStr(huiduImg);
+            if (r) {
+                r = r.replace(/[0-9\/]/g, '');
+            }
+            utils.recycleNull(imgSmall);
+            utils.recycleNull(huiduImg);
+
+            return r;
+        },
+        怪物血量是否变化: () => {
+            // x: [505, 760],
+            // y: [2, 62],
+            var img = captureScreen();
+            var p = config.zuobiao.锁定怪物标识范围[fbl];
+            var r = utils.regionalFindImg2(img, 被攻击怪物血量截图, p.x[0], p.y[0], p.x[1], p.y[1], 60, 255, 0.95, false, false, "");
+            utils.recycleNull(img);
+            if (r != null && (r.x > 0 || r.y > 0)) {
+                return false;
+            } else {
+                return true;
+            }
         },
     },
     人物移动: {
@@ -4410,58 +4492,6 @@ var tools = {
         var path = "/sdcard/Download/crop_" + timestamp + ".png";
         images.save(pic, path);// 保存图片
     },
-    送检YoLo: (img, mode) => {
-        //var img = images.read("/sdcard/screenshot.png");
-        var base64Str = android.util.Base64.encodeToString(images.toBytes(img, "png"), 0);
-
-        var url = "";
-        if (mode == "jipin") {
-            url = "http://183.249.84.44:9850/jipin"
-        } else {
-            return {
-                status: false,
-                err: "无匹配模型",
-            }
-        }
-        var headers = {
-            "Content-Type": "application/json"
-        };
-        var data = {
-            image: base64Str
-        };
-        var response = http.postJson(url, data, {
-            headers: headers,
-            timeout: 10000
-        });
-        if (response.statusCode == 200) {
-            return {
-                status: true,
-                value: response.body.string(),
-            }
-        } else {
-            return {
-                status: false,
-                err: "状态码:" + response.statusCode,
-            }
-        }
-
-    },
-    shenqiCapture: () => {
-        var result = false;
-        try {
-            images.stopScreenCapture()
-            result = images.requestScreenCapture()
-            // sleep(1000)
-        } catch (error) {
-            toast("请求截图错误");
-            toastLog(error)
-            exit();
-        }
-        if (!result) {
-            toastLog("申请截图失败");
-            exit();
-        }
-    },
     findImageForWaitClick: (fileName, options, threshold) => {
         var result = tools.findImageForWait(fileName, options, threshold);
         if (result.status && (result.img.x > 0 || result.img.y > 0)) {
@@ -4709,42 +4739,6 @@ var tools = {
             return false
         }
     },
-    /** 判断两张图片是否相似（用于判断人物坐标是否发生变化）
-     * @param {Image} img1 第一张图片（之前截的区域）
-     * @param {Image} img2 第二张图片（当前截图）
-     * @param {number} threshold 单个像素 RGB 差异的容忍值（默认 20），越小越严格
-     * @param {number} tolerance 允许有多少个像素超过 threshold（默认 5），越小越严格
-     * @returns {boolean} 是否足够相似（true = 没变化，false = 有变化）
-     */
-    isSimilarImage: (img1, img2, threshold, tolerance) => {
-        if (threshold == null) {
-            threshold = 20;
-        }
-        if (tolerance == null) {
-            tolerance = 5;
-        }
-        let w = img1.getWidth(), h = img1.getHeight();
-        if (w !== img2.getWidth() || h !== img2.getHeight()) return false;
-
-        let diffCount = 0;
-        for (let y = 0; y < h; y++) {
-            for (let x = 0; x < w; x++) {
-                let c1 = images.pixel(img1, x, y);
-                let c2 = images.pixel(img2, x, y);
-
-                // 计算颜色差异总和：|R1-R2| + |G1-G2| + |B1-B2|
-                let diff = Math.abs(colors.red(c1) - colors.red(c2)) +
-                    Math.abs(colors.green(c1) - colors.green(c2)) +
-                    Math.abs(colors.blue(c1) - colors.blue(c2));
-
-                if (diff > threshold) {
-                    diffCount++;
-                    if (diffCount > tolerance) return false;
-                }
-            }
-        }
-        return true;
-    },
     获取区域文字: (x1, y1, x2, y2, param1, param2, isP1, isP2) => {
         var {
             w,
@@ -4841,7 +4835,7 @@ win.ditu1.setOnCheckedChangeListener((group, checkedId) => {
 tools.初始化参数();
 // 初始化文字识别插件(必须初始化才生效)
 utils.initOcr("谷歌")
-tools.shenqiCapture();
+tools.常用方法.申请截图();
 ui.run(() => {
     win.tab1.setOnClickListener(() => switchTab(1));
     win.tab2.setOnClickListener(() => switchTab(2));
