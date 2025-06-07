@@ -465,308 +465,6 @@ var win = floaty.rawWindow(
 
 
 var tools = {
-    启动初始化: () => {
-        var r = tools.常用操作.获取人物金币();//这里不用多线程好像会被卡死
-        if (r != null) {
-            启动金币 = r;
-        }
-    },
-    初始化参数: () => {
-        if (commonStorage.contains("peizhi")) {
-            var str = commonStorage.get("peizhi");
-            挂机参数 = JSON.parse(str);
-        }
-        if (挂机参数.拾取时长 == null || 挂机参数.拾取时长 <= 0) {
-            挂机参数.拾取时长 = 15;
-        }
-        win[挂机参数.ditu1].setChecked(true);
-        win[挂机参数.ditu1_1].setChecked(true);
-
-
-        win.t_lanYaoZhongBao.setText(挂机参数.购买物品.find(item => {
-            return item.name == "魔法药中包"
-        }).num.toString())
-        win.t_lanYaoZhongBao.setText(挂机参数.购买物品.find(item => {
-            return item.name == "魔法药中包"
-        }).num.toString());
-        win.t_lanYaoZhongGe.setText(挂机参数.购买物品.find(item => {
-            return item.name == "魔法药中个"
-        }).num.toString());
-        win.t_hongYaoZhongBao.setText(挂机参数.购买物品.find(item => {
-            return item.name == "金创药中包"
-        }).num.toString());
-        win.t_hongYaoZhongGe.setText(挂机参数.购买物品.find(item => {
-            return item.name == "金创药中个"
-        }).num.toString());
-        win.t_suiJiBao.setText(挂机参数.购买物品.find(item => {
-            return item.name == "随机包"
-        }).num.toString());
-        win.t_suiJiGe.setText(挂机参数.购买物品.find(item => {
-            return item.name == "随机"
-        }).num.toString());
-        win.t_diLaoGe.setText(挂机参数.购买物品.find(item => {
-            return item.name == "地牢"
-        }).num.toString());
-        win.t_xiuFuYou.setText(挂机参数.购买物品.find(item => {
-            return item.name == "修复油"
-        }).num.toString());
-        win.t_hushenhu.setText(挂机参数.购买物品.find(item => {
-            return item.name == "护身符大"
-        }).num.toString());
-        if (挂机参数.隐身数量) {
-            win.t_YinShen.setText(挂机参数.隐身数量.toString());
-        } else {
-            win.t_YinShen.setText("0");
-        }
-        if (挂机参数.机器标识) {
-            win.t_jiqibiaoshi.setText(挂机参数.机器标识.toString());
-        } else {
-            win.t_jiqibiaoshi.setText("");
-        }
-        if (挂机参数.检查衣服武器时间戳 && 挂机参数.检查衣服武器时间戳 > 0) {
-            win.t_shoujihaoma.setText(挂机参数.检查衣服武器时间戳.toString());
-        } else {
-            win.t_shoujihaoma.setText("600");
-        }
-        if (挂机参数.打怪等待 && 挂机参数.打怪等待 > 0) {
-            win.t_daguaidengdai.setText(挂机参数.打怪等待.toString());
-        } else {
-            win.t_daguaidengdai.setText("120");
-        }
-        if (挂机参数.随机血量 && 挂机参数.随机血量 > 0) {
-            win.t_suijixueliang.setText(挂机参数.随机血量.toString());
-        } else {
-            win.t_suijixueliang.setText("0");
-        }
-        if (挂机参数.拾取延时 && 挂机参数.拾取延时 > 0) {
-            win.t_shiquyanshi.setText(挂机参数.拾取延时.toString());
-        } else {
-            win.t_shiquyanshi.setText("200");
-        }
-        win.t_shiQuShiChang.setText(挂机参数.拾取时长.toString());
-
-
-        // win..setText(挂机参数.购买物品.find(item => item.name == "").num);   
-        // win..setText(挂机参数.购买物品.find(item => item.name == "").num);    
-        // win..setText(挂机参数.购买物品.find(item => item.name == "").num);  
-        // win..setText(挂机参数.购买物品.find(item => item.name == "").num);  
-        // win..setText(挂机参数.购买物品.find(item => item.name == "").num);  
-        // win..setText(挂机参数.购买物品.find(item => item.name == "").num);    
-        // win..setText(挂机参数.购买物品.find(item => item.name == "").num);    
-        if (挂机参数.衣服持久0回程 == 1 || 挂机参数.衣服持久0回程 == "1") {
-            win.cbIsHuiChengYiFu.setChecked(true);
-        }
-        if (挂机参数.武器持久0回程 == 1 || 挂机参数.武器持久0回程 == "1") {
-            win.cbIsHuiChengWuQi.setChecked(true);
-        }
-        if (挂机参数.补给时点分身 == 1 || 挂机参数.补给时点分身 == "1") {
-            win.cbIsFenShen.setChecked(true);
-        }
-        if (挂机参数.召唤骷髅 == 1 || 挂机参数.召唤骷髅 == "1") {
-            win.cbZhaoHuanKuLou.setChecked(true);
-        }
-        if (挂机参数.召唤神兽 == 1 || 挂机参数.召唤神兽 == "1") {
-            win.cbZhaoShenShou.setChecked(true);
-        }
-        if (挂机参数.沿途打怪 == 1 || 挂机参数.沿途打怪 == "1") {
-            win.cbYanTuDaGuai.setChecked(true);
-        }
-        if (挂机参数.地牢回城 == 1 || 挂机参数.地牢回城 == "1") {
-            win.cbIsDiLao.setChecked(true);
-        }
-        if (挂机参数.装备实际未满下线 == 1 || 挂机参数.装备实际未满下线 == "1") {
-            win.cbShiJiWeiManXiaXian.setChecked(true);
-        }
-        // if (挂机参数.一波怪物死亡拾取 == 1 || 挂机参数.一波怪物死亡拾取 == "1") {
-        //     win.cbIsYiBoSiWangSiQu.setChecked(true);
-        // }
-        if (挂机参数.首次用符攻击 == 1 || 挂机参数.首次用符攻击 == "1") {
-            win.cbIsFuGongJi.setChecked(true);
-        }
-        if (挂机参数.只打满血怪 == 1 || 挂机参数.只打满血怪 == "1") {
-            win.cbManXue.setChecked(true);
-        }
-        if (挂机参数.替换男重盔 == 1 || 挂机参数.替换男重盔 == "1") {
-            win.cbTiHuanNanZhongKui.setChecked(true);
-        }
-        if (挂机参数.替换女重盔 == 1 || 挂机参数.替换女重盔 == "1") {
-            win.cbTiHuanNvZhongKui.setChecked(true);
-        }
-        if (挂机参数.替换男灵魂 == 1 || 挂机参数.替换男灵魂 == "1") {
-            win.cbTiHuanNanLingHun.setChecked(true);
-        }
-        if (挂机参数.替换女灵魂 == 1 || 挂机参数.替换女灵魂 == "1") {
-            win.cbTiHuanNvLingHun.setChecked(true);
-        }
-        if (挂机参数.替换降魔 == 1 || 挂机参数.替换降魔 == "1") {
-            win.cbTiHuanXiangMo.setChecked(true);
-        }
-        if (挂机参数.无蓝回城 == 1 || 挂机参数.无蓝回城 == "1") {
-            win.cbIsWuLanHuiCheng.setChecked(true);
-        }
-        if (挂机参数.无飞回城 == 1 || 挂机参数.无飞回城 == "1") {
-            win.cbIsWuFeiHuiCheng.setChecked(true);
-        }
-        if (挂机参数.备用男重盔 == 1 || 挂机参数.备用男重盔 == "1") {
-            win.cbBeiYongNanZhongKui.setChecked(true);
-        }
-        if (挂机参数.备用女重盔 == 1 || 挂机参数.备用女重盔 == "1") {
-            win.cbBeiYongNvZhongKui.setChecked(true);
-        }
-        if (挂机参数.备用斩马 == 1 || 挂机参数.备用斩马 == "1") {
-            win.cbBeiYongZhanMa.setChecked(true);
-        }
-
-
-        if (挂机参数.隐身走动 == 1 || 挂机参数.隐身走动 == "1") {
-            win.cbYinShenZouDong.setChecked(true);
-        }
-        if (挂机参数.攻击检查宝宝 == 1 || 挂机参数.攻击检查宝宝 == "1") {
-            win.cbJianChaBaoBao.setChecked(true);
-        }
-        if (挂机参数.攻击检查武器衣服 == 1 || 挂机参数.攻击检查武器衣服 == "1") {
-            win.cbJianChaWuQi.setChecked(true);
-        }
-        if (挂机参数.随机跑图 == 1) {
-            win.cbSuiJiPaoTu.setChecked(true);
-        }
-        if (挂机参数.认证短信 == 1) {
-            win.cbRenzhengDuanXin.setChecked(true);
-        }
-        if (挂机参数.认证自动识别 == 1) {
-            win.cbRenzhengShiBie.setChecked(true);
-        }
-        if (挂机参数.云码认证 == 1) {
-            win.cbRenzhengYunMa.setChecked(true);
-        }
-        if (挂机参数.地图拖动 == 1) {
-            win.cbDiTuTuoDong.setChecked(true);
-        }
-    },
-    发送邮件: (subject, body) => {
-        app.sendEmail({
-            email: ["175417739@qq.com"],
-            subject: subject + "(" + 挂机参数.机器标识 + ")",
-            text: body
-        });
-    },
-    重启游戏: () => {
-        tools.退出游戏();
-        sleep(2000);
-        launch(盛趣包名);
-        tools.悬浮球描述("等待游戏启动中....");
-        sleep(2000);
-
-        var timeout = 1000 * 60 * 30;
-        var start = new Date().getTime();
-        var 是否找隐私 = true;
-
-        while (true) {
-            if (new Date().getTime() - start > timeout) {
-                tools.错误日志("重启游戏失败,loginquedingBtn.png找不到", 3);
-                return false;
-            }
-            if (是否找隐私) {
-                r = tools.findImageClick("loginyinshiBtn.png");
-                if (r) {
-                    是否找隐私 = false;
-                    sleep(random(1000, 1200));
-                    continue;
-                }
-            }
-            r = tools.findImageClick("loginquedingBtn.png");
-            if (r) {
-                break;
-            }
-            sleep(1000);
-        }
-
-        r = tools.findImageForWaitClick("kaishiyouxiBtn.png", { //开始
-            maxTries: 60 * 10,
-            timeout: 1000 * 60 * 10,
-            interval: 1000
-        });
-        if (!r.status) {
-            tools.错误日志("重启游戏失败,kaishiyouxiBtn.png找不到", 3);
-            return false;
-        }
-
-        r = tools.findImageForWaitClick("kaishiyouxi.png", { //开始
-            maxTries: 60 * 10,
-            timeout: 1000 * 60 * 10,
-            interval: 1000
-        });
-        if (!r.status) {
-            tools.错误日志("重启游戏失败,kaishiyouxi.png找不到", 3);
-            return false;
-        }
-
-        timeout = 1000 * 60 * 30;
-        start = new Date().getTime();
-        tryCount = 0;
-
-        while (true) {
-            tryCount++;
-            if (new Date().getTime() - start > timeout) {
-                tools.错误日志("重启游戏失败,yijianxiaoTuiBtn.png找不到", 3);
-                return false;
-            }
-
-            r = tools.findImage("yijianxiaoTuiBtn.png");
-            if (r.status) {
-                break;
-            }
-
-            r = tools.findImage("paiduitishi.png");
-            if (r.status) {
-                tools.悬浮球描述("排队中(" + parseInt(tryCount * 2 / 60) + ")");
-                start = new Date().getTime(); //说明在排队，重新计算时间
-            }
-            sleep(1000);
-        }
-
-
-        return true;
-    },
-    退出游戏: () => {
-        home();
-        sleep(5000);
-        app.openAppSetting(盛趣包名);
-        sleep(5000);
-
-        // 模拟点击“强行停止”按钮（不同手机可能文字不一样）
-        var w = null;
-        while (true) {
-            w = textMatches(/(强行停止|结束运行)/).findOne();
-            if (w != null) {
-                w.click();
-                break;
-            }
-            sleep(1000);
-        }
-        sleep(5000);
-
-        w = null;
-        while (true) {
-            w = textMatches(/(确定|强行停止)/).findOne()
-            if (w != null) {
-                w.click();
-                break;
-            }
-            sleep(1000);
-        }
-        sleep(5000);
-        home();
-        sleep(5000);
-    },
-    错误日志: (text, type) => {
-        var url = "http://183.249.84.44/api/api/errzuobiao";
-        var res = http.post(url, {
-            "result": text + "(" + 挂机参数.机器标识 + ")",
-            "type": type
-        });
-        return res.body.string();
-    },
     常用方法: {
         是否为正整数: (str) => {
             if (str) {
@@ -793,7 +491,7 @@ var tools = {
         送检YoLo: (img, mode) => {
             //var img = images.read("/sdcard/screenshot.png");
             var base64Str = android.util.Base64.encodeToString(images.toBytes(img, "png"), 0);
-    
+
             var url = "";
             if (mode == "jipin") {
                 url = "http://183.249.84.44:9850/jipin"
@@ -824,7 +522,205 @@ var tools = {
                     err: "状态码:" + response.statusCode,
                 }
             }
-    
+
+        },
+        错误日志: (text, type) => {
+            var url = "http://183.249.84.44/api/api/errzuobiao";
+            var res = http.post(url, {
+                "result": text + "(" + 挂机参数.机器标识 + ")",
+                "type": type
+            });
+            return res.body.string();
+        },
+        发送邮件: (subject, body) => {
+            app.sendEmail({
+                email: ["175417739@qq.com"],
+                subject: subject + "(" + 挂机参数.机器标识 + ")",
+                text: body
+            });
+        },
+        启动初始化: () => {
+            var r = tools.常用操作.获取人物金币();//这里不用多线程好像会被卡死
+            if (r != null) {
+                启动金币 = r;
+            }
+        },
+        初始化参数: () => {
+            if (commonStorage.contains("peizhi")) {
+                var str = commonStorage.get("peizhi");
+                挂机参数 = JSON.parse(str);
+            }
+            if (挂机参数.拾取时长 == null || 挂机参数.拾取时长 <= 0) {
+                挂机参数.拾取时长 = 15;
+            }
+            win[挂机参数.ditu1].setChecked(true);
+            win[挂机参数.ditu1_1].setChecked(true);
+
+
+            win.t_lanYaoZhongBao.setText(挂机参数.购买物品.find(item => {
+                return item.name == "魔法药中包"
+            }).num.toString())
+            win.t_lanYaoZhongBao.setText(挂机参数.购买物品.find(item => {
+                return item.name == "魔法药中包"
+            }).num.toString());
+            win.t_lanYaoZhongGe.setText(挂机参数.购买物品.find(item => {
+                return item.name == "魔法药中个"
+            }).num.toString());
+            win.t_hongYaoZhongBao.setText(挂机参数.购买物品.find(item => {
+                return item.name == "金创药中包"
+            }).num.toString());
+            win.t_hongYaoZhongGe.setText(挂机参数.购买物品.find(item => {
+                return item.name == "金创药中个"
+            }).num.toString());
+            win.t_suiJiBao.setText(挂机参数.购买物品.find(item => {
+                return item.name == "随机包"
+            }).num.toString());
+            win.t_suiJiGe.setText(挂机参数.购买物品.find(item => {
+                return item.name == "随机"
+            }).num.toString());
+            win.t_diLaoGe.setText(挂机参数.购买物品.find(item => {
+                return item.name == "地牢"
+            }).num.toString());
+            win.t_xiuFuYou.setText(挂机参数.购买物品.find(item => {
+                return item.name == "修复油"
+            }).num.toString());
+            win.t_hushenhu.setText(挂机参数.购买物品.find(item => {
+                return item.name == "护身符大"
+            }).num.toString());
+            if (挂机参数.隐身数量) {
+                win.t_YinShen.setText(挂机参数.隐身数量.toString());
+            } else {
+                win.t_YinShen.setText("0");
+            }
+            if (挂机参数.机器标识) {
+                win.t_jiqibiaoshi.setText(挂机参数.机器标识.toString());
+            } else {
+                win.t_jiqibiaoshi.setText("");
+            }
+            if (挂机参数.检查衣服武器时间戳 && 挂机参数.检查衣服武器时间戳 > 0) {
+                win.t_shoujihaoma.setText(挂机参数.检查衣服武器时间戳.toString());
+            } else {
+                win.t_shoujihaoma.setText("600");
+            }
+            if (挂机参数.打怪等待 && 挂机参数.打怪等待 > 0) {
+                win.t_daguaidengdai.setText(挂机参数.打怪等待.toString());
+            } else {
+                win.t_daguaidengdai.setText("120");
+            }
+            if (挂机参数.随机血量 && 挂机参数.随机血量 > 0) {
+                win.t_suijixueliang.setText(挂机参数.随机血量.toString());
+            } else {
+                win.t_suijixueliang.setText("0");
+            }
+            if (挂机参数.拾取延时 && 挂机参数.拾取延时 > 0) {
+                win.t_shiquyanshi.setText(挂机参数.拾取延时.toString());
+            } else {
+                win.t_shiquyanshi.setText("200");
+            }
+            win.t_shiQuShiChang.setText(挂机参数.拾取时长.toString());
+
+
+            // win..setText(挂机参数.购买物品.find(item => item.name == "").num);   
+            // win..setText(挂机参数.购买物品.find(item => item.name == "").num);    
+            // win..setText(挂机参数.购买物品.find(item => item.name == "").num);  
+            // win..setText(挂机参数.购买物品.find(item => item.name == "").num);  
+            // win..setText(挂机参数.购买物品.find(item => item.name == "").num);  
+            // win..setText(挂机参数.购买物品.find(item => item.name == "").num);    
+            // win..setText(挂机参数.购买物品.find(item => item.name == "").num);    
+            if (挂机参数.衣服持久0回程 == 1 || 挂机参数.衣服持久0回程 == "1") {
+                win.cbIsHuiChengYiFu.setChecked(true);
+            }
+            if (挂机参数.武器持久0回程 == 1 || 挂机参数.武器持久0回程 == "1") {
+                win.cbIsHuiChengWuQi.setChecked(true);
+            }
+            if (挂机参数.补给时点分身 == 1 || 挂机参数.补给时点分身 == "1") {
+                win.cbIsFenShen.setChecked(true);
+            }
+            if (挂机参数.召唤骷髅 == 1 || 挂机参数.召唤骷髅 == "1") {
+                win.cbZhaoHuanKuLou.setChecked(true);
+            }
+            if (挂机参数.召唤神兽 == 1 || 挂机参数.召唤神兽 == "1") {
+                win.cbZhaoShenShou.setChecked(true);
+            }
+            if (挂机参数.沿途打怪 == 1 || 挂机参数.沿途打怪 == "1") {
+                win.cbYanTuDaGuai.setChecked(true);
+            }
+            if (挂机参数.地牢回城 == 1 || 挂机参数.地牢回城 == "1") {
+                win.cbIsDiLao.setChecked(true);
+            }
+            if (挂机参数.装备实际未满下线 == 1 || 挂机参数.装备实际未满下线 == "1") {
+                win.cbShiJiWeiManXiaXian.setChecked(true);
+            }
+            // if (挂机参数.一波怪物死亡拾取 == 1 || 挂机参数.一波怪物死亡拾取 == "1") {
+            //     win.cbIsYiBoSiWangSiQu.setChecked(true);
+            // }
+            if (挂机参数.首次用符攻击 == 1 || 挂机参数.首次用符攻击 == "1") {
+                win.cbIsFuGongJi.setChecked(true);
+            }
+            if (挂机参数.只打满血怪 == 1 || 挂机参数.只打满血怪 == "1") {
+                win.cbManXue.setChecked(true);
+            }
+            if (挂机参数.替换男重盔 == 1 || 挂机参数.替换男重盔 == "1") {
+                win.cbTiHuanNanZhongKui.setChecked(true);
+            }
+            if (挂机参数.替换女重盔 == 1 || 挂机参数.替换女重盔 == "1") {
+                win.cbTiHuanNvZhongKui.setChecked(true);
+            }
+            if (挂机参数.替换男灵魂 == 1 || 挂机参数.替换男灵魂 == "1") {
+                win.cbTiHuanNanLingHun.setChecked(true);
+            }
+            if (挂机参数.替换女灵魂 == 1 || 挂机参数.替换女灵魂 == "1") {
+                win.cbTiHuanNvLingHun.setChecked(true);
+            }
+            if (挂机参数.替换降魔 == 1 || 挂机参数.替换降魔 == "1") {
+                win.cbTiHuanXiangMo.setChecked(true);
+            }
+            if (挂机参数.无蓝回城 == 1 || 挂机参数.无蓝回城 == "1") {
+                win.cbIsWuLanHuiCheng.setChecked(true);
+            }
+            if (挂机参数.无飞回城 == 1 || 挂机参数.无飞回城 == "1") {
+                win.cbIsWuFeiHuiCheng.setChecked(true);
+            }
+            if (挂机参数.备用男重盔 == 1 || 挂机参数.备用男重盔 == "1") {
+                win.cbBeiYongNanZhongKui.setChecked(true);
+            }
+            if (挂机参数.备用女重盔 == 1 || 挂机参数.备用女重盔 == "1") {
+                win.cbBeiYongNvZhongKui.setChecked(true);
+            }
+            if (挂机参数.备用斩马 == 1 || 挂机参数.备用斩马 == "1") {
+                win.cbBeiYongZhanMa.setChecked(true);
+            }
+
+
+            if (挂机参数.隐身走动 == 1 || 挂机参数.隐身走动 == "1") {
+                win.cbYinShenZouDong.setChecked(true);
+            }
+            if (挂机参数.攻击检查宝宝 == 1 || 挂机参数.攻击检查宝宝 == "1") {
+                win.cbJianChaBaoBao.setChecked(true);
+            }
+            if (挂机参数.攻击检查武器衣服 == 1 || 挂机参数.攻击检查武器衣服 == "1") {
+                win.cbJianChaWuQi.setChecked(true);
+            }
+            if (挂机参数.随机跑图 == 1) {
+                win.cbSuiJiPaoTu.setChecked(true);
+            }
+            if (挂机参数.认证短信 == 1) {
+                win.cbRenzhengDuanXin.setChecked(true);
+            }
+            if (挂机参数.认证自动识别 == 1) {
+                win.cbRenzhengShiBie.setChecked(true);
+            }
+            if (挂机参数.云码认证 == 1) {
+                win.cbRenzhengYunMa.setChecked(true);
+            }
+            if (挂机参数.地图拖动 == 1) {
+                win.cbDiTuTuoDong.setChecked(true);
+            }
+        },
+        保存图片: (pic) => {
+            var timestamp = new Date().getTime();
+            var path = "/sdcard/Download/crop_" + timestamp + ".png";
+            images.save(pic, path);// 保存图片
         },
     },
     常用操作: {
@@ -1092,7 +988,7 @@ var tools = {
                         y: parseInt(parts[1])
                     }
                 } else {
-                    tools.错误日志(JSON.stringify(result), 1);
+                    tools.常用方法.错误日志(JSON.stringify(result), 1);
                     return null;
                 }
             } else {
@@ -1265,7 +1161,7 @@ var tools = {
             return isok;
         },
         检查武器衣服持久: () => {
-            tools.常用操作.启动隐身();
+            tools.挂机打怪.启动隐身();
             var r = tools.常用操作.获取装备持久();
             if (挂机参数.衣服持久0回程 == 1 && r && r.衣服 && r.衣服.剩持久 <= 2) {
                 if (!是否用过备用衣服) {
@@ -1506,6 +1402,115 @@ var tools = {
             }
             return text;
         },
+        重启游戏: () => {
+            tools.常用操作.退出游戏();
+            sleep(2000);
+            launch(盛趣包名);
+            tools.悬浮球描述("等待游戏启动中....");
+            sleep(2000);
+
+            var timeout = 1000 * 60 * 30;
+            var start = new Date().getTime();
+            var 是否找隐私 = true;
+
+            while (true) {
+                if (new Date().getTime() - start > timeout) {
+                    tools.常用方法.错误日志("重启游戏失败,loginquedingBtn.png找不到", 3);
+                    return false;
+                }
+                if (是否找隐私) {
+                    r = tools.findImageClick("loginyinshiBtn.png");
+                    if (r) {
+                        是否找隐私 = false;
+                        sleep(random(1000, 1200));
+                        continue;
+                    }
+                }
+                r = tools.findImageClick("loginquedingBtn.png");
+                if (r) {
+                    break;
+                }
+                sleep(1000);
+            }
+
+            r = tools.findImageForWaitClick("kaishiyouxiBtn.png", { //开始
+                maxTries: 60 * 10,
+                timeout: 1000 * 60 * 10,
+                interval: 1000
+            });
+            if (!r.status) {
+                tools.常用方法.错误日志("重启游戏失败,kaishiyouxiBtn.png找不到", 3);
+                return false;
+            }
+
+            r = tools.findImageForWaitClick("kaishiyouxi.png", { //开始
+                maxTries: 60 * 10,
+                timeout: 1000 * 60 * 10,
+                interval: 1000
+            });
+            if (!r.status) {
+                tools.常用方法.错误日志("重启游戏失败,kaishiyouxi.png找不到", 3);
+                return false;
+            }
+
+            timeout = 1000 * 60 * 30;
+            start = new Date().getTime();
+            tryCount = 0;
+
+            while (true) {
+                tryCount++;
+                if (new Date().getTime() - start > timeout) {
+                    tools.常用方法.错误日志("重启游戏失败,yijianxiaoTuiBtn.png找不到", 3);
+                    return false;
+                }
+
+                r = tools.findImage("yijianxiaoTuiBtn.png");
+                if (r.status) {
+                    break;
+                }
+
+                r = tools.findImage("paiduitishi.png");
+                if (r.status) {
+                    tools.悬浮球描述("排队中(" + parseInt(tryCount * 2 / 60) + ")");
+                    start = new Date().getTime(); //说明在排队，重新计算时间
+                }
+                sleep(1000);
+            }
+
+
+            return true;
+        },
+        退出游戏: () => {
+            home();
+            sleep(5000);
+            app.openAppSetting(盛趣包名);
+            sleep(5000);
+
+            // 模拟点击“强行停止”按钮（不同手机可能文字不一样）
+            var w = null;
+            while (true) {
+                w = textMatches(/(强行停止|结束运行)/).findOne();
+                if (w != null) {
+                    w.click();
+                    break;
+                }
+                sleep(1000);
+            }
+            sleep(5000);
+
+            w = null;
+            while (true) {
+                w = textMatches(/(确定|强行停止)/).findOne()
+                if (w != null) {
+                    w.click();
+                    break;
+                }
+                sleep(1000);
+            }
+            sleep(5000);
+            home();
+            sleep(5000);
+        },
         关闭所有窗口: (isClick, time) => {
             if (time == null) {
                 time = 500;
@@ -1694,8 +1699,7 @@ var tools = {
             if (isFind) {
                 //tools.悬浮球描述("攻击中");
                 if (挂机参数.首次用符攻击 == 1) {
-                    tools.常用操作.打符();
-                    // longClick(random(按钮集合.打符.x[0], 按钮集合.打符.x[1]), random(按钮集合.打符.y[0], 按钮集合.打符.y[1]));
+                    tools.挂机打怪.打符();
                     sleep(666);
                 }
                 for (let index = 0; index < 3; index++) {
@@ -1747,6 +1751,7 @@ var tools = {
                 var 血量预警 = false;
                 var 是否隐身等待 = false;
                 var 血量阈值次数 = 0;
+                var 宝宝位置 = "";
                 while (当前总状态 == 总状态.已启动) {
                     总次数++;
                     var 时间戳 = new Date().getTime() - start;
@@ -1779,42 +1784,38 @@ var tools = {
                             }
                         }
                         怪物 = tools.挂机打怪.获取身边怪物数据();
-                        // if (是否隐身等待 && 怪物 && 怪物.length > 0) {
-                        //     tools.常用操作.启动隐身();
-                        //     上一次隐身 = new Date().getTime();
-                        // }
 
                         if (挂机参数.隐身数量 > 0 && 怪物 && 怪物.length > 0 && (new Date().getTime() - 上一次隐身 >= 隐身时间戳)) {
                             if (怪物.length >= parseInt(挂机参数.隐身数量)) {
-                                tools.常用操作.启动隐身();
+                                tools.挂机打怪.启动隐身();
                                 上一次隐身 = new Date().getTime();
                             }
 
                         }
-                        if (挂机参数.隐身走动 == 1 && !是否隐身等待 && 锁定的怪物.length > 0) {
+
+
+                        if (挂机参数.隐身走动 == 1 && 锁定的怪物.length > 0) {
                             var r = tools.挂机打怪.扫描宝宝();
                             if (r.status) {
-
-                                //tools.常用操作.点击人物();
-                                tools.挂机打怪.向宝宝移动(r);
-                                //tools.悬浮球临时描述(JSON.stringify(r));
-                                // click(random(726, 736), random(25, 35));
-                                // sleep(random(666, 999));
-                                // click(random(选择怪物攻击.x[0], 选择怪物攻击.x[1]), random(选择怪物攻击.y[0], 选择怪物攻击.y[1]))//防止点到人物，再次选择怪物
-                                是否隐身等待 = true;
+                                宝宝最后位置信息 = {
+                                    p: r,
+                                    time: new Date().getTime()
+                                }
+                                宝宝位置 = `,(${r.r.x + ":" + r.r.y})`;
+                                if (!是否隐身等待) {
+                                    tools.挂机打怪.向宝宝移动(r);
+                                    是否隐身等待 = true;
+                                }
+                            }
+                            else {
+                                宝宝位置 = ",(未找到)";
                             }
                         }
 
                         if (挂机参数.随机血量 > 0) {
                             var 血量预警 = tools.挂机打怪.获取人物血量是否飞随机();
                             if (血量预警) {
-                                血量阈值次数++;
-                                if (血量阈值次数 >= 2) {
-                                    tools.人物移动.使用随机();
-                                }
-                            }
-                            else {
-                                血量阈值次数 = 0;
+                                tools.人物移动.使用随机();
                             }
                         }
 
@@ -1826,13 +1827,6 @@ var tools = {
                                 上次坐标截图 = 当前坐标截图;
                             }
                             else {
-                                // if (random(0, 1) == 0) {
-                                //     tools.人物移动.左上走(random(2500, 3500));
-                                // }
-                                // else {
-                                //     tools.人物移动.右下走(random(2500, 3500));
-                                // }
-                                //tools.常用操作.打符();
                                 tools.人物移动.随机走一步(random(2500, 3500))
                                 click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                             }
@@ -1864,7 +1858,7 @@ var tools = {
                         //var t1 = new Date().getTime();
                         //var t2 = new Date().getTime();
                         //tools.悬浮球临时描述("(" + ((t2 - t1) / 1000).toString() + ")");
-                        tools.悬浮球描述("攻击中(" + parseInt((timeout - (时间戳)) / 1000) + "),怪物(" + 锁定的怪物 + "),isChange(" + isChange + ")[" + 总次数 + "]");
+                        tools.悬浮球描述("(" + parseInt((timeout - (时间戳)) / 1000) + "),(" + 锁定的怪物 + "),isChange(" + isChange + ")" + 宝宝位置 + "[" + 总次数 + "]");
                         //sleep(111);
                     } else {
                         tools.挂机打怪.开始拾取();
@@ -1899,7 +1893,7 @@ var tools = {
             return r;
         },
         回城补给在挂机: (来源) => {
-            tools.错误日志(来源, 2)
+            tools.常用方法.错误日志(来源, 2)
             tools.补给操作.回城补给();
             tools.挂机打怪.去挂机图打怪();
         },
@@ -2054,7 +2048,10 @@ var tools = {
             });
             utils.recycleNull(img);
             if (r == null || r.x <= 0 || r.y <= 0) {
-                result = true;
+                r = tools.findImage("beibaoBtn.png"); //如果血量没找到，但是背包找到判定为飞随机
+                if (r.status) {
+                    result = true;
+                }
             }
             return result;
             // var p = config.zuobiao.血量范围[fbl];
@@ -4356,11 +4353,11 @@ var tools = {
                     sleep(1000);
                     var r = tools.常用操作.读取聊天框信息()
                     tools.悬浮球描述(r);
-                    tools.错误日志(r, 5);
+                    tools.常用方法.错误日志(r, 5);
                 }
             }
             else {
-                tools.错误日志("未找到滑动条", 5);
+                tools.常用方法.错误日志("未找到滑动条", 5);
             }
         },
         点开认证: (认证P) => {
@@ -4486,11 +4483,6 @@ var tools = {
         ui.run(() => {
             window.tempText.setText(text);
         });
-    },
-    保存图片: (pic) => {
-        var timestamp = new Date().getTime();
-        var path = "/sdcard/Download/crop_" + timestamp + ".png";
-        images.save(pic, path);// 保存图片
     },
     findImageForWaitClick: (fileName, options, threshold) => {
         var result = tools.findImageForWait(fileName, options, threshold);
@@ -4832,7 +4824,7 @@ win.ditu1.setOnCheckedChangeListener((group, checkedId) => {
             break;
     }
 });
-tools.初始化参数();
+tools.常用方法.初始化参数();
 // 初始化文字识别插件(必须初始化才生效)
 utils.initOcr("谷歌")
 tools.常用方法.申请截图();
@@ -5247,13 +5239,13 @@ threads.start(function () {
             var 打怪次数 = 0; //大于0则坐标移动过，需强制跑图
 
             if (!是否启动初始化过) {
-                tools.启动初始化();
+                tools.常用方法.启动初始化();
                 是否启动初始化过 = true;
             }
             if (开启强行补给) {
                 开启强行补给 = false;
                 tools.常用操作.点击人物();
-                tools.常用操作.启动隐身();
+                tools.挂机打怪.启动隐身();
                 toastLog("强制回城补给")
                 tools.挂机打怪.回城补给在挂机("强行补给");
             }
