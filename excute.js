@@ -1022,64 +1022,6 @@ var tools = {
             var y = random(p.y1, p.y2);
             click(x, y);
         },
-        获取挂机坐标: () => {
-            var r = null;
-            var fbl = `${device.width}_${device.height}`;
-            if (挂机参数.挂机地图 == "兽人古墓一层") {
-                r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓一层.打怪点;
-            } else if (挂机参数.挂机地图 == "兽人古墓二层") {
-                r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓二层.打怪点;
-            } else if (挂机参数.挂机地图 == "兽人古墓三层") {
-                r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓三层.打怪点;
-            } else if (挂机参数.挂机地图 == "地牢一层东") {
-                r = config.zuobiao.盟重大地图偏移[fbl].地牢一层东.打怪点;
-            } else if (挂机参数.挂机地图 == "地牢一层北1") {
-                r = config.zuobiao.盟重大地图偏移[fbl].地牢一层北1.打怪点;
-            } else if (挂机参数.挂机地图 == "连接通道九") {
-                r = config.zuobiao.盟重大地图偏移[fbl].连接通道九.打怪点;
-            } else if (挂机参数.挂机地图 == "连接通道八") {
-                r = config.zuobiao.盟重大地图偏移[fbl].连接通道八.打怪点;
-            } else if (挂机参数.挂机地图 == "连接通道六") {
-                r = config.zuobiao.盟重大地图偏移[fbl].连接通道六.打怪点;
-            } else if (挂机参数.挂机地图 == "沃玛寺庙一层") {
-                r = config.zuobiao.比奇大地图偏移[fbl].沃玛寺庙一层.打怪点;
-            } else if (挂机参数.挂机地图 == "沃玛寺庙二层") {
-                r = config.zuobiao.比奇大地图偏移[fbl].沃玛寺庙二层.打怪点;
-            } else if (挂机参数.挂机地图 == "骨魔洞一层") {
-                r = config.zuobiao.苍月大地图偏移[fbl].骨魔洞一层.打怪点;
-            } else if (挂机参数.挂机地图 == "骨魔洞二层") {
-                r = config.zuobiao.苍月大地图偏移[fbl].骨魔洞二层.打怪点;
-            } else if (挂机参数.挂机地图 == "石墓一层") {
-                r = config.zuobiao.盟重大地图偏移[fbl].石墓一层.打怪点;
-            } else if (挂机参数.挂机地图 == "石墓二层") {
-                r = config.zuobiao.盟重大地图偏移[fbl].石墓二层.打怪点;
-            } else if (挂机参数.挂机地图 == "石墓三层") {
-                r = config.zuobiao.盟重大地图偏移[fbl].石墓三层.打怪点;
-            } else if (挂机参数.挂机地图 == "石墓四层") {
-                r = config.zuobiao.盟重大地图偏移[fbl].石墓四层.打怪点;
-            } else if (挂机参数.挂机地图 == "石墓五层") {
-                r = config.zuobiao.盟重大地图偏移[fbl].石墓五层.打怪点;
-            } else if (挂机参数.挂机地图 == "牛魔寺庙二层") {
-                r = config.zuobiao.苍月大地图偏移[fbl].牛魔寺庙二层.打怪点;
-            } else if (挂机参数.挂机地图 == "牛魔寺庙三层") {
-                r = config.zuobiao.苍月大地图偏移[fbl].牛魔寺庙三层.打怪点;
-            } else if (挂机参数.挂机地图 == "牛魔寺庙四层") {
-                r = config.zuobiao.苍月大地图偏移[fbl].牛魔寺庙四层.打怪点;
-            } else if (挂机参数.挂机地图 == "牛魔寺庙五层") {
-                r = config.zuobiao.苍月大地图偏移[fbl].牛魔寺庙五层.打怪点;
-            }
-            else {
-                toastLog("不支持" + 挂机参数.挂机地图 + "地图")
-                return {
-                    status: false,
-                    err: "不支持" + 挂机参数.挂机地图 + "地图"
-                }
-            }
-            return {
-                status: true,
-                result: r
-            }
-        },
         获取人物坐标: () => { //注意这个截图不能太小了，否则会造成识别失败
             var p = config.zuobiao.人物坐标范围[fbl];
             var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
@@ -1250,31 +1192,6 @@ var tools = {
                     }
                 }
             }
-        },
-        检测宝宝: () => {
-            var r = tools.常用操作.扫描宝宝();
-            if (r.status) {
-                return true;
-            }
-            var tryCount = 0;
-            while (true) {
-                if (tryCount >= 12) {
-                    break;
-                }
-                var r = tools.findImageClick("chongwuBtn.png");
-                sleep(500)
-                if (r) {
-                    r = tools.常用操作.读取聊天框最后一行信息();
-                    tools.悬浮球描述(r + "(" + tryCount + ")");
-                    if ((r.indexOf("行") >= 0 || r.indexOf("动") >= 0 || r.indexOf("属") >= 0 || r.indexOf("下") >= 0) && (r.indexOf("攻") >= 0 || r.indexOf("击") >= 0)) {
-                        tools.常用操作.初始化攻击面板loops();
-                        return true;
-                    }
-                }
-                tryCount++;
-            }
-            tools.常用操作.初始化攻击面板loops();
-            return false;
         },
         使用备用装备: (pic) => {
             var isok = false;
@@ -1581,36 +1498,6 @@ var tools = {
             utils.recycleNull(img);
             return result;
         },
-        扫描宝宝: () => {
-            let img = captureScreen();
-            var color = "#00BF00";
-            var result = {
-                status: false,
-                r: null
-            };
-            var regions = [
-                [0, 0, 617, 720],
-                [663, 0, 617, 720],
-                [617, 0, 43, 240],
-                [617, 250, 43, 470],
-            ]
-            for (let index = 0; index < regions.length; index++) {
-                var reg = regions[index];
-                var r = images.findMultiColors(img, color, [[20, 0, color]], {
-                    region: reg,
-                    threshold: 30
-                });
-                if (r && (r.x > 0 || r.y > 0)) {
-                    result = {
-                        status: true,
-                        r: r
-                    }
-                    break;
-                }
-            }
-            utils.recycleNull(img);
-            return result;
-        },
         向宝宝移动: (result) => {
             var r = result.r;
             var 人物中心 = config.zuobiao.人物中心[fbl];
@@ -1684,13 +1571,13 @@ var tools = {
             if (new Date().getTime() - 上次检查宝宝时间 > 检查宝宝时间戳 || 强制检测) {
                 if (挂机参数.召唤骷髅 == 1 || 挂机参数.召唤神兽 == 1) {
                     tools.悬浮球描述("检查宝宝开始");
-                    var r = tools.常用操作.检测宝宝();
+                    var r = tools.挂机打怪.宝宝是否存在();
                     if (!r) {
                         if (挂机参数.召唤骷髅 == 1) {
-                            tools.常用操作.点击召唤骷髅();
+                            tools.挂机打怪.点击召唤骷髅();
                         }
                         if (挂机参数.召唤神兽 == 1) {
-                            tools.常用操作.点击召唤神兽();
+                            tools.挂机打怪.点击召唤神兽();
                         }
                     }
                     上次检查宝宝时间 = new Date().getTime();
@@ -2091,18 +1978,6 @@ var tools = {
             }
         },
         初始化挂机: () => {
-            // let start = new Date().getTime();
-            // tools.常用操作.关闭所有窗口();
-            // 上次检测地牢时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            // 上次检查蓝药时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            // 上次检查武器衣服时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            // 上次检查宝宝时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            // 上次设置内挂时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            // 上次设置组队模式时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-            // 上次设置操作模式时间 = start - (1000 * 60 * 60 * 48); // 减去 48小时
-
-            //tools.执行时间戳.检测宝宝(true);
-
             tools.执行时间戳.检测无地牢补给(true);
 
             tools.执行时间戳.检测操作模式(true);
@@ -2135,7 +2010,7 @@ var tools = {
                     tools.悬浮球描述("人物未移动")
                 }
             }
-            var 挂机坐标s = tools.常用操作.获取挂机坐标();
+            var 挂机坐标s = tools.挂机打怪.获取挂机坐标();
             if (!挂机坐标s.status) {
                 return
             }
@@ -2233,6 +2108,107 @@ var tools = {
                 click(random(按钮集合.打符.x[0], 按钮集合.打符.x[1]), random(按钮集合.打符.y[0], 按钮集合.打符.y[1]));
                 sleep(110)
             }
+        },
+        点击召唤骷髅: () => {
+            tools.常用操作.点击人物();
+            for (let index = 0; index < 10; index++) {
+                tools.findImageClick("zhaohuankulouBtn.png");
+                sleep(110)
+            }
+        },
+        点击召唤神兽: () => {
+            tools.常用操作.点击人物();
+            // var r = tools.findImageForWaitClick("zhaohuanshenshouBtn.png", {
+            //     maxTries: 5,
+            //     interval: 666
+            // });
+            for (let index = 0; index < 10; index++) {
+                tools.findImageClick("zhaohuanshenshouBtn.png");
+                sleep(110)
+            }
+        },
+        获取挂机坐标: () => {
+            var r = null;
+            var fbl = `${device.width}_${device.height}`;
+            if (挂机参数.挂机地图 == "兽人古墓一层") {
+                r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓一层.打怪点;
+            } else if (挂机参数.挂机地图 == "兽人古墓二层") {
+                r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓二层.打怪点;
+            } else if (挂机参数.挂机地图 == "兽人古墓三层") {
+                r = config.zuobiao.比奇大地图偏移[fbl].兽人古墓三层.打怪点;
+            } else if (挂机参数.挂机地图 == "地牢一层东") {
+                r = config.zuobiao.盟重大地图偏移[fbl].地牢一层东.打怪点;
+            } else if (挂机参数.挂机地图 == "地牢一层北1") {
+                r = config.zuobiao.盟重大地图偏移[fbl].地牢一层北1.打怪点;
+            } else if (挂机参数.挂机地图 == "连接通道九") {
+                r = config.zuobiao.盟重大地图偏移[fbl].连接通道九.打怪点;
+            } else if (挂机参数.挂机地图 == "连接通道八") {
+                r = config.zuobiao.盟重大地图偏移[fbl].连接通道八.打怪点;
+            } else if (挂机参数.挂机地图 == "连接通道六") {
+                r = config.zuobiao.盟重大地图偏移[fbl].连接通道六.打怪点;
+            } else if (挂机参数.挂机地图 == "沃玛寺庙一层") {
+                r = config.zuobiao.比奇大地图偏移[fbl].沃玛寺庙一层.打怪点;
+            } else if (挂机参数.挂机地图 == "沃玛寺庙二层") {
+                r = config.zuobiao.比奇大地图偏移[fbl].沃玛寺庙二层.打怪点;
+            } else if (挂机参数.挂机地图 == "骨魔洞一层") {
+                r = config.zuobiao.苍月大地图偏移[fbl].骨魔洞一层.打怪点;
+            } else if (挂机参数.挂机地图 == "骨魔洞二层") {
+                r = config.zuobiao.苍月大地图偏移[fbl].骨魔洞二层.打怪点;
+            } else if (挂机参数.挂机地图 == "石墓一层") {
+                r = config.zuobiao.盟重大地图偏移[fbl].石墓一层.打怪点;
+            } else if (挂机参数.挂机地图 == "石墓二层") {
+                r = config.zuobiao.盟重大地图偏移[fbl].石墓二层.打怪点;
+            } else if (挂机参数.挂机地图 == "石墓三层") {
+                r = config.zuobiao.盟重大地图偏移[fbl].石墓三层.打怪点;
+            } else if (挂机参数.挂机地图 == "石墓四层") {
+                r = config.zuobiao.盟重大地图偏移[fbl].石墓四层.打怪点;
+            } else if (挂机参数.挂机地图 == "石墓五层") {
+                r = config.zuobiao.盟重大地图偏移[fbl].石墓五层.打怪点;
+            } else if (挂机参数.挂机地图 == "牛魔寺庙二层") {
+                r = config.zuobiao.苍月大地图偏移[fbl].牛魔寺庙二层.打怪点;
+            } else if (挂机参数.挂机地图 == "牛魔寺庙三层") {
+                r = config.zuobiao.苍月大地图偏移[fbl].牛魔寺庙三层.打怪点;
+            } else if (挂机参数.挂机地图 == "牛魔寺庙四层") {
+                r = config.zuobiao.苍月大地图偏移[fbl].牛魔寺庙四层.打怪点;
+            } else if (挂机参数.挂机地图 == "牛魔寺庙五层") {
+                r = config.zuobiao.苍月大地图偏移[fbl].牛魔寺庙五层.打怪点;
+            }
+            else {
+                toastLog("不支持" + 挂机参数.挂机地图 + "地图")
+                return {
+                    status: false,
+                    err: "不支持" + 挂机参数.挂机地图 + "地图"
+                }
+            }
+            return {
+                status: true,
+                result: r
+            }
+        },
+        宝宝是否存在: () => {
+            var r = tools.常用操作.扫描宝宝();
+            if (r.status) {
+                return true;
+            }
+            var tryCount = 0;
+            while (true) {
+                if (tryCount >= 12) {
+                    break;
+                }
+                var r = tools.findImageClick("chongwuBtn.png");
+                sleep(500)
+                if (r) {
+                    r = tools.常用操作.读取聊天框最后一行信息();
+                    tools.悬浮球描述(r + "(" + tryCount + ")");
+                    if ((r.indexOf("行") >= 0 || r.indexOf("动") >= 0 || r.indexOf("属") >= 0 || r.indexOf("下") >= 0) && (r.indexOf("攻") >= 0 || r.indexOf("击") >= 0)) {
+                        tools.常用操作.初始化攻击面板loops();
+                        return true;
+                    }
+                }
+                tryCount++;
+            }
+            tools.常用操作.初始化攻击面板loops();
+            return false;
         },
     },
     人物移动: {
@@ -2922,16 +2898,6 @@ var tools = {
                         }
 
                     }
-                    // if (!是否召唤宝宝) {
-                    //     if (挂机参数.召唤骷髅 == 1 || 挂机参数.召唤骷髅 == "1") {
-                    //         tools.常用操作.点击召唤骷髅();
-                    //     }
-                    //     if (挂机参数.召唤神兽 == 1 || 挂机参数.召唤神兽 == "1") {
-                    //         tools.常用操作.点击召唤神兽();
-                    //     }
-
-                    //     是否召唤宝宝 = true;
-                    // }
                     if (是否沿途打怪 && 挂机参数.沿途打怪 == 1) {
                         var r = false;
                         while (当前总状态 == 总状态.已启动) {
