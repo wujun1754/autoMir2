@@ -1135,7 +1135,7 @@ var tools = {
                 上次坐标截图 = tools.常用操作.截图当前坐标();
             }
             else {
-                var r = tools.跑图坐标是否变化();
+                var r = tools.人物移动.跑图坐标是否变化();
                 if (r) {
                     var 当前坐标截图 = tools.常用操作.截图当前坐标();
                     utils.recycleNull(上次坐标截图);
@@ -2106,7 +2106,7 @@ var tools = {
                         }
 
                         if (!是否隐身等待 && new Date().getTime() - 上一次移动 >= 移动时间戳 && 锁定的怪物.length <= 0) {
-                            人物是否移动 = tools.跑图坐标是否变化();
+                            人物是否移动 = tools.人物移动.跑图坐标是否变化();
                             if (人物是否移动) {
                                 var 当前坐标截图 = tools.常用操作.截图当前坐标();
                                 utils.recycleNull(上次坐标截图);
@@ -2246,19 +2246,6 @@ var tools = {
                 }
             }
         },
-    },
-
-    悬浮球描述: (text) => {
-        if (text) {
-            ui.run(() => {
-                windowCommon.commonText.setText(text);
-            });
-        }
-    },
-    悬浮球临时描述: (text) => {
-        ui.run(() => {
-            window.tempText.setText(text);
-        });
     },
     人物移动: {
         使用地牢: () => {
@@ -2418,6 +2405,17 @@ var tools = {
                 //         [p.x + dx2, p.y + dx2]
                 //     ]
                 // );
+            }
+        },
+        跑图坐标是否变化: () => {
+            var img = captureScreen();
+            var p = config.zuobiao.小地图范围2[fbl];
+            var r = utils.regionalFindImg2(img, 上次坐标截图, p.x1, p.y1, p.x2, p.y2, 60, 255, 0.95, false, false, "");
+            utils.recycleNull(img);
+            if (r != null && (r.x > 0 || r.y > 0)) {
+                return false;
+            } else {
+                return true;
             }
         },
         比奇安全区到小贩: (人物坐标) => {
@@ -2915,7 +2913,7 @@ var tools = {
                         上次坐标截图 = tools.常用操作.截图当前坐标();
                     }
                     else {
-                        var r = tools.跑图坐标是否变化()
+                        var r = tools.人物移动.跑图坐标是否变化()
                         if (r) {
                             var 当前坐标截图 = tools.常用操作.截图当前坐标();
                             utils.recycleNull(上次坐标截图);
@@ -3172,21 +3170,6 @@ var tools = {
                 ]
             );
         },
-    },
-    保存图片: (pic) => {
-        var timestamp = new Date().getTime();
-        var path = "/sdcard/Download/crop_" + timestamp + ".png";
-        images.save(pic, path);// 保存图片
-    },
-
-
-    丢护身符: (格子x, 格子y, 时间戳) => {
-        var fbl = `${device.width}_${device.height}`;
-        var x1 = 格子x + random(-5, 5);
-        var y1 = 格子y + random(-5, 5);
-        var x2 = random(config.zuobiao.丢东西范围[fbl].x[0], config.zuobiao.丢东西范围[fbl].x[1]);
-        var y2 = random(config.zuobiao.丢东西范围[fbl].y[0], config.zuobiao.丢东西范围[fbl].y[1]);
-        gesture(时间戳, [x1, y1], [x2, y2]);
     },
     补给操作: {
         喝修复油: () => {
@@ -4248,42 +4231,14 @@ var tools = {
                 }
             }
         },
-    },
-    送检YoLo: (img, mode) => {
-        //var img = images.read("/sdcard/screenshot.png");
-        var base64Str = android.util.Base64.encodeToString(images.toBytes(img, "png"), 0);
-
-        var url = "";
-        if (mode == "jipin") {
-            url = "http://183.249.84.44:9850/jipin"
-        } else {
-            return {
-                status: false,
-                err: "无匹配模型",
-            }
-        }
-        var headers = {
-            "Content-Type": "application/json"
-        };
-        var data = {
-            image: base64Str
-        };
-        var response = http.postJson(url, data, {
-            headers: headers,
-            timeout: 10000
-        });
-        if (response.statusCode == 200) {
-            return {
-                status: true,
-                value: response.body.string(),
-            }
-        } else {
-            return {
-                status: false,
-                err: "状态码:" + response.statusCode,
-            }
-        }
-
+        丢护身符: (格子x, 格子y, 时间戳) => {
+            var fbl = `${device.width}_${device.height}`;
+            var x1 = 格子x + random(-5, 5);
+            var y1 = 格子y + random(-5, 5);
+            var x2 = random(config.zuobiao.丢东西范围[fbl].x[0], config.zuobiao.丢东西范围[fbl].x[1]);
+            var y2 = random(config.zuobiao.丢东西范围[fbl].y[0], config.zuobiao.丢东西范围[fbl].y[1]);
+            gesture(时间戳, [x1, y1], [x2, y2]);
+        },
     },
     验证码认证: {
         检测是否有认证: (img) => {
@@ -4484,7 +4439,59 @@ var tools = {
             );
         },
     },
+    悬浮球描述: (text) => {
+        if (text) {
+            ui.run(() => {
+                windowCommon.commonText.setText(text);
+            });
+        }
+    },
+    悬浮球临时描述: (text) => {
+        ui.run(() => {
+            window.tempText.setText(text);
+        });
+    },
+    保存图片: (pic) => {
+        var timestamp = new Date().getTime();
+        var path = "/sdcard/Download/crop_" + timestamp + ".png";
+        images.save(pic, path);// 保存图片
+    },
+    送检YoLo: (img, mode) => {
+        //var img = images.read("/sdcard/screenshot.png");
+        var base64Str = android.util.Base64.encodeToString(images.toBytes(img, "png"), 0);
 
+        var url = "";
+        if (mode == "jipin") {
+            url = "http://183.249.84.44:9850/jipin"
+        } else {
+            return {
+                status: false,
+                err: "无匹配模型",
+            }
+        }
+        var headers = {
+            "Content-Type": "application/json"
+        };
+        var data = {
+            image: base64Str
+        };
+        var response = http.postJson(url, data, {
+            headers: headers,
+            timeout: 10000
+        });
+        if (response.statusCode == 200) {
+            return {
+                status: true,
+                value: response.body.string(),
+            }
+        } else {
+            return {
+                status: false,
+                err: "状态码:" + response.statusCode,
+            }
+        }
+
+    },
     shenqiCapture: () => {
         var result = false;
         try {
@@ -4783,90 +4790,6 @@ var tools = {
             }
         }
         return true;
-    },
-    跑图坐标是否变化: () => {
-        var img = captureScreen();
-        var p = config.zuobiao.小地图范围2[fbl];
-        var r = utils.regionalFindImg2(img, 上次坐标截图, p.x1, p.y1, p.x2, p.y2, 60, 255, 0.95, false, false, "");
-        utils.recycleNull(img);
-        if (r != null && (r.x > 0 || r.y > 0)) {
-            return false;
-        } else {
-            return true;
-        }
-    },
-    区域找图: (fileName, x1, y1, x2, y2) => {
-        var w = device.width;
-        var h = device.height;
-        var exists = config.youxiaoFBL.some(item => item.w === w && item.h === h);
-        if (exists) {
-            var img = captureScreen();
-            var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${fileName}`;
-            var targetImg = images.read(targetImgPath);
-            var imgSize = {
-                w: targetImg.width,
-                h: targetImg.height
-            }
-            var result = null;
-            try {
-                result = utils.regionalFindImg2(img, targetImg, x1, y1, x2, y2, 60, 255, 0.7, false, false, "区域找图");
-            } catch (e) {
-                toastLog(fileName + '区域找图异常');
-                toastLog(e)
-            }
-            utils.recycleNull(img);
-            utils.recycleNull(targetImg);
-            if (result != null && (result.x > 0 || result.y > 0)) {
-                return {
-                    status: true,
-                    img: result,
-                    size: imgSize
-                };
-            } else {
-                return {
-                    status: false,
-                    img: null,
-                    err: '未找到对应的图片'
-                }
-            }
-        } else {
-            return {
-                status: false,
-                img: null,
-                err: '不支持' + w + 'x' + h + '分辨率'
-            }
-        }
-    },
-    找图并点击图片中心: (fileName) => {
-        var result = tools.findImage(fileName);
-        if (result.status && result.img.x > 0 && result.img.y > 0) {
-            var x = result.img.x + (result.size.w / 2);
-            var y = result.img.y + (result.size.h / 2);
-            click(x, y)
-            return true
-        } else {
-            toastLog('找图失败' + fileName)
-            return false
-        }
-    },
-    获取全屏文字: (img) => {
-        //tools.shenqiCapture();
-        if (img == null) {
-            img = captureScreen();
-        }
-        var {
-            w,
-            h
-        } = tools.获取屏幕高宽();
-        var r = null;
-        try {
-            r = utils.regionalAnalysisChart3(img, 0, 0, w, h, 60, 255, false, false, "区域识字测试代码");
-        } catch (e) {
-            toastLog(e)
-            r = null;
-        }
-        utils.recycleNull(img);
-        return r;
     },
     获取区域文字: (x1, y1, x2, y2, param1, param2, isP1, isP2) => {
         var {
