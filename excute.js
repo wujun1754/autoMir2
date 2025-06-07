@@ -1205,7 +1205,7 @@ var tools = {
             else {
                 tools.常用操作.关闭所有窗口();
             }
-            tools.激活拾取后操作();
+            tools.挂机打怪.激活拾取后操作();
         },
         获取人物坐标: () => { //注意这个截图不能太小了，否则会造成识别失败
             var p = config.zuobiao.人物坐标范围[fbl];
@@ -2013,7 +2013,7 @@ var tools = {
                     isFind = false;
                 }
             }
-            tools.激活拾取后操作();
+            tools.挂机打怪.激活拾取后操作();
             if (isShiQu) {
                 var timeout = parseInt(挂机参数.打怪等待);// 1000 * 60 * 10;
                 if (timeout == null || timeout <= 0) {
@@ -2157,10 +2157,7 @@ var tools = {
                         tools.悬浮球描述("攻击中(" + parseInt((timeout - (时间戳)) / 1000) + "),怪物(" + 锁定的怪物 + "),isChange(" + isChange + ")[" + 总次数 + "]");
                         //sleep(111);
                     } else {
-                        // if (挂机参数.一波怪物死亡拾取 == 0) {
-                        //     tools.开始拾取();
-                        // }
-                        tools.开始拾取();
+                        tools.挂机打怪.开始拾取();
                         toastLog("怪物死亡")
                         //tools.悬浮球临时描述("")
                         break;
@@ -2204,8 +2201,53 @@ var tools = {
             //     tools.常用操作.初始化挂机();
             // }
         },
+        开始拾取: () => {
+            var 按钮集合 = config.zuobiao.按钮集合[fbl];
+            click(random(按钮集合.拾取.x[0], 按钮集合.拾取.x[1]), random(按钮集合.拾取.y[0], 按钮集合.拾取.y[1]));
+        },
+        激活拾取后操作: () => {
+            var 拾取延时 = 0;
+            if (挂机参数.拾取延时 != null && 挂机参数.拾取延时 > 0) {
+                拾取延时 = 挂机参数.拾取延时;
+            }
+            var 按钮集合 = config.zuobiao.按钮集合[fbl];
+            let start = new Date().getTime();
+            while (当前总状态 == 总状态.已启动) {
+                if (拾取延时 > 0) {
+                    sleep(拾取延时);
+                }
+                if (new Date().getTime() - start > (挂机参数.拾取时长 * 1000)) {
+                    click(random(按钮集合.拾取.x[0], 按钮集合.拾取.x[1]), random(按钮集合.拾取.y[0], 按钮集合.拾取.y[1]));
+                    break;
+                }
+                var 文字 = tools.常用操作.读取聊天框最后一行信息();
+                if ((文字.indexOf("不能") >= 0 || 文字.indexOf("拾取") >= 0) && (文字.indexOf("一定") >= 0 || 文字.indexOf("时间") >= 0)) {
+                    click(random(按钮集合.拾取.x[0], 按钮集合.拾取.x[1]), random(按钮集合.拾取.y[0], 按钮集合.拾取.y[1]));
+                    break;
+                }
+                if (文字.indexOf("已满") >= 0 || 文字.indexOf("己满") >= 0 || 文字.indexOf("负重") >= 0) {
+                    if (挂机参数.装备实际未满下线 == 1) {
+                        var r1 = tools.常用操作.检查背包是否有东西("5_7");
+                        if (r1) {
+                            tools.挂机打怪.回城补给在挂机("拾取发现装备已满");
+                        } else {
+                            tools.常用操作.小退();
+                            break;
+                        }
+                    }
+                }
+
+                var r = tools.findImage("shiquzhongBtn.png", 0.9)
+                if (!r.status) {
+                    break;
+                }
+                else {
+                    tools.悬浮球描述("拾取(" + parseInt(((挂机参数.拾取时长 * 1000) - (new Date().getTime() - start)) / 1000) + ")");
+                }
+            }
+        },
     },
-   
+
     悬浮球描述: (text) => {
         if (text) {
             ui.run(() => {
@@ -3136,52 +3178,8 @@ var tools = {
         var path = "/sdcard/Download/crop_" + timestamp + ".png";
         images.save(pic, path);// 保存图片
     },
-   
-    激活拾取后操作: () => {
-        var 拾取延时 = 0;
-        if (挂机参数.拾取延时 != null && 挂机参数.拾取延时 > 0) {
-            拾取延时 = 挂机参数.拾取延时;
-        }
-        var 按钮集合 = config.zuobiao.按钮集合[fbl];
-        let start = new Date().getTime();
-        while (当前总状态 == 总状态.已启动) {
-            if (拾取延时 > 0) {
-                sleep(拾取延时);
-            }
-            if (new Date().getTime() - start > (挂机参数.拾取时长 * 1000)) {
-                click(random(按钮集合.拾取.x[0], 按钮集合.拾取.x[1]), random(按钮集合.拾取.y[0], 按钮集合.拾取.y[1]));
-                break;
-            }
-            var 文字 = tools.常用操作.读取聊天框最后一行信息();
-            if ((文字.indexOf("不能") >= 0 || 文字.indexOf("拾取") >= 0) && (文字.indexOf("一定") >= 0 || 文字.indexOf("时间") >= 0)) {
-                click(random(按钮集合.拾取.x[0], 按钮集合.拾取.x[1]), random(按钮集合.拾取.y[0], 按钮集合.拾取.y[1]));
-                break;
-            }
-            if (文字.indexOf("已满") >= 0 || 文字.indexOf("己满") >= 0 || 文字.indexOf("负重") >= 0) {
-                if (挂机参数.装备实际未满下线 == 1) {
-                    var r1 = tools.常用操作.检查背包是否有东西("5_7");
-                    if (r1) {
-                        tools.挂机打怪.回城补给在挂机("拾取发现装备已满");
-                    } else {
-                        tools.常用操作.小退();
-                        break;
-                    }
-                }
-            }
 
-            var r = tools.findImage("shiquzhongBtn.png", 0.9)
-            if (!r.status) {
-                break;
-            }
-            else {
-                tools.悬浮球描述("拾取(" + parseInt(((挂机参数.拾取时长 * 1000) - (new Date().getTime() - start)) / 1000) + ")");
-            }
-        }
-    },
-    开始拾取: () => {
-        var 按钮集合 = config.zuobiao.按钮集合[fbl];
-        click(random(按钮集合.拾取.x[0], 按钮集合.拾取.x[1]), random(按钮集合.拾取.y[0], 按钮集合.拾取.y[1]));
-    },
+
     丢护身符: (格子x, 格子y, 时间戳) => {
         var fbl = `${device.width}_${device.height}`;
         var x1 = 格子x + random(-5, 5);
@@ -5418,9 +5416,6 @@ threads.start(function () {
                     break;
                 }
             }
-            // if (打怪次数 > 0 && 挂机参数.一波怪物死亡拾取 == 1) {
-            //     tools.开始拾取();
-            // }
 
             if (new Date().getTime() - 上次跑图时间 > 跑图时间戳) {
                 var 当前地图 = tools.常用操作.获取人物地图();
