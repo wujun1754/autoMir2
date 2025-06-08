@@ -143,7 +143,8 @@ var 挂机参数 = {
     挂机地图: "",
     挂机城市: "",
     机器标识: "",
-    跟随宝宝:0,
+    跟随宝宝: 0,
+    跟随几格: 2,
     检查衣服武器时间戳: 600
 }
 var 挂机坐标点跑图次数 = 0;
@@ -417,6 +418,10 @@ var win = floaty.rawWindow(
                         <horizontal gravity="right">
                             <checkbox id="cbIsGenSuiBaoBao" text="跟随宝宝" textSize="10sp" />
                         </horizontal>
+                        <horizontal>
+                            <text text="跟随几格" textSize="10sp" textColor="#000000" />
+                            <input textSize="10sp" id="t_gensuijuli" focusable="true" w="20sp" text="0" />
+                        </horizontal>
                     </horizontal>
                     <horizontal>
                         <horizontal gravity="left">
@@ -599,6 +604,15 @@ var tools = {
             } else {
                 win.t_jiqibiaoshi.setText("");
             }
+            if (挂机参数.跟随几格) {
+                win.t_gensuijuli.setText(挂机参数.跟随几格.toString());
+            } else {
+                win.t_gensuijuli.setText("2");
+            }
+
+
+
+
             if (挂机参数.检查衣服武器时间戳 && 挂机参数.检查衣服武器时间戳 > 0) {
                 win.t_shoujihaoma.setText(挂机参数.检查衣服武器时间戳.toString());
             } else {
@@ -717,7 +731,7 @@ var tools = {
             }
             if (挂机参数.地图拖动 == 1) {
                 win.cbDiTuTuoDong.setChecked(true);
-            }  
+            }
             if (挂机参数.跟随宝宝 == 1) {
                 win.cbIsGenSuiBaoBao.setChecked(true);
             }
@@ -1750,6 +1764,8 @@ var tools = {
                 var 是否隐身等待 = false;
                 var 血量阈值次数 = 0;
                 var 宝宝位置 = "";
+                var 走一格像素 = config.zuobiao.走一格像素[fbl];
+                var 人物血量中心 = config.zuobiao.人物血量中心[fbl];
                 while (当前总状态 == 总状态.已启动) {
                     总次数++;
                     var 时间戳 = new Date().getTime() - start;
@@ -1776,17 +1792,8 @@ var tools = {
                                 }
                             }
                         }
-                        怪物 = tools.挂机打怪.获取身边怪物数据();
-
-                        if (挂机参数.隐身数量 > 0 && 怪物 && 怪物.length > 0 && (new Date().getTime() - 上一次隐身 >= 隐身时间戳)) {
-                            if (怪物.length >= parseInt(挂机参数.隐身数量)) {
-                                tools.挂机打怪.启动隐身();
-                                上一次隐身 = new Date().getTime();
-                            }
-
-                        }
-
-
+                        怪物 = tools.挂机打怪.获取人物身边怪物数据();
+                        //var 是否到达隐身血量 = tools.挂机打怪.获取人物血量是否隐身()
                         if (挂机参数.隐身走动 == 1) {
                             var r = tools.挂机打怪.扫描宝宝();
                             if (r.status) {
@@ -1795,15 +1802,38 @@ var tools = {
                                     time: new Date().getTime()
                                 }
                                 宝宝位置 = `,(${r.r.x + ":" + r.r.y})`;
-                                if (!是否隐身等待 && 锁定的怪物.length > 0) {
-                                    tools.挂机打怪.向宝宝移动(r);
-                                    是否隐身等待 = true;
+                                if (锁定的怪物.length > 0) {
+                                    var 向宝宝移动 = false;
+                                    if (挂机参数.跟随宝宝 == 1) {
+                                        var 范围x = 走一格像素.x * 挂机参数.跟随几格;
+                                        var 范围y = 走一格像素.y * 挂机参数.跟随几格;
+                                        var 宝宝血量中心x = r.r.x + 20;
+                                        if (Math.abs(宝宝血量中心x - 人物血量中心.x) > 范围x || Math.abs(r.r.y - 人物血量中心.y) > 范围y) {
+                                            向宝宝移动 = true;
+                                        }
+                                    }
+                                    if (!是否隐身等待 || 向宝宝移动) {
+                                        tools.挂机打怪.向宝宝移动(r);
+                                        // tools.挂机打怪.启动隐身();
+                                        // 上一次隐身 = new Date().getTime();
+                                        是否隐身等待 = true;
+                                    }
                                 }
                             }
                             else {
                                 宝宝位置 = ",(未找到)";
                             }
                         }
+
+                        if (挂机参数.隐身数量 > 0 && 怪物 && 怪物.length > 0 && (new Date().getTime() - 上一次隐身 >= 隐身时间戳)) {
+                            if (怪物.length >= parseInt(挂机参数.隐身数量)) {
+                                //if (是否到达隐身血量) {
+                                tools.挂机打怪.启动隐身();
+                                上一次隐身 = new Date().getTime();
+                            }
+
+                        }
+
 
                         if (挂机参数.随机血量 > 0) {
                             var 血量预警 = tools.挂机打怪.获取人物血量是否飞随机();
@@ -1847,6 +1877,8 @@ var tools = {
                         //tools.执行时间戳.检测无地牢补给();
 
                         tools.执行时间戳.检测武器衣服();
+
+                        tools.执行时间戳.检测宝宝();
 
                         //var t1 = new Date().getTime();
                         //var t2 = new Date().getTime();
@@ -1943,14 +1975,12 @@ var tools = {
                     break;
                 }
                 if (文字.indexOf("已满") >= 0 || 文字.indexOf("己满") >= 0 || 文字.indexOf("负重") >= 0) {
-                    if (挂机参数.装备实际未满下线 == 1) {
-                        var r1 = tools.常用操作.检查背包是否有东西("5_7");
-                        if (r1) {
-                            tools.挂机打怪.回城补给在挂机("拾取发现装备已满");
-                        } else {
-                            tools.常用操作.小退();
-                            break;
-                        }
+                    var r1 = tools.常用操作.检查背包是否有东西("5_7");
+                    if (r1) {
+                        tools.挂机打怪.回城补给在挂机("拾取发现装备已满");
+                    } else {
+                        tools.常用操作.小退();
+                        break;
                     }
                 }
 
@@ -2070,17 +2100,19 @@ var tools = {
                 }
             }
             return result;
-            // var p = config.zuobiao.血量范围[fbl];
-            // var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
-            // var xue = null;
-            // if (result != null && result.length > 0) {
-            //     try {
-            //         xue = parseInt(result[0].text);
-            //     } catch (error) {
-            //         xue = null;
-            //     }
-            // }
-            // return xue;
+        },
+        获取人物血量是否隐身: () => {
+            var result = false;
+            var img = captureScreen();
+            var r = images.findMultiColors(img, "#FF4246", [[0, -69, "#79030C"]], {
+                region: [365, 560, 3, 85],
+                threshold: 35
+            });
+            utils.recycleNull(img);
+            if (r == null || r.x <= 0 || r.y <= 0) {
+                result = true;
+            }
+            return result;
         },
         启动隐身: () => {
             // if (挂机参数.隐身走动 == 1) {
@@ -2235,26 +2267,33 @@ var tools = {
             return result;
         },
         向宝宝移动: (result) => {
-            var r = result.r;
-            var 人物中心 = config.zuobiao.人物中心[fbl];
-            if (r.y < 人物中心.y) {
-                var juli = 人物中心.y - r.y > 40 ? 人物中心.y - r.y : 40;
-                tools.人物移动.上走一步(parseInt(juli / 40 * 1000));
+            var 人物中心 = config.zuobiao.人物血量中心[fbl];
+            var 走一格像素 = config.zuobiao.走一格像素[fbl];
+            var 宝宝中心 = {
+                x: result.r.x + 20,
+                y: result.r.y
             }
-            if (r.y > 人物中心.y) {
-                var juli = r.y - 人物中心.y > 40 ? r.y - 人物中心.y : 40;
-                tools.人物移动.下走一步(parseInt(juli / 40 * 1000));
+            var 走动x = Math.round(Math.abs(宝宝中心.x - 人物中心.x) / 走一格像素.x);
+            if (走动x > 0) {
+                if (宝宝中心.x < 人物中心.x) {
+                    tools.人物移动.左走一步(走动x * 1000);
+                }
+                else {
+                    tools.人物移动.右走一步(走动x * 1000);
+                }
             }
-            if (r.x < 人物中心.x) {
-                var juli = 人物中心.x - r.x > 65 ? 人物中心.x - r.x : 65;
-                tools.人物移动.左走一步(parseInt(juli / 65 * 1000));
-            }
-            if (r.x > 人物中心.x) {
-                var juli = r.x - 人物中心.x > 65 ? r.x - 人物中心.x : 65;
-                tools.人物移动.右走一步(parseInt(juli / 65 * 1000));
+
+            var 走动y = Math.round(Math.abs(宝宝中心.y - 人物中心.y) / 走一格像素.y);
+            if (走动y > 0) {
+                if (宝宝中心.y < 人物中心.y) {
+                    tools.人物移动.上走一步(走动y * 1000);
+                }
+                if (宝宝中心.y > 人物中心.y) {
+                    tools.人物移动.下走一步(走动y * 1000);
+                }
             }
         },
-        获取身边怪物数据: () => {
+        获取人物身边怪物数据: () => {
             let img = captureScreen();
             var color = "#DB0000";
             var result = [];
@@ -2269,6 +2308,37 @@ var tools = {
 
                 [555, 245, 50, 5], // 正左方
                 [681, 245, 50, 5], // 正右方
+            ]
+            regions.forEach((reg, index) => {
+                var r = images.findAllPointsForColor(img, color, {
+                    region: reg, // 正上方
+                    threshold: 10
+                });
+                if (r && r.length > 0) {
+                    result.push({
+                        方向: index,
+                        血量: r.length
+                    })
+                }
+            })
+            utils.recycleNull(img);
+            return result;
+        },
+        获取宝宝身边怪物数据: (p) => {
+            let img = captureScreen();
+            var color = "#DB0000";
+            var result = [];
+            var regions = [
+                [p.x - 2, p.y - 45, 50, 8], // 正上方
+                [p.x - 67, p.y - 45, 50, 8], // 左上方
+                [p.x + 61, p.y - 45, 50, 8], // 右上方
+
+                [p.x - 2, p.y + 40, 50, 8], // 正下方
+                [p.x - 67, p.y + 40, 50, 8], // 左下方
+                [p.x + 61, p.y + 40, 50, 8], // 右下方
+
+                [p.x - 67, p.y - 2, 50, 8], // 正左方
+                [p.x + 61, p.y - 2, 50, 8], // 正右方
             ]
             regions.forEach((reg, index) => {
                 var r = images.findAllPointsForColor(img, color, {
@@ -5071,7 +5141,10 @@ ui.run(() => {
             拾取时长: parseInt(win.t_shiQuShiChang.getText()),
             拾取延时: parseInt(win.t_shiquyanshi.getText()),
             隐身数量: parseInt(win.t_YinShen.getText()),
+            跟随几格: parseInt(win.t_gensuijuli.getText()),
             机器标识: win.t_jiqibiaoshi.getText(),
+
+
             检查衣服武器时间戳: parseInt(win.t_shoujihaoma.getText()),
             打怪等待: win.t_daguaidengdai.getText(),
             随机血量: parseInt(win.t_suijixueliang.getText()),
