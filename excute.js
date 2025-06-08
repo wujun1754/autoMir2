@@ -143,6 +143,7 @@ var 挂机参数 = {
     挂机地图: "",
     挂机城市: "",
     机器标识: "",
+    跟随宝宝:0,
     检查衣服武器时间戳: 600
 }
 var 挂机坐标点跑图次数 = 0;
@@ -181,7 +182,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.7.8" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.8.21" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -254,9 +255,10 @@ var win = floaty.rawWindow(
                             <radio textSize="10sp" id="radio4_2" text="骨魔洞二层" />
                             <radio textSize="10sp" id="radio4_3" text="骨魔洞三层" />
 
-                            <radio textSize="10sp" id="radio4_4" text="牛魔寺庙二层" />
-                            <radio textSize="10sp" id="radio4_5" text="牛魔寺庙三层" />
-                            <radio textSize="10sp" id="radio4_6" text="牛魔寺庙四层" />
+                            <radio textSize="10sp" id="radio4_4" text="牛魔寺庙一层" />
+                            <radio textSize="10sp" id="radio4_5" text="牛魔寺庙二层" />
+                            <radio textSize="10sp" id="radio4_6" text="牛魔寺庙三层" />
+                            <radio textSize="10sp" id="radio4_7" text="牛魔寺庙四层" />
 
                         </radiogroup>
                     </horizontal>
@@ -412,9 +414,9 @@ var win = floaty.rawWindow(
                         <horizontal gravity="right">
                             <checkbox id="cbIsFuGongJi" text="首攻用符" textSize="10sp" />
                         </horizontal>
-                        {/* <horizontal gravity="right">
-                            <checkbox id="cbIsYiBoSiWangSiQu" text="无怪拾取" textSize="10sp" />
-                        </horizontal> */}
+                        <horizontal gravity="right">
+                            <checkbox id="cbIsGenSuiBaoBao" text="跟随宝宝" textSize="10sp" />
+                        </horizontal>
                     </horizontal>
                     <horizontal>
                         <horizontal gravity="left">
@@ -715,7 +717,12 @@ var tools = {
             }
             if (挂机参数.地图拖动 == 1) {
                 win.cbDiTuTuoDong.setChecked(true);
+            }  
+            if (挂机参数.跟随宝宝 == 1) {
+                win.cbIsGenSuiBaoBao.setChecked(true);
             }
+
+
         },
         保存图片: (pic) => {
             var timestamp = new Date().getTime();
@@ -1674,10 +1681,6 @@ var tools = {
             var isShiQu = false;
             var r = null;
             if (挂机参数.只打满血怪 == 1) {
-                // r = tools.findImageAreaClick("zuoguaiwumanxueBtn.png", 怪物集合.x[0], 怪物集合.y[0], 怪物集合.x[1], 怪物集合.y[1]);
-                // if (r) {
-                //     isFind = true;
-                // }
                 r = tools.挂机打怪.找满血怪();
                 if (r && (r.x > 0 || r.y > 0)) {
                     click(r.x + random(12, 20), r.y + random(-3, 3))
@@ -1685,19 +1688,13 @@ var tools = {
                 }
             }
             else {
-                r = tools.findImageArea("zuoguaiwuBtn.png", 怪物集合.x[0], 怪物集合.y[0], 怪物集合.x[1], 怪物集合.y[1]);
-                if (r.status) {
-                    isFind = true;
+                r = tools.挂机打怪.找非满血怪();
+                if (r && (r.x > 0 || r.y > 0)) {
                     click(random(选择怪物攻击.x[0], 选择怪物攻击.x[1]), random(选择怪物攻击.y[0], 选择怪物攻击.y[1]))
+                    isFind = true;
                 }
-                // r = tools.挂机打怪.找非满血怪();
-                // if (r && (r.x > 0 || r.y > 0)) {
-                //     click(random(选择怪物攻击.x[0], 选择怪物攻击.x[1]), random(选择怪物攻击.y[0], 选择怪物攻击.y[1]))
-                //     isFind = true;
-                // }
             }
             if (isFind) {
-                //tools.悬浮球描述("攻击中");
                 if (挂机参数.首次用符攻击 == 1) {
                     tools.挂机打怪.打符();
                     sleep(666);
@@ -1706,12 +1703,13 @@ var tools = {
                     sleep(100);
                     click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                 }
-                r = tools.findImageAreaForWait("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1], {
-                    maxTries: 10,
-                    interval: 100,
-                    threshold: 0.6
-                })
-                if (r.status) {
+                // r = tools.findImageAreaForWait("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1], {
+                //     maxTries: 10,
+                //     interval: 100,
+                //     threshold: 0.6
+                // })
+                r = tools.挂机打怪.找正上锁定怪物(1);
+                if (r && (r.x > 0 || r.y > 0)) {
                     utils.recycleNull(被攻击怪物血量截图);
                     被攻击怪物血量截图 = tools.常用操作.截图被攻击怪物血量();
                     上次坐标截图 = tools.常用操作.截图当前坐标();
@@ -1763,13 +1761,8 @@ var tools = {
                         }
                         return false;
                     }
-                    //     r = tools.findImageArea("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1], 0.6)
-                    r = tools.findImageAreaForWait("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1], {
-                        maxTries: 2,
-                        interval: 100,
-                        threshold: 0.7
-                    })
-                    if (r.status) {
+                    r = tools.挂机打怪.找正上锁定怪物(2, 100);
+                    if (r && (r.x > 0 || r.y > 0)) {
                         isChange = tools.挂机打怪.怪物血量是否变化();
                         if (锁定的怪物.length <= 0) {
                             锁定的怪物 = tools.挂机打怪.身边锁定怪物().replace(/\./g, "").replace(/,/g, "").replace(/:/g, "");
@@ -1794,7 +1787,7 @@ var tools = {
                         }
 
 
-                        if (挂机参数.隐身走动 == 1 && 锁定的怪物.length > 0) {
+                        if (挂机参数.隐身走动 == 1) {
                             var r = tools.挂机打怪.扫描宝宝();
                             if (r.status) {
                                 宝宝最后位置信息 = {
@@ -1802,7 +1795,7 @@ var tools = {
                                     time: new Date().getTime()
                                 }
                                 宝宝位置 = `,(${r.r.x + ":" + r.r.y})`;
-                                if (!是否隐身等待) {
+                                if (!是否隐身等待 && 锁定的怪物.length > 0) {
                                     tools.挂机打怪.向宝宝移动(r);
                                     是否隐身等待 = true;
                                 }
@@ -1876,21 +1869,44 @@ var tools = {
             var img = captureScreen();
             var r = images.findMultiColors(img, p.找色[0].color, [[p.找色[1].x, p.找色[1].y, p.找色[1].color], [p.找色[2].x, p.找色[2].y, p.找色[2].color], [p.找色[3].x, p.找色[3].y, p.找色[3].color]], {
                 region: [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]],
-                threshold: 50
+                threshold: 35
             });
             utils.recycleNull(img);
             return r;
         },
         找非满血怪: () => {
-            let fbl = `${device.width}_${device.height}`;
             var p = config.zuobiao.左攻击面板[fbl].怪物集合;
             var img = captureScreen();
             var r = images.findMultiColors(img, p.找色非满血[0].color, [[p.找色非满血[1].x, p.找色非满血[1].y, p.找色非满血[1].color]], {
                 region: [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]],
-                threshold: 55
+                threshold: 35
             });
             utils.recycleNull(img);
             return r;
+        },
+        找正上锁定怪物: (tryCount, interval) => {
+            var p = config.zuobiao.锁定怪物标识范围[fbl];
+            if (tryCount == null || tryCount <= 0) {
+                tryCount = 1;
+            }
+            for (var index = 0; index < tryCount; index++) {
+                var img = captureScreen();
+                var r = images.findMultiColors(img, p.找色[0].color, [[p.找色[1].x, p.找色[1].y, p.找色[1].color]], {
+                    region: [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]],
+                    threshold: 35
+                });
+                utils.recycleNull(img);
+                if (r && (r.x > 0 || r.y > 0)) {
+                    return r;
+                }
+                if (tryCount > 1) {
+                    if (interval == null || interval <= 100) {
+                        interval = 100;
+                    }
+                    sleep(interval)
+                }
+            }
+            return null;
         },
         回城补给在挂机: (来源) => {
             tools.常用方法.错误日志(来源, 2)
@@ -2127,6 +2143,8 @@ var tools = {
                 r = config.zuobiao.苍月大地图偏移[fbl].骨魔洞一层.打怪点;
             } else if (挂机参数.挂机地图 == "骨魔洞二层") {
                 r = config.zuobiao.苍月大地图偏移[fbl].骨魔洞二层.打怪点;
+            } else if (挂机参数.挂机地图 == "骨魔洞三层") {
+                r = config.zuobiao.苍月大地图偏移[fbl].骨魔洞三层.打怪点;
             } else if (挂机参数.挂机地图 == "石墓一层") {
                 r = config.zuobiao.盟重大地图偏移[fbl].石墓一层.打怪点;
             } else if (挂机参数.挂机地图 == "石墓二层") {
@@ -2137,7 +2155,10 @@ var tools = {
                 r = config.zuobiao.盟重大地图偏移[fbl].石墓四层.打怪点;
             } else if (挂机参数.挂机地图 == "石墓五层") {
                 r = config.zuobiao.盟重大地图偏移[fbl].石墓五层.打怪点;
-            } else if (挂机参数.挂机地图 == "牛魔寺庙二层") {
+            } else if (挂机参数.挂机地图 == "牛魔寺庙一层") {
+                r = config.zuobiao.苍月大地图偏移[fbl].牛魔寺庙一层.打怪点;
+            }
+            else if (挂机参数.挂机地图 == "牛魔寺庙二层") {
                 r = config.zuobiao.苍月大地图偏移[fbl].牛魔寺庙二层.打怪点;
             } else if (挂机参数.挂机地图 == "牛魔寺庙三层") {
                 r = config.zuobiao.苍月大地图偏移[fbl].牛魔寺庙三层.打怪点;
@@ -2866,13 +2887,13 @@ var tools = {
 
         },
         去挂机地图: (目的地, 当前地图) => {
-
-            tools.常用操作.点击人物();
-            sleep(888);
+            // tools.常用操作.点击人物();
+            // sleep(1288);
             if (挂机参数.地图拖动 == 1) {
                 tools.人物移动.拖动大地图到中心();
             }
             else {
+                tools.常用操作.关闭所有窗口();
                 tools.常用操作.打开大地图();
             }
             var closeBtn = tools.findImageForWait("closeBtn.png", {
@@ -2903,14 +2924,13 @@ var tools = {
                     click(x, y)
                     sleep(random(1200, 1600));
                 }
-                sleep(random(1200, 1666));
+                //sleep(random(1200, 1666));
                 if (挂机参数.地图拖动 == 1) {
                     tools.人物移动.拖动大地图到边缘();
                 }
                 else {
                     tools.常用操作.关闭所有窗口();
                 }
-                sleep(random(1200, 1666));
             } else {
                 tools.常用操作.检测是否小退(true);
                 toastLog("未找到closeBtn");
@@ -2922,6 +2942,7 @@ var tools = {
             var 是否跑图 = false;
             var 是否召唤宝宝 = false;
             tools.常用操作.关闭所有窗口();
+            //tools.常用操作.点击人物();
             var 当前地图 = tools.常用操作.获取人物地图();
             tools.悬浮球描述("开始去挂机地图(" + 当前地图 + ")");
             if (当前地图 == 挂机参数.挂机地图) { //说明到目的地
@@ -2939,56 +2960,60 @@ var tools = {
             if (routesGroup == null || routesGroup.length <= 0) {
                 return;
             }
+            let 上次跑图时间 = new Date().getTime();
+            let 跑图时间戳 = 1.5 * 1000;
             for (let index = 0; index < routesGroup.length; index++) {
                 var routes = routesGroup[index];
                 var last = routes[routes.length - 1];
                 var 目的地 = (index == routesGroup.length - 1 ? last[0] : last[1]);
                 while (当前总状态 == 总状态.已启动) {
                     tools.执行时间戳.检测认证();
-                    当前地图 = tools.常用操作.获取人物地图();
                     var 是否沿途打怪 = config.沿途打怪点.some(item => item === 当前地图)
-                    if (当前地图 == 目的地) { //说明到目的地
-                        tools.挂机打怪.初始化挂机();
-                        break;
-                    }
-                    if (上次坐标截图 == null) {
-                        是否跑图 = true;
-                        上次坐标截图 = tools.常用操作.截图当前坐标();
-                    }
-                    else {
-                        var r = tools.人物移动.跑图坐标是否变化()
-                        if (r) {
-                            var 当前坐标截图 = tools.常用操作.截图当前坐标();
-                            utils.recycleNull(上次坐标截图);
-                            上次坐标截图 = 当前坐标截图;
-                            是否跑图 = false;
-                            tools.悬浮球描述("人物跑动中")
+                    if (new Date().getTime() - 上次跑图时间 > 跑图时间戳) {
+                        var 当前地图 = tools.常用操作.获取人物地图();
+                        if (当前地图 == 目的地) { //说明到目的地
+                            tools.挂机打怪.初始化挂机();
+                            break;
+                        }
+                        if (上次坐标截图 == null) {
+                            是否跑图 = true;
+                            上次坐标截图 = tools.常用操作.截图当前坐标();
                         }
                         else {
-                            是否跑图 = true;
-                            tools.悬浮球描述("人物未移动")
+                            var r = tools.人物移动.跑图坐标是否变化()
+                            if (r) {
+                                var 当前坐标截图 = tools.常用操作.截图当前坐标();
+                                utils.recycleNull(上次坐标截图);
+                                上次坐标截图 = 当前坐标截图;
+                                是否跑图 = false;
+                                tools.悬浮球描述("人物跑动中")
+                            }
+                            else {
+                                是否跑图 = true;
+                                tools.悬浮球描述("人物未移动")
+                            }
                         }
-                    }
-                    if (是否跑图) {
-                        try {
-                            tools.人物移动.去挂机地图(目的地, 当前地图);
-                        } catch (error) {
-                            toastLog('跑图异常' + error)
+                        if (是否跑图) {
+                            try {
+                                tools.人物移动.去挂机地图(目的地, 当前地图);
+                            } catch (error) {
+                                toastLog('跑图异常' + error)
+                            }
                         }
-
+                        上次跑图时间 = new Date().getTime();
                     }
                     if (是否沿途打怪 && 挂机参数.沿途打怪 == 1) {
                         var r = false;
+                        var 打怪次数 = 0;
                         while (当前总状态 == 总状态.已启动) {
                             try {
-                                r = tools.挂机打怪.寻找打怪(打怪次数 > 0 ? true : false);
+                                r = tools.挂机打怪.寻找打怪();
                             } catch (e) {
                                 r = false;
                                 toastLog("打怪异常" + e)
                             }
                             if (r) {
                                 打怪次数++;
-                                //toast("继续攻击");
                                 tools.悬浮球描述("继续攻击")
                                 continue;
                             } else {
@@ -2996,8 +3021,9 @@ var tools = {
                             }
                         }
                     }
-
-                    sleep(1000 * 2.5);
+                    else {
+                        sleep(150);
+                    }
                 }
             }
             tools.常用操作.点击人物();
@@ -3275,6 +3301,11 @@ var tools = {
             if (r.status) {
                 tools.悬浮球描述("格子面板找图命中")
                 return true;
+            } else {
+                r = tools.findImage("beibaoBtn.png"); //背包未找到判定为无蓝
+                if (!r.status) {
+                    return true;
+                }
             }
             // var 背包按钮 = tools.常用操作.打开背包();
             // if (背包按钮.status) {
@@ -5034,6 +5065,7 @@ ui.run(() => {
             认证自动识别: win.cbRenzhengShiBie.isChecked() ? 1 : 0,
             云码认证: win.cbRenzhengYunMa.isChecked() ? 1 : 0,
             地图拖动: win.cbDiTuTuoDong.isChecked() ? 1 : 0,
+            跟随宝宝: win.cbIsGenSuiBaoBao.isChecked() ? 1 : 0,
             挂机地图: 挂机地图,
             挂机城市: 挂机城市,
             拾取时长: parseInt(win.t_shiQuShiChang.getText()),
@@ -5219,14 +5251,11 @@ function showWinConfig() {
 }
 
 
-// while (true) {
-//     var r = tools.找满血怪()
-//     tools.悬浮球描述(JSON.stringify(r));
-//     sleep(1000);
-// }
-
-// sleep(1000);
-// tools.补给操作.卖物品Loop()
+// while(true){
+//     var r  =tools.挂机打怪.找正上锁定怪物()
+//     tools.悬浮球描述(JSON.stringify(r))
+//     sleep(100)
+//  }
 
 
 //启动程序
