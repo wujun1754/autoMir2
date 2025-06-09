@@ -183,7 +183,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.8.21" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.8.3" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -1850,8 +1850,15 @@ var tools = {
                                 上次坐标截图 = 当前坐标截图;
                             }
                             else {
-                                tools.人物移动.随机走一步(random(2500, 3500))
-                                click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                                var r = tools.挂机打怪.大范围扫描锁定怪物();
+                                if (r && r.x > 0 && r.y > 0) {
+                                    tools.人物移动.指定像素移动(r.x, r.y);
+                                    click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                                }
+                                else {
+                                    tools.人物移动.随机走一步(random(1500, 3500));
+                                    click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                                }
                             }
                             上一次移动 = new Date().getTime();
                         }
@@ -2266,55 +2273,10 @@ var tools = {
             utils.recycleNull(img);
             return result;
         },
-        向宝宝移动: () => {
-            var 走一格像素 = config.zuobiao.走一格像素[fbl];
-            var 人物中心 = config.zuobiao.人物血量中心[fbl];
-            var 宝宝中心 = {
-                x: result.r.x + 20,
-                y: result.r.y
-            }
-            while (true) {
-                var r = tools.挂机打怪.扫描宝宝();
-                if (r.status) {
-                    var 宝宝空余位置 = tools.挂机打怪.获取宝宝身边怪物数据(r.r).filter(item => item.血量 <= 0);
-                    if (宝宝空余位置 && 宝宝空余位置.length > 0) {
-                        var 范围x = 走一格像素.x * 挂机参数.跟随几格;
-                        var 范围y = 走一格像素.y * 挂机参数.跟随几格;
-                        var 宝宝血量中心x = r.r.x + 20;
-                        if (Math.abs(宝宝血量中心x - 人物血量中心.x) > 范围x || Math.abs(r.r.y - 人物血量中心.y) > 范围y) {
-                            向宝宝移动 = true;
-                        }
-                    }
-                    else {
-                        var 走动x = Math.round(Math.abs(宝宝中心.x - 人物中心.x) / 走一格像素.x);
-                        if (走动x > 0) {
-                            if (宝宝中心.x < 人物中心.x) {
-                                tools.人物移动.左走一步(走动x * 1000);
-                            }
-                            else {
-                                tools.人物移动.右走一步(走动x * 1000);
-                            }
-                        }
-
-                        var 走动y = Math.round(Math.abs(宝宝中心.y - 人物中心.y) / 走一格像素.y);
-                        if (走动y > 0) {
-                            if (宝宝中心.y < 人物中心.y) {
-                                tools.人物移动.上走一步(走动y * 1000);
-                            }
-                            if (宝宝中心.y > 人物中心.y) {
-                                tools.人物移动.下走一步(走动y * 1000);
-                            }
-                        }
-                        break;
-                    }
-                }
-                else {
-                    break;
-                }
-            }
-
-
-
+        向宝宝移动: (result) => {
+            var 宝宝中心x = result.r.x + 20;
+            var 宝宝中心y = result.r.y + 50;
+            tools.人物移动.指定像素移动(宝宝中心x, 宝宝中心y);
         },
         获取人物身边怪物数据: () => {
             let img = captureScreen();
@@ -2347,33 +2309,54 @@ var tools = {
             utils.recycleNull(img);
             return result;
         },
-        获取宝宝身边怪物数据: (p) => {
-            let img = captureScreen();
-            var color = "#DB0000";
-            var result = [];
-            var regions = [
-                [p.x - 2, p.y - 45, 50, 8], // 正上方
-                [p.x - 67, p.y - 45, 50, 8], // 左上方
-                [p.x + 61, p.y - 45, 50, 8], // 右上方
-
-                [p.x - 2, p.y + 40, 50, 8], // 正下方
-                [p.x - 67, p.y + 40, 50, 8], // 左下方
-                [p.x + 61, p.y + 40, 50, 8], // 右下方
-
-                [p.x - 67, p.y - 2, 50, 8], // 正左方
-                [p.x + 61, p.y - 2, 50, 8], // 正右方
-            ]
-            regions.forEach((reg, index) => {
-                var r = images.findAllPointsForColor(img, color, {
-                    region: reg,
-                    threshold: 10
-                });
-                result.push({
-                    方向: index,
-                    血量: r && r.length ? r.length : 0
+        获取宝宝身边怪物数据: (status) => {
+            var r = tools.挂机打怪.扫描宝宝();
+            var result = {
+                status: false,
+                value: null
+            }
+            if (r.status) {
+                var p =  r.r;
+                let img = captureScreen();
+                var color = "#DB0000";
+                var value = [];
+                var regions = [
+                    [p.x - 2, p.y - 45, 50, 8], // 正上方
+                    [p.x - 67, p.y - 45, 50, 8], // 左上方
+                    [p.x + 61, p.y - 45, 50, 8], // 右上方
+    
+                    [p.x - 2, p.y + 40, 50, 8], // 正下方
+                    [p.x - 67, p.y + 40, 50, 8], // 左下方
+                    [p.x + 61, p.y + 40, 50, 8], // 右下方
+    
+                    [p.x - 67, p.y - 2, 50, 8], // 正左方
+                    [p.x + 61, p.y - 2, 50, 8], // 正右方
+                ]
+                regions.forEach((reg, index) => {
+                    var r = images.findColor(img, color, {
+                        region: reg, // 正上方
+                        threshold: 4
+                    });
+                    if (status == 0) {
+                        value.push(r)
+                    }
+                    else if (status == 1) {
+                        if (r && r.x > 0 && r.y > 0) {
+                            value.push(r)
+                        }
+                    }
+                    else if (status == 2) {
+                        if (r == null || r.x <= 0 || r.y <= 0) {
+                            value.push(r)
+                        }
+                    }
                 })
-            })
-            utils.recycleNull(img);
+                utils.recycleNull(img);
+                result = {
+                    status: true,
+                    value: value
+                }
+            }
             return result;
         },
         身边锁定怪物: () => {
@@ -2387,6 +2370,21 @@ var tools = {
             utils.recycleNull(huiduImg);
 
             return r;
+        },
+        大范围扫描锁定怪物: () => {
+            var r = tools.获取区域文字(300, 66, 917, 535, 60, 255, true, false);
+            if (r && r.length > 0) {
+                for (var index = 0; index < r.length; index++) {
+                    var info = r[index];
+                    let hasNumber = /\d/.test(info.text);
+                    if (!hasNumber) {
+                        info.x = info.x + 300;
+                        info.y = info.y + 60;
+                        return info;
+                    }
+                }
+            }
+            return null;
         },
         怪物血量是否变化: () => {
             // x: [505, 760],
@@ -2560,6 +2558,29 @@ var tools = {
                 //         [p.x + dx2, p.y + dx2]
                 //     ]
                 // );
+            }
+        },
+        指定像素移动: (x, y) => {
+            var 人物中心 = config.zuobiao.人物血量中心[fbl];
+            var 走一格像素 = config.zuobiao.走一格像素[fbl];
+            var 走动x = Math.round(Math.abs(x - 人物中心.x) / 走一格像素.x);
+            if (走动x > 0) {
+                if (x < 人物中心.x) {
+                    tools.人物移动.左走一步(走动x * 1000);
+                }
+                else {
+                    tools.人物移动.右走一步(走动x * 1000);
+                }
+            }
+
+            var 走动y = Math.round(Math.abs(y - 人物中心.y) / 走一格像素.y);
+            if (走动y > 0) {
+                if (y < 人物中心.y) {
+                    tools.人物移动.上走一步(走动y * 1000);
+                }
+                if (y > 人物中心.y) {
+                    tools.人物移动.下走一步(走动y * 1000);
+                }
             }
         },
         跑图坐标是否变化: () => {
