@@ -1686,11 +1686,8 @@ var tools = {
     },
     挂机打怪: {
         寻找打怪: () => {
-            //tools.悬浮球描述("找怪(" + new Date().getSeconds() + ")");
-            var p2 = config.zuobiao.锁定怪物标识范围[fbl];
             var 按钮集合 = config.zuobiao.按钮集合[fbl];
             var 选择怪物攻击 = config.zuobiao.左攻击面板[fbl].选择怪物攻击;
-            var 怪物集合 = config.zuobiao.左攻击面板[fbl].怪物集合;
             var isFind = false;
             var isShiQu = false;
             var r = null;
@@ -1711,19 +1708,13 @@ var tools = {
             if (isFind) {
                 if (挂机参数.首次用符攻击 == 1) {
                     tools.挂机打怪.打符();
-                    sleep(666);
                 }
                 for (let index = 0; index < 3; index++) {
                     sleep(100);
                     click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                 }
-                // r = tools.findImageAreaForWait("zhongjianguaiwuBtn.png", p2.x[0], p2.y[0], p2.x[1], p2.y[1], {
-                //     maxTries: 10,
-                //     interval: 100,
-                //     threshold: 0.6
-                // })
-                r = tools.挂机打怪.找正上锁定怪物(1);
-                if (r && (r.x > 0 || r.y > 0)) {
+                r = tools.挂机打怪.找正上锁定怪物(5, 100);
+                if (r.status) {
                     utils.recycleNull(被攻击怪物血量截图);
                     被攻击怪物血量截图 = tools.常用操作.截图被攻击怪物血量();
                     上次坐标截图 = tools.常用操作.截图当前坐标();
@@ -1731,13 +1722,12 @@ var tools = {
                 }
                 else {
                     toastLog("锁定失败");
-                    //tools.悬浮球描述("锁定失败");
                     isFind = false;
                 }
             }
             tools.挂机打怪.激活拾取后操作();
             if (isShiQu) {
-                var timeout = parseInt(挂机参数.打怪等待);// 1000 * 60 * 10;
+                var timeout = 挂机参数.打怪等待;// 1000 * 60 * 10;
                 if (timeout == null || timeout <= 0) {
                     timeout = 300;
                 }
@@ -1762,7 +1752,6 @@ var tools = {
                 var isChange = false;
                 var 血量预警 = false;
                 var 是否隐身等待 = false;
-                var 血量阈值次数 = 0;
                 var 宝宝位置 = "";
                 var 走一格像素 = config.zuobiao.走一格像素[fbl];
                 var 人物血量中心 = config.zuobiao.人物血量中心[fbl];
@@ -1777,19 +1766,17 @@ var tools = {
                         }
                         return false;
                     }
-                    r = tools.挂机打怪.找正上锁定怪物(2, 100);
-                    if (r && (r.x > 0 || r.y > 0)) {
+                    r = tools.挂机打怪.找正上锁定怪物(3, 100);
+                    if (r.status) {
                         isChange = tools.挂机打怪.怪物血量是否变化();
                         if (锁定的怪物.length <= 0) {
                             锁定的怪物 = tools.挂机打怪.身边锁定怪物().replace(/\./g, "").replace(/,/g, "").replace(/:/g, "");
                         }
-                        if (挂机参数.只打满血怪 == 1) {
-                            if (isChange && 锁定的怪物.length <= 0) {
-                                锁定的怪物 = tools.挂机打怪.身边锁定怪物().replace(/\./g, "").replace(/,/g, "").replace(/:/g, "");
-                                if (锁定的怪物.length <= 0) {
-                                    click(random(726, 736), random(25, 35));
-                                    return true;
-                                }
+                        if (挂机参数.只打满血怪 == 1 && isChange && 锁定的怪物.length <= 0) {
+                            锁定的怪物 = tools.挂机打怪.身边锁定怪物().replace(/\./g, "").replace(/,/g, "").replace(/:/g, "");
+                            if (锁定的怪物.length <= 0) {
+                                click(random(726, 736), random(25, 35));
+                                return true;
                             }
                         }
                         怪物 = tools.挂机打怪.获取人物身边怪物数据();
@@ -1894,6 +1881,15 @@ var tools = {
                         //sleep(111);
                     } else {
                         tools.挂机打怪.开始拾取();
+                        if (挂机参数.只打满血怪 == 1) {
+                            r = tools.挂机打怪.获取宝宝身边怪物数据(1);
+                            if (r.status && r.value && r.value.length > 0) {
+                                var item = r.value[0];
+                                click(item.x + 20, item.y);
+                                toastLog("攻击宝宝身边怪物")
+                                continue;
+                            }
+                        }
                         toastLog("怪物死亡")
                         //tools.悬浮球临时描述("")
                         break;
@@ -1924,28 +1920,38 @@ var tools = {
             return r;
         },
         找正上锁定怪物: (tryCount, interval) => {
-            var p = config.zuobiao.锁定怪物标识范围[fbl];
+            if (interval == null || interval <= 0) {
+                interval = 10;
+            }
             if (tryCount == null || tryCount <= 0) {
                 tryCount = 1;
             }
-            for (var index = 0; index < tryCount; index++) {
-                var img = captureScreen();
-                var r = images.findMultiColors(img, p.找色[0].color, [[p.找色[1].x, p.找色[1].y, p.找色[1].color]], {
-                    region: [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]],
-                    threshold: 35
-                });
-                utils.recycleNull(img);
-                if (r && (r.x > 0 || r.y > 0)) {
-                    return r;
-                }
-                if (tryCount > 1) {
-                    if (interval == null || interval <= 100) {
-                        interval = 100;
-                    }
-                    sleep(interval)
-                }
-            }
-            return null;
+            var p = config.zuobiao.锁定怪物标识范围[fbl];
+            return tools.findImageAreaForWait("zhongjianguaiwuBtn.png", p.x[0], p.y[0], p.x[1], p.y[1], {
+                maxTries: tryCount,
+                interval: interval,
+                threshold: 0.65
+            })
+
+            // 不能通过找色去做，因为有时会误点到人物
+            // for (var index = 0; index < tryCount; index++) {
+            //     var img = captureScreen();
+            //     var r = images.findMultiColors(img, p.找色[0].color, [[p.找色[1].x, p.找色[1].y, p.找色[1].color]], {
+            //         region: [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]],
+            //         threshold: 35
+            //     });
+            //     utils.recycleNull(img);
+            //     if (r && (r.x > 0 || r.y > 0)) {
+            //         return r;
+            //     }
+            //     if (tryCount > 1) {
+            //         if (interval == null || interval <= 100) {
+            //             interval = 100;
+            //         }
+            //         sleep(interval)
+            //     }
+            // }
+            // return null;
         },
         回城补给在挂机: (来源) => {
             tools.常用方法.错误日志(来源, 2)
@@ -2316,7 +2322,7 @@ var tools = {
                 value: null
             }
             if (r.status) {
-                var p =  r.r;
+                var p = r.r;
                 let img = captureScreen();
                 var color = "#DB0000";
                 var value = [];
@@ -2324,11 +2330,11 @@ var tools = {
                     [p.x - 2, p.y - 45, 50, 8], // 正上方
                     [p.x - 67, p.y - 45, 50, 8], // 左上方
                     [p.x + 61, p.y - 45, 50, 8], // 右上方
-    
+
                     [p.x - 2, p.y + 40, 50, 8], // 正下方
                     [p.x - 67, p.y + 40, 50, 8], // 左下方
                     [p.x + 61, p.y + 40, 50, 8], // 右下方
-    
+
                     [p.x - 67, p.y - 2, 50, 8], // 正左方
                     [p.x + 61, p.y - 2, 50, 8], // 正右方
                 ]
@@ -4709,7 +4715,9 @@ var tools = {
         let start = new Date().getTime();
         let tryCount = 0;
         while (true) {
-            sleep(interval);
+            if (interval > 0) {
+                sleep(interval);
+            }
             var msg = "";
             if (maxTries && tryCount >= maxTries) {
                 msg = "超过最大尝试次数，未找到图像：" + fileName;
