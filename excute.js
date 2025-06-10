@@ -2320,10 +2320,41 @@ var tools = {
             utils.recycleNull(img);
             return result;
         },
-        向宝宝移动: (result) => {
-            var 宝宝中心x = result.r.x + 20;
-            var 宝宝中心y = result.r.y + 50;
-            tools.人物移动.指定像素移动(宝宝中心x, 宝宝中心y);
+        向宝宝移动: () => {
+            while (true) {
+                var r = tools.挂机打怪.扫描宝宝();
+                var 人物中心 = config.zuobiao.人物血量中心[fbl];
+                var 走一格像素 = config.zuobiao.走一格像素[fbl];
+                if (r.status) {
+                    var 宝宝中心x = r.r.x + 20; //宝宝中心x
+                    var 宝宝中心y = r.r.y + 42; //宝宝中心y
+                    if (宝宝中心x < 人物中心.x) {
+                        if (x < 人物中心.x) {
+                            tools.人物移动.左走一步(走动x * 1000);
+                        }
+                        else {
+                            tools.人物移动.右走一步(走动x * 1000);
+                        }
+                    }
+
+                    var 走动y = Math.round(Math.abs(y - 人物中心.y) / 走一格像素.y);
+                    if (走动y > 0) {
+                        if (y < 人物中心.y) {
+                            tools.人物移动.上走一步(走动y * 1000);
+                        }
+                        if (y > 人物中心.y) {
+                            tools.人物移动.下走一步(走动y * 1000);
+                        }
+                    }
+                    tools.人物移动.指定像素移动(宝宝中心x, 宝宝中心y);
+                }
+                else {
+                    toastLog("扫描宝宝失败");
+                    break;
+                }
+            }
+
+
         },
         获取人物身边怪物数据: () => {
             let img = captureScreen();
@@ -2401,7 +2432,8 @@ var tools = {
                 utils.recycleNull(img);
                 result = {
                     status: true,
-                    value: value
+                    value: value,
+                    p: p
                 }
             }
             return result;
@@ -2586,12 +2618,19 @@ var tools = {
                 var p = config.zuobiao.遥感中心位置[fbl];
                 let dx1 = random(-5, 5);
                 let dx2 = random(40, 70);
-                gesture(duration, [p.x - dx1, p.y - dx1], [p.x - dx2, p.y + dx1], [p.x + dx1, p.y - dx2])
-                // gestures(
+                gesture(duration, [p.x - dx1, p.y - dx1], [random(80,85), random(498,502)])
                 //     [0, duration, [p.x - dx1, p.y - dx1],
                 //         [p.x - dx2, p.y - dx2]
                 //     ]
                 // );
+            }
+        },
+        右上走: (duration) => {
+            if (duration > 0) {
+                var p = config.zuobiao.遥感中心位置[fbl];
+                let dx1 = random(-5, 5);
+                let dx2 = random(40, 70);
+                gesture(duration, [p.x - dx1, p.y - dx1], [random(170,180), random(498,502)])
             }
         },
         右下走: (duration) => {
@@ -2599,12 +2638,19 @@ var tools = {
                 var p = config.zuobiao.遥感中心位置[fbl];
                 let dx1 = random(-5, 5);
                 let dx2 = random(40, 70);
-                gesture(duration, [p.x - dx1, p.y - dx1], [p.x + dx2, p.y + dx1], [p.x + dx1, p.y + dx2])
-                // gestures(
+                gesture(duration, [p.x - dx1, p.y - dx1], [random(170,180), random(575,580)])
                 //     [0, duration, [p.x - dx1, p.y - dx1],
                 //         [p.x + dx2, p.y + dx2]
                 //     ]
                 // );
+            }
+        },
+        左下走: (duration) => {
+            if (duration > 0) {
+                var p = config.zuobiao.遥感中心位置[fbl];
+                let dx1 = random(-5, 5);
+                let dx2 = random(40, 70);
+                gesture(duration, [p.x - dx1, p.y - dx1], [random(80,85), random(575,580)])
             }
         },
         指定像素移动: (x, y) => {
@@ -5409,7 +5455,7 @@ function showWinConfig() {
 //启动程序
 threads.start(function () {
     let 上次跑图时间 = new Date().getTime();
-    let 跑图时间戳 = 1.2 * 1000;
+    let 跑图时间戳 = 1.5 * 1000;
 
     while (true) {
         if (isStart) {
