@@ -1783,10 +1783,10 @@ var tools = {
                     if (r.status) {
                         isChange = tools.挂机打怪.怪物血量是否变化();
                         if (锁定的怪物.length <= 0) {
-                            锁定的怪物 = tools.挂机打怪.身边锁定怪物().replace(/\./g, "").replace(/,/g, "").replace(/:/g, "");
+                            锁定的怪物 = tools.挂机打怪.身边锁定怪物();
                         }
                         if (挂机参数.只打满血怪 == 1 && !攻击宝宝身边怪物 && isChange && 锁定的怪物.length <= 0) {
-                            锁定的怪物 = tools.挂机打怪.身边锁定怪物().replace(/\./g, "").replace(/,/g, "").replace(/:/g, "");
+                            锁定的怪物 = tools.挂机打怪.身边锁定怪物();
                             if (锁定的怪物.length <= 0) {
                                 click(random(726, 736), random(25, 35));
                                 toastLog("放弃怪物归属");
@@ -1851,15 +1851,16 @@ var tools = {
                                 上次坐标截图 = 当前坐标截图;
                             }
                             else {
-                                var r = tools.挂机打怪.大范围扫描锁定怪物();
-                                if (r && r.x > 0 && r.y > 0) {
-                                    tools.人物移动.指定像素移动(r.x, r.y);
-                                    click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                                }
-                                else {
-                                    tools.人物移动.随机走一步(random(1500, 3500));
-                                    click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                                }
+                                tools.挂机打怪.向怪物移动();
+                                // var r = tools.挂机打怪.大范围扫描锁定怪物();
+                                // if (r && r.x > 0 && r.y > 0) {
+                                //     tools.人物移动.指定像素移动(r.x, r.y);
+                                //     click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                                // }
+                                // else {
+                                //     tools.人物移动.随机走一步(random(1500, 3500));
+                                //     click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                                // }
                             }
                             上一次移动 = new Date().getTime();
                         }
@@ -2321,40 +2322,145 @@ var tools = {
             return result;
         },
         向宝宝移动: () => {
+            var start = new Date().getTime();
+            var 人物中心 = config.zuobiao.人物血量中心[fbl];
+            var 走一格像素 = config.zuobiao.走一格像素[fbl];
+            var 跟随几格 = 挂机参数.跟随几格;
             while (true) {
+                if (new Date().getTime() - start > 15 * 1000) {//超过15秒自动退出
+                    toastLog("移动超过时间强制结束");
+                    break;
+                }
                 var r = tools.挂机打怪.扫描宝宝();
-                var 人物中心 = config.zuobiao.人物血量中心[fbl];
-                var 走一格像素 = config.zuobiao.走一格像素[fbl];
+                if (挂机参数.跟随几格 == null || 挂机参数.跟随几格 <= 0) {
+                    跟随几格 = 2;
+                }
                 if (r.status) {
                     var 宝宝中心x = r.r.x + 20; //宝宝中心x
-                    var 宝宝中心y = r.r.y + 42; //宝宝中心y
-                    if (宝宝中心x < 人物中心.x) {
-                        if (x < 人物中心.x) {
-                            tools.人物移动.左走一步(走动x * 1000);
+                    var 宝宝中心y = r.r.y; //宝宝中心y
+                    if (Math.abs(宝宝中心x - 人物中心.x) <= 走一格像素.x * 跟随几格 && Math.abs(宝宝中心y - 人物中心.y) <= 走一格像素.y * 跟随几格) {
+                        toastLog("移动成功");
+                        break;
+                    }
+                    var duartion = random(300, 500);
+                    if (宝宝中心x + (走一格像素.x * 跟随几格) < 人物中心.x) {
+                        if (宝宝中心y + (走一格像素.y * 跟随几格) < 人物中心.y) {
+                            tools.人物移动.左上走(duartion)
+                        }
+                        else if (宝宝中心y - (走一格像素.y * 跟随几格) > 人物中心.y) {
+                            tools.人物移动.左下走(duartion)
                         }
                         else {
-                            tools.人物移动.右走一步(走动x * 1000);
+                            tools.人物移动.左走一步(duartion)
                         }
                     }
-
-                    var 走动y = Math.round(Math.abs(y - 人物中心.y) / 走一格像素.y);
-                    if (走动y > 0) {
-                        if (y < 人物中心.y) {
-                            tools.人物移动.上走一步(走动y * 1000);
+                    else if (宝宝中心x - (走一格像素.x * 跟随几格) > 人物中心.x) {
+                        if (宝宝中心y + (走一格像素.y * 跟随几格) < 人物中心.y) {
+                            tools.人物移动.右上走(duartion)
                         }
-                        if (y > 人物中心.y) {
-                            tools.人物移动.下走一步(走动y * 1000);
+                        else if (宝宝中心y - (走一格像素.y * 跟随几格) > 人物中心.y) {
+                            tools.人物移动.右下走(duartion)
+                        }
+                        else {
+                            tools.人物移动.右走一步(duartion)
                         }
                     }
-                    tools.人物移动.指定像素移动(宝宝中心x, 宝宝中心y);
+                    else {
+                        if (宝宝中心y + (走一格像素.y * 跟随几格) < 人物中心.y) {
+                            tools.人物移动.上走一步(duartion)
+                        }
+                        else if (宝宝中心y - (走一格像素.y * 跟随几格) > 人物中心.y) {
+                            tools.人物移动.下走一步(duartion)
+                        }
+                        else {
+                            break;
+                        }
+                    }
                 }
                 else {
                     toastLog("扫描宝宝失败");
                     break;
                 }
             }
-
-
+        },
+        向怪物移动: () => {
+            var 按钮集合 = config.zuobiao.按钮集合[fbl];
+            var start = new Date().getTime();
+            var 人物中心 = config.zuobiao.人物中心[fbl];
+            var tryCount = 0;
+            var 允许距离 = {
+                x: 100,
+                y: 55
+            }
+            while (true) {
+                if (new Date().getTime() - start > 15 * 1000) {//超过15秒自动退出
+                    toastLog("移动超过时间强制结束");
+                    return 
+                }
+                if (tryCount >= 10) {
+                    tools.悬浮球描述("扫描怪物失败随机走动");
+                    tools.人物移动.随机走一步(random(1500, 3500));
+                    click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                    break;
+                }
+                // var 锁定的怪物 = tools.挂机打怪.身边锁定怪物();
+                // if (锁定的怪物.length > 0) {
+                //     toastLog("移动成功");
+                //     break;
+                // }
+                var r = tools.挂机打怪.大范围扫描锁定怪物();
+                if (r && r.x > 0 && r.y > 0) {
+                    tryCount = 0;
+                    tools.悬浮球描述("成功扫描怪物" + JSON.stringify(r));
+                    var x = r.x;
+                    var y = r.y;
+                    if (Math.abs(x - 人物中心.x) <= 允许距离.x && Math.abs(y - 人物中心.y) <= 允许距离.y) {
+                        toastLog("移动成功" + JSON.stringify(r));
+                        tools.悬浮球描述("移动成功" + JSON.stringify(r));
+                        return true;
+                    }
+                    var duartion = random(300, 500);
+                    if (x + 允许距离.x < 人物中心.x) {
+                        if (y + 允许距离.y < 人物中心.y) {
+                            tools.人物移动.左上走(duartion)
+                        }
+                        else if (y - 允许距离.y > 人物中心.y) {
+                            tools.人物移动.左下走(duartion)
+                        }
+                        else {
+                            tools.人物移动.左走一步(duartion)
+                        }
+                    }
+                    else if (x - 允许距离.x > 人物中心.x) {
+                        if (y + 允许距离.y < 人物中心.y) {
+                            tools.人物移动.右上走(duartion)
+                        }
+                        else if (y - 允许距离.y > 人物中心.y) {
+                            tools.人物移动.右下走(duartion)
+                        }
+                        else {
+                            tools.人物移动.右走一步(duartion)
+                        }
+                    }
+                    else {
+                        if (y + 允许距离.y < 人物中心.y) {
+                            tools.人物移动.上走一步(duartion)
+                        }
+                        else if (y - 允许距离.y > 人物中心.y) {
+                            tools.人物移动.下走一步(duartion)
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                    if(Math.abs(x - 人物中心.x)<= 允许距离.x*2.5 && Math.abs(y - 人物中心.y)<= 允许距离.y*2.5){
+                        sleep(333)
+                    }
+                }
+                else {
+                    tryCount++;
+                }
+            }
         },
         获取人物身边怪物数据: () => {
             let img = captureScreen();
@@ -2447,7 +2553,9 @@ var tools = {
             }
             utils.recycleNull(imgSmall);
             utils.recycleNull(huiduImg);
-
+            if (r && r.length > 0) {
+                r = r.replace(/\./g, "").replace(/,/g, "").replace(/:/g, "");
+            }
             return r;
         },
         大范围扫描锁定怪物: () => {
@@ -2618,7 +2726,7 @@ var tools = {
                 var p = config.zuobiao.遥感中心位置[fbl];
                 let dx1 = random(-5, 5);
                 let dx2 = random(40, 70);
-                gesture(duration, [p.x - dx1, p.y - dx1], [random(80,85), random(498,502)])
+                gesture(duration, [p.x - dx1, p.y - dx1], [random(80, 85), random(498, 502)])
                 //     [0, duration, [p.x - dx1, p.y - dx1],
                 //         [p.x - dx2, p.y - dx2]
                 //     ]
@@ -2630,7 +2738,7 @@ var tools = {
                 var p = config.zuobiao.遥感中心位置[fbl];
                 let dx1 = random(-5, 5);
                 let dx2 = random(40, 70);
-                gesture(duration, [p.x - dx1, p.y - dx1], [random(170,180), random(498,502)])
+                gesture(duration, [p.x - dx1, p.y - dx1], [random(170, 180), random(498, 502)])
             }
         },
         右下走: (duration) => {
@@ -2638,7 +2746,7 @@ var tools = {
                 var p = config.zuobiao.遥感中心位置[fbl];
                 let dx1 = random(-5, 5);
                 let dx2 = random(40, 70);
-                gesture(duration, [p.x - dx1, p.y - dx1], [random(170,180), random(575,580)])
+                gesture(duration, [p.x - dx1, p.y - dx1], [random(170, 180), random(575, 580)])
                 //     [0, duration, [p.x - dx1, p.y - dx1],
                 //         [p.x + dx2, p.y + dx2]
                 //     ]
@@ -2650,7 +2758,7 @@ var tools = {
                 var p = config.zuobiao.遥感中心位置[fbl];
                 let dx1 = random(-5, 5);
                 let dx2 = random(40, 70);
-                gesture(duration, [p.x - dx1, p.y - dx1], [random(80,85), random(575,580)])
+                gesture(duration, [p.x - dx1, p.y - dx1], [random(80, 85), random(575, 580)])
             }
         },
         指定像素移动: (x, y) => {
@@ -2675,6 +2783,8 @@ var tools = {
                     tools.人物移动.下走一步(走动y * 1000);
                 }
             }
+
+
         },
         跑图坐标是否变化: () => {
             var img = captureScreen();
@@ -3506,34 +3616,38 @@ var tools = {
             return false;
         },
         找蓝个: () => {
-            var 格子P = config.zuobiao.药品格子面板[fbl];
-            var r = tools.findImageAreaForWait("lanyaoge.png", 格子P.x1, 格子P.y1, 格子P.x2, 格子P.y2, {
-                maxTries: 5,
-                interval: 200
-            }, 0.65);
-            if (r.status) {
-                tools.悬浮球描述("格子面板找图命中")
+            var img = captureScreen();
+            var r = images.findMultiColors(img, "#6DB3F0", [[0, -19, "#1942A2"]], {
+                region: [373, 618, 3, 30],
+                threshold: 35
+            });
+            utils.recycleNull(img);
+            if (r && r.x > 0 && r.y > 0) {
+                toastLog("找色匹配蓝个成功")
                 return true;
-            } else {
-                r = tools.findImage("beibaoBtn.png"); //背包未找到判定为无蓝
-                if (!r.status) {
+            }
+            else {
+                tools.错误日志("找色匹配蓝个失败", 2);
+                var 格子P = config.zuobiao.药品格子面板[fbl];
+                var r = tools.findImageAreaForWait("lanyaoge.png", 格子P.x1, 格子P.y1, 格子P.x2, 格子P.y2, {
+                    maxTries: 10,
+                    interval: 200
+                }, 0.65);
+                if (r.status) {
+                    toastLog("找图匹配蓝个成功")
                     return true;
+                } else {
+                    tools.错误日志("找图匹配蓝个失败", 2);
+                    r = tools.findImage("beibaoBtn.png"); //背包找到才判定为无蓝
+                    if (r.status) {
+                        tools.错误日志("匹配蓝个失败且找到背包图标", 2);
+                        return false;
+                    }
+                    else {
+                        return true;
+                    }
                 }
             }
-            // var 背包按钮 = tools.常用操作.打开背包();
-            // if (背包按钮.status) {
-            //     r = tools.findImageForWait("lanyaoge.png", {
-            //         maxTries: 5,
-            //         interval: 200
-            //     }, 0.65);
-            //     if (r.status) {
-            //         tools.悬浮球描述("背包面板找图命中")
-            //         tools.常用操作.关闭所有窗口();
-            //         return true;
-            //     }
-            // }
-            // tools.常用操作.关闭所有窗口();
-            return false;
         },
         获取物品信息: (btnName) => {
             var btn = tools.findImageForWait(btnName, {
