@@ -187,7 +187,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.9.27_1" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.9.27_2" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -3778,13 +3778,19 @@ var tools = {
         },
     },
     补给操作: {
-        判断是否出现BOSS提示: () => {
+        判断是否出现BOSS提示: (等待时间) => { //type=1卖，type=2修,type=3存
             var img = captureScreen();
             var r = images.findMultiColors(img, "#00D2FF", [[26, 0, "#00D2FF"], [85, 0, "#FFFFFF"]], {
                 region: [500, 140, 300, 35],
                 threshold: 15
             });
             utils.recycleNull(img);
+            if (r && (r.x > 0 || r.y > 0)) {
+                tools.常用方法.错误日志("补给时发现BOSS提示文字", 3);
+                if (等待时间 && 等待时间 > 0) {
+                    sleep(等待时间);
+                }
+            }
             return r;
         },
         喝修复油: () => {
@@ -4026,7 +4032,7 @@ var tools = {
                 pic: "lanyaoge.png"
             }, {
                 name: "修复油",
-                pic: "xiufuyou1.png"
+                pic: "xiufuyou.png"
             }];
             if (!排除装备) {
                 arr.push({
@@ -4053,16 +4059,18 @@ var tools = {
                 })
             }
             var img = captureScreen();
-            var r = images.findMultiColors(img, "#FFDD3C", [[57, 0, "#FFDD3C"], [0, 56, "#FFDD3C"], [57, 56, "#FFDD3C"]]);
+            var r = images.findMultiColors(img, "#FFDD3C", [[55, 0, "#FFDD3C"], [0, 55, "#FFDD3C"]]);
             utils.recycleNull(img);
             if (r && r.x > 0 && r.y > 0) {
                 for (let index = 0; index < arr.length; index++) {
                     var item = arr[index];
-                    var result = tools.findImageArea(item.pic, r.x, r.y, r.x + 57, r.y + 56, 0.8);
+                    var result = tools.findImageArea(item.pic, r.x - 10, r.y - 10, r.x + 70, r.y + 70, 0.8);
+
                     if (result.status) {
                         if (item.pic == "wuqi_zhanma.png" && btnName != null && btnName.length > 0) {
                             var info = tools.补给操作.获取物品信息(btnName);
-                            if (info.status && info.value.indexOf("马") >= 0) {
+                            toastLog(JSON.stringify(info))
+                            if (info.status && (info.value.indexOf("马") >= 0 || info.value.indexOf("刀") >= 0 || info.value.indexOf("新") >= 0)) {
                                 return {
                                     status: true,
                                     msg: item.name + "跳过",
@@ -4192,7 +4200,7 @@ var tools = {
             if (r && r.x > 0 && r.y > 0) {
                 for (let index = 0; index < arr.length; index++) {
                     var item = arr[index];
-                    var result = tools.findImageArea(item.pic, r.x, r.y, r.x + 57, r.y + 56);
+                    var result = tools.findImageArea(item.pic, r.x - 5, r.y - 5, r.x + 70, r.y + 70);
                     if (result.status) {
                         return {
                             status: true,
@@ -4436,10 +4444,8 @@ var tools = {
                             interval: 500
                         });
                     } else {
-                        r = tools.补给操作.判断是否出现BOSS提示();
+                        r = tools.补给操作.判断是否出现BOSS提示(1000 * 60);
                         if (r && (r.x > 0 || r.y > 0)) {
-                            tools.常用方法.错误日志("卖东西时发现BOSS提示文字", 3);
-                            sleep(1000 * 60);
                             return {
                                 status: false,
                                 err: "卖东西时发现BOSS提示文字"
