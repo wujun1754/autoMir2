@@ -187,7 +187,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.9.27_5" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.9.31" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -2835,139 +2835,6 @@ var tools = {
                 return true;
             }
         },
-        比奇安全区到小贩: (人物坐标) => {
-            var 比奇小贩坐标 = config.zuobiao.比奇小贩坐标;
-            if (比奇小贩坐标.x > 人物坐标.x) {
-                tools.人物移动.右走一步((比奇小贩坐标.x - 人物坐标.x) * 1000)
-                sleep(600)
-            } else {
-                tools.人物移动.左走一步((人物坐标.x - 比奇小贩坐标.x) * 1000)
-                sleep(600)
-            }
-            if (比奇小贩坐标.y > 人物坐标.y) {
-                tools.人物移动.下走一步((比奇小贩坐标.y - 人物坐标.y) * 1000)
-                sleep(600)
-            } else {
-                tools.人物移动.上走一步((人物坐标.y - 比奇小贩坐标.y) * 1000)
-                sleep(600)
-            }
-        },
-        盟重安全区到小贩: (人物坐标) => {
-            var 小贩坐标 = config.zuobiao.盟重小贩坐标;
-            if (小贩坐标.x > 人物坐标.x) {
-                tools.人物移动.右走一步((小贩坐标.x - 人物坐标.x) * 1000)
-                sleep(600)
-            } else {
-                tools.人物移动.左走一步((人物坐标.x - 小贩坐标.x) * 1000)
-                sleep(600)
-            }
-            if (小贩坐标.y > 人物坐标.y) {
-                tools.人物移动.下走一步((小贩坐标.y - 人物坐标.y) * 1000)
-                sleep(600)
-            } else {
-                tools.人物移动.上走一步((人物坐标.y - 小贩坐标.y) * 1000)
-                sleep(600)
-            }
-        },
-        苍月安全区到小贩: (人物坐标) => {
-            var 小贩坐标 = config.zuobiao.苍月小贩坐标;
-            if (小贩坐标.x > 人物坐标.x) {
-                tools.人物移动.右走一步((小贩坐标.x - 人物坐标.x) * 1000)
-                sleep(600)
-            } else {
-                tools.人物移动.左走一步((人物坐标.x - 小贩坐标.x) * 1000)
-                sleep(600)
-            }
-            if (小贩坐标.y > 人物坐标.y) {
-                tools.人物移动.下走一步((小贩坐标.y - 人物坐标.y) * 1000)
-                sleep(600)
-            } else {
-                tools.人物移动.上走一步((人物坐标.y - 小贩坐标.y) * 1000)
-                sleep(600)
-            }
-        },
-        去比奇老兵: (当前地图) => {
-            if (挂机参数.地图拖动 == 1) {
-                tools.人物移动.拖动大地图到中心();
-            }
-            else {
-                tools.常用操作.打开大地图();
-            }
-            var closeBtn = tools.findImageForWait("closeBtn.png", {
-                maxTries: 10,
-                interval: 666
-            });
-            if (closeBtn.status) {
-                var closeImg = closeBtn.img;
-                var fbl = `${device.width}_${device.height}`;
-                var routes = config.地图路由[当前地图]["回比奇老兵"][0];
-                var 大地图坐标 = config.zuobiao.比奇大地图偏移[fbl];
-                for (var i = 0; i < routes.length; i++) {
-                    var 路由 = routes[i];
-                    var r = null;
-                    路由.forEach((item) => {
-                        r = (r == null ? 大地图坐标[item] : r[item]);
-                    })
-                    var x = closeImg.x + random(r.x[0], r.x[1]);
-                    var y = closeImg.y + random(r.y[0], r.y[1]);
-                    click(x, y)
-                    sleep(random(1200, 1666));
-                }
-                sleep(random(1200, 1666));
-                if (挂机参数.地图拖动 == 1) {
-                    tools.人物移动.拖动大地图到边缘();
-                }
-                else {
-                    tools.常用操作.关闭所有窗口();
-                }
-            } else {
-                tools.常用操作.检测是否小退(true);
-                toastLog("未找到closeBtn");
-                return;
-            }
-            return;
-        },
-        去苍月老兵: (当前地图) => {
-            if (挂机参数.地图拖动 == 1) {
-                tools.人物移动.拖动大地图到中心();
-            }
-            else {
-                tools.常用操作.打开大地图();
-            }
-            var closeBtn = tools.findImageForWait("closeBtn.png", {
-                maxTries: 10,
-                interval: 666
-            });
-            if (closeBtn.status) {
-                var closeImg = closeBtn.img;
-                var fbl = `${device.width}_${device.height}`;
-                var routes = config.地图路由[当前地图]["回苍月老兵"][0];
-                var 大地图坐标 = config.zuobiao.苍月大地图偏移[fbl];
-                for (var i = 0; i < routes.length; i++) {
-                    var 路由 = routes[i];
-                    var r = null;
-                    路由.forEach((item) => {
-                        r = (r == null ? 大地图坐标[item] : r[item]);
-                    })
-                    var x = closeImg.x + random(r.x[0], r.x[1]);
-                    var y = closeImg.y + random(r.y[0], r.y[1]);
-                    click(x, y)
-                    sleep(random(1200, 1666));
-                }
-                sleep(random(1200, 1666));
-                if (挂机参数.地图拖动 == 1) {
-                    tools.人物移动.拖动大地图到边缘();
-                }
-                else {
-                    tools.常用操作.关闭所有窗口();
-                }
-            } else {
-                tools.常用操作.检测是否小退(true);
-                toastLog("未找到closeBtn");
-                return;
-            }
-            return;
-        },
         是否跑图并截图坐标: () => {
             var 是否跑图 = false;
             if (上次坐标截图 == null) {
@@ -3112,7 +2979,7 @@ var tools = {
                 sleep(600)
             }
         },
-        回老兵: (当前地图, 路由, 大地图偏移) => {
+        回老兵: (当前地图, routes, 大地图偏移) => {
             tools.人物移动.检测地图走动方向(当前地图);
             if (挂机参数.地图拖动 == 1) {
                 tools.人物移动.拖动大地图到中心();
@@ -3126,14 +2993,18 @@ var tools = {
             });
             if (closeBtn.status) {
                 var closeImg = closeBtn.img;
-                var r = null;
-                路由.forEach((item) => {
-                    r = (r == null ? 大地图偏移[item] : r[item]);
-                })
-                var x = closeImg.x + random(r.x[0], r.x[1]);
-                var y = closeImg.y + random(r.y[0], r.y[1]);
-                click(x, y)
-                sleep(random(1000, 1200));
+                for (var i = 0; i < routes.length; i++) {
+                    var 路由 = routes[i];
+                    var r = null;
+                    路由.forEach((item) => {
+                        r = (r == null ? 大地图偏移[item] : r[item]);
+                    })
+                    var x = closeImg.x + random(r.x[0], r.x[1]);
+                    var y = closeImg.y + random(r.y[0], r.y[1]);
+                    click(x, y)
+                    sleep(random(1200, 1666));
+                }
+                sleep(random(1200, 1666));
                 if (挂机参数.地图拖动 == 1) {
                     tools.人物移动.拖动大地图到边缘();
                 }
@@ -3365,136 +3236,6 @@ var tools = {
             toastLog("到达目的地挂机地图Loop");
             return;
         },
-        盟重去地下秘密通道: () => {
-            tools.常用操作.关闭所有窗口();
-            tools.悬浮球描述("开始去地下秘密通道");
-            var 挂机地图 = 挂机参数.挂机地图;
-            var 历史坐标 = tools.常用操作.获取人物坐标();
-            var tryCount = 0;
-            var 跑图次数 = 1;
-            while (当前总状态 == 总状态.已启动) {
-                var r = tools.findImage("midaoshizheshangfang.png");
-                if (r.status) {
-                    //04-29 16:57:51.875/D: {"status":true,"img":"{\"x\":360.0,\"y\":160.0}","size":{"w":151,"h":152}}
-                    tools.悬浮球描述("到达密道使者周边");
-                    while (true) {
-                        sleep(2500);
-                        var x = r.img.x + r.size.w / 2 + random(-5, 5);
-                        var y = r.img.y + r.size.h + 58 + random(-5, 5);
-                        click(x, y);
-                        sleep(random(666, 999));
-                        var r = tools.findImageForWaitClick("midaoduihuaBtn.png", {
-                            maxTries: 10,
-                            interval: 666
-                        });
-                        if (!r.status) {
-                            continue;
-                        }
-                        sleep(random(666, 999));
-                        r = tools.findImageForWaitClick("midaotongdaoyidongBtn.png", {
-                            maxTries: 10,
-                            interval: 666
-                        });
-                        if (!r.status) {
-                            continue;
-                        }
-                        sleep(random(666, 999));
-                        r = tools.findImageForWaitClick("midaoyidongBtn.png", {
-                            maxTries: 10,
-                            interval: 666
-                        });
-                        if (!r.status) {
-                            continue;
-                        }
-                        else {
-                            break;
-                        }
-                    }
-                    break;
-                }
-                else {
-                    var 坐标 = tools.常用操作.获取人物坐标();
-                    if (坐标 == null && tryCount < 3) {
-                        tryCount++;
-                        tools.悬浮球描述("坐标失败(" + tryCount + ")")
-                        sleep(1000 * 3);
-                        continue;
-                    }
-                    if (tryCount >= 3 || 坐标 == null || (坐标.x == 历史坐标.x && 坐标.y == 历史坐标.y)) {
-                        tools.悬浮球描述("开始跑图(连接通道)");
-                        try {
-                            tools.人物移动.去挂机地图("武馆教头");
-                        } catch (error) {
-                            toastLog('跑图异常' + error)
-                        }
-                        tryCount = 0;
-                    }
-                    else {
-                        tools.悬浮球描述("跑图中(" + 跑图次数 + ")");
-                    }
-                    if (坐标 != null) {
-                        历史坐标 = 坐标;
-                    }
-                }
-                sleep(1000 * 5);
-            }
-            return;
-        },
-        去地下秘密通道下一层: () => {
-            tools.常用操作.关闭所有窗口();
-            tools.悬浮球描述("开始去下一层");
-            var 挂机地图 = 挂机参数.挂机地图;
-            var fbl = `${device.width}_${device.height}`;
-            var 历史坐标 = tools.常用操作.获取人物坐标();
-            var tryCount = 0;
-            var 跑图次数 = 1;
-            var 入口偏移 = config.zuobiao.地下秘密通道入口偏移[fbl];
-            var closeImg = null;
-            var closeBtn = tools.findImageForWait("closeBtn.png", {
-                maxTries: 10,
-                interval: 333
-            })
-            if (closeBtn.status) {
-                closeImg = closeBtn.img;
-            } else {
-                return false;
-            }
-
-            // sleep(random(333, 666))
-            // tools.常用操作.关闭所有窗口();
-            while (当前总状态 == 总状态.已启动) {
-                var x = closeImg.x + 入口偏移.x + random(-3, 3);
-                var y = closeImg.y + 入口偏移.y + random(-3, 3);
-                click(x, y)
-                var 当前地图 = tools.常用操作.获取人物地图();
-                var 人物坐标 = tools.常用操作.获取人物坐标();
-                var 安全区坐标范围 = config.zuobiao.比奇安全区坐标范围;
-                if (人物坐标 != null && 当前地图 == "比奇城" && 人物坐标.x >= 安全区坐标范围.x1 - 5 && 人物坐标.x <= 安全区坐标范围.x2 + 5 && 人物坐标.y >= 安全区坐标范围.y1 - 5 && 人物坐标.y <= 安全区坐标范围.y2 + 5) {
-                    sleep(3000);
-                    break; //说明到了安全区
-                }
-                if (人物坐标 == null && tryCount < 10) {
-                    tryCount++;
-                    sleep(1000 * 5);
-                    continue;
-                }
-                if (tryCount >= 10 || 历史坐标 == null || (人物坐标.x == 历史坐标.x && 人物坐标.y == 历史坐标.y)) {
-                    toastLog('开始跑图(去比奇老兵)');
-                    try {
-                        tools.人物移动.去比奇老兵();
-                    } catch (error) {
-                        toastLog(error)
-                        sleep(666)
-                    }
-                    tryCount = 0;
-                }
-                if (人物坐标 != null) {
-                    历史坐标 = 人物坐标;
-                }
-                sleep(1000 * 5);
-            }
-            return;
-        },
         拖动大地图到边缘: () => {
             tools.悬浮球描述("拖动大地图到边缘");
             var biaoJiImg = null;
@@ -3713,14 +3454,7 @@ var tools = {
                 return false;
             }
         },
-        点击背包格子: (index1, index2) => {
-            var zhengliBtn = tools.findImageForWait("beibaozhengliBtn.png", {
-                maxTries: 10,
-                interval: 200
-            });
-            if (!zhengliBtn.status) {
-                toastLog("未找到背包整理按钮")
-            }
+        点击背包格子: (index1, index2, zhengliBtn) => {
             var zhengliP = {
                 x: zhengliBtn.img.x,
                 y: zhengliBtn.img.y
@@ -3879,7 +3613,6 @@ var tools = {
                     if (result.status) {
                         if (item.pic == "wuqi_zhanma.png" && btnName != null && btnName.length > 0) {
                             var info = tools.补给操作.获取物品信息(btnName);
-                            toastLog(JSON.stringify(info))
                             if (info.status && (info.value.indexOf("马") >= 0 || info.value.indexOf("刀") >= 0 || info.value.indexOf("新") >= 0)) {
                                 return {
                                     status: true,
@@ -4163,7 +3896,6 @@ var tools = {
                     err: "未获取出售物品按钮"
                 }
             }
-
             var zhengliBtn = tools.补给操作.整理背包(false);
             if (!zhengliBtn.status) {
                 tools.补给操作.点击小贩按钮(2, true); //这里尝试购买后，可能会出现整理按钮
@@ -4190,7 +3922,7 @@ var tools = {
                         sleep(random(555, 666))
                     }
                     tools.悬浮球描述(`开始出售${index}_${index1}格子`)
-                    tools.补给操作.点击背包格子(index, index1);
+                    tools.补给操作.点击背包格子(index, index1, zhengliBtn);
                     r = tools.补给操作.获取背包操作按钮(1, false);
                     if (r.status) {
                         if (r.btnName == "beibaofangruBtn.png") { //只有没花屏的情况才有意义
@@ -4679,7 +4411,7 @@ var tools = {
                     err: ""
                 }
             }
-            tools.补给操作.整理背包(false);
+            var zhengliBtn = tools.补给操作.整理背包(false);
             var 是否返回修理 = false;
             for (let index = 1; index <= 5; index++) {
                 for (let index1 = 1; index1 <= 8; index1++) {
@@ -4710,7 +4442,7 @@ var tools = {
                     }
 
                     tools.悬浮球描述(`开始修理${index}_${index1}格子`);
-                    tools.补给操作.点击背包格子(index, index1);
+                    tools.补给操作.点击背包格子(index, index1, zhengliBtn);
                     r = tools.补给操作.获取背包操作按钮(3, false);
                     if (r.status) {
                         var 跳过 = tools.补给操作.判断选中格子是否跳过(true, r.btnName);
@@ -4792,14 +4524,14 @@ var tools = {
             tools.常用操作.关闭所有窗口();
         },
         穿装备: () => {
-            var result = tools.补给操作.整理背包(true);
+            var zhengliBtn = tools.补给操作.整理背包(true);
             sleep(555, 666);
-            if (result.status) {
+            if (zhengliBtn.status) {
                 for (let index = 1; index <= 5; index++) {
                     for (let index1 = 1; index1 <= 8; index1++) {
                         tools.执行时间戳.检测认证();
                         tools.悬浮球描述("穿戴" + index + "_" + index1 + "格");
-                        tools.补给操作.点击背包格子(index, index1);
+                        tools.补给操作.点击背包格子(index, index1, zhengliBtn);
                         var tryCount = 0;
                         while (true) {
                             if (tryCount >= 3) {
