@@ -1297,7 +1297,12 @@ var tools = {
                 }
             }
             else if (text.indexOf("苍月岛") >= 0) {
-                text = "苍月岛"
+                if (text.indexOf("渔") >= 0 || text.indexOf("村") >= 0) {
+                    text = "苍月岛渔村"
+                }
+                else {
+                    text = "苍月岛"
+                }
             }
             else if (text.indexOf("比奇城") >= 0) {
                 text = "比奇城"
@@ -3161,6 +3166,47 @@ var tools = {
             }
             return;
         },
+        回老兵: (当前地图) => {
+            if (挂机参数.地图拖动 == 1) {
+                tools.人物移动.拖动大地图到中心();
+            }
+            else {
+                tools.常用操作.打开大地图();
+            }
+            var closeBtn = tools.findImageForWait("closeBtn.png", {
+                maxTries: 10,
+                interval: 666
+            });
+            if (closeBtn.status) {
+                var 回老兵 = "回" + 挂机参数.挂机城市 + "老兵";
+                var closeImg = closeBtn.img;
+                var routes = config.地图路由[当前地图][回老兵][0];
+                var 大地图坐标 = config.zuobiao.苍月大地图偏移[fbl];
+                for (var i = 0; i < routes.length; i++) {
+                    var 路由 = routes[i];
+                    var r = null;
+                    路由.forEach((item) => {
+                        r = (r == null ? 大地图坐标[item] : r[item]);
+                    })
+                    var x = closeImg.x + random(r.x[0], r.x[1]);
+                    var y = closeImg.y + random(r.y[0], r.y[1]);
+                    click(x, y)
+                    sleep(random(1200, 1666));
+                }
+                sleep(random(1200, 1666));
+                if (挂机参数.地图拖动 == 1) {
+                    tools.人物移动.拖动大地图到边缘();
+                }
+                else {
+                    tools.常用操作.关闭所有窗口();
+                }
+            } else {
+                tools.常用操作.检测是否小退(true);
+                toastLog("未找到closeBtn");
+                return;
+            }
+            return;
+        },
         回老兵Loop: () => {
             var 历史坐标 = null;
             var tryCount = 0;
@@ -3173,47 +3219,54 @@ var tools = {
                 routesGroup = null;
             }
             if (routesGroup == null || routesGroup.length <= 0) {
-                toastLog("去苍月老兵Loop routesGroup=null")
+                toastLog("去老兵Loop routesGroup=null")
                 return;
             }
-            var 安全区坐标范围 = config.zuobiao.苍月安全区坐标范围;
+            var 安全区坐标范围 = null;
+            switch (挂机参数.挂机城市) {
+                case "比奇":
+                    安全区坐标范围 = config.zuobiao.比奇安全区坐标范围;
+                    break;
+                case "盟重":
+                    安全区坐标范围 = config.zuobiao.盟重安全区坐标范围;
+                    break;
+                case "苍月":
+                    安全区坐标范围 = config.zuobiao.苍月安全区坐标范围;
+                    break;
+            }
             for (var index = 0; index < routesGroup.length; index++) {
                 while (当前总状态 == 总状态.已启动) {
                     tools.执行时间戳.检测认证();
                     当前地图 = tools.常用操作.获取人物地图();
-                    if (当前地图 == "苍月岛") {
-
+                    if (当前地图 == "苍月岛渔村" || 当前地图 == "比奇城" || 当前地图 == "土城") {
+                        var 人物坐标 = tools.常用操作.获取人物坐标();
+                        tools.悬浮球描述("坐标:" + JSON.stringify(人物坐标));
+                        if (人物坐标 != null && 人物坐标.x >= 安全区坐标范围.x1 - 5 && 人物坐标.x <= 安全区坐标范围.x2 + 5 && 人物坐标.y >= 安全区坐标范围.y1 - 5 && 人物坐标.y <= 安全区坐标范围.y2 + 5) {
+                            toastLog("到达安全区")
+                            sleep(3000);
+                            break;
+                        }
+                        if (人物坐标 == null && tryCount < 5) {
+                            tryCount++;
+                        }
+                        else {
+                            if (历史坐标 == null || (人物坐标.x == 历史坐标.x && 人物坐标.y == 历史坐标.y)) {
+                                try {
+                                    tools.人物移动.回老兵(当前地图);
+                                } catch (error) {
+                                    toastLog(error)
+                                }
+                                tryCount = 0;
+                            }
+                            if (人物坐标 != null) {
+                                历史坐标 = 人物坐标;
+                            }
+                        }
                     }
                     else {
 
                     }
-                    var 人物坐标 = tools.常用操作.获取人物坐标();
-                    tools.悬浮球描述("坐标:" + JSON.stringify(人物坐标));
-                    if (人物坐标 != null && 当前地图 == "苍月岛" && 人物坐标.x >= 安全区坐标范围.x1 - 5 && 人物坐标.x <= 安全区坐标范围.x2 + 5 && 人物坐标.y >= 安全区坐标范围.y1 - 5 && 人物坐标.y <= 安全区坐标范围.y2 + 5) {
-                        sleep(3000);
-                        break; //说明到了安全区
-                    }
-                    if (人物坐标 == null && tryCount < 5 && 当前地图 != "苍月岛") {
-                        tryCount++;
-                        sleep(1000 * 3);
-                        continue;
-                    }
-                    if (tryCount >= 5 || 历史坐标 == null || (人物坐标.x == 历史坐标.x && 人物坐标.y == 历史坐标.y)) {
-                        tools.人物移动.随机走一步(random(1500, 2500));
-                        sleep(1000 * 2);
-                        toastLog('开始跑图(去苍月老兵)');
-                        try {
-                            tools.人物移动.去苍月老兵(当前地图);
-                        } catch (error) {
-                            toastLog(error)
-                            sleep(666)
-                        }
-                        tryCount = 0;
-                    }
-                    if (人物坐标 != null) {
-                        历史坐标 = 人物坐标;
-                    }
-                    sleep(1000 * 5);
+                    sleep(1000 * 2);
                 }
             }
             toastLog("到达目的地苍月老兵Loop");
@@ -3245,7 +3298,7 @@ var tools = {
                         sleep(3000);
                         break; //说明到了安全区
                     }
-                    if (人物坐标 == null && tryCount < 5 && 当前地图 != "苍月岛") {
+                    if (人物坐标 == null && tryCount < 5) {
                         tryCount++;
                         sleep(1000 * 3);
                         continue;
@@ -3370,7 +3423,7 @@ var tools = {
                 return;
             }
             let 上次跑图时间 = new Date().getTime();
-            let 跑图时间戳 = 1.5 * 1000;
+            let 跑图时间戳 = 2.5 * 1000;
             for (let index = 0; index < routesGroup.length; index++) {
                 var routes = routesGroup[index];
                 var last = routes[routes.length - 1];
