@@ -3880,7 +3880,10 @@ var tools = {
                 }
             }
         },
-        点击小贩按钮: (type) => { //type=1表示出售
+        点击小贩按钮: (type, isClose) => { //type=1表示出售、2表示购买
+            if (isClose) {
+                tools.常用操作.关闭所有窗口();
+            }
             var 比奇小贩按钮 = config.zuobiao.比奇小贩按钮[fbl];
             var msg = "";
             click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2));
@@ -3893,6 +3896,15 @@ var tools = {
                     });
                     msg = "出售按钮"
                     break;
+                case 2:
+                    r = tools.findImageForWaitClick("goumaiwupingBtn.png", {
+                        maxTries: 10,
+                        interval: 200
+                    });
+                    msg = "购买按钮"
+                    break;
+
+
             }
             if (r.status) {
                 return true;
@@ -3900,6 +3912,65 @@ var tools = {
             else {
                 toastLog("未找到" + msg)
                 return false;
+            }
+        },
+        点击背包格子(index1, index2) {
+            var zhengliBtn = tools.findImageForWait("beibaozhengliBtn.png", {
+                maxTries: 10,
+                interval: 200
+            });
+            if (!zhengliBtn.status) {
+                toastLog("未找到背包整理按钮")
+            }
+            var zhengliP = {
+                x: zhengliBtn.img.x,
+                y: zhengliBtn.img.y
+            }
+            var 背包格子偏移 = config.zuobiao.背包格子偏移[fbl];
+            var x = zhengliP.x + 背包格子偏移["1_1"].x + (背包格子偏移.中心点偏移量X * (index1 - 1)) + random(-5, 5)
+            var y = zhengliP.y + 背包格子偏移["1_1"].y + (背包格子偏移.中心点偏移量Y * (index2 - 1)) + random(-5, 5)
+            click(x, y)
+        },
+        获取背包操作按钮(type, isClick) {//type=1表示放入按钮、2表示购买
+            var r = null;
+            var btnName = "";
+            switch (type) {
+                case 1:
+                    btnName = "beibaofangruBtn.png";
+                    r = tools.findImageForWait(btnName, {
+                        maxTries: 10,
+                        interval: 200
+                    });
+                    if (!r.status) {
+                        btnName = "beibaofangruBtn1.png";
+                        r = tools.findImageForWait(btnName, {
+                            maxTries: 10,
+                            interval: 200
+                        });
+                        if (r.status) {
+                            tools.常用方法.错误日志(btnName + "找图成功", 3);
+                        }
+                    }
+                    break;
+            }
+            if (r.status) {
+                if (isClick) {
+                    var x = r.img.x + r.size.w / 2 + random(-5, 5);
+                    var y = r.img.y + r.size.h / 2 + random(-3, 3);
+                    click(x, y)
+                }
+                return {
+                    status: true,
+                    btnName: btnName,
+                    value: r
+                }
+            }
+            else {
+                tools.常用方法.错误日志(btnName + "找图失败", 3);
+                return {
+                    status: false,
+                    btnName: btnName
+                }
             }
         },
         整理背包: (isOpen) => {
@@ -3911,7 +3982,7 @@ var tools = {
                 interval: 200
             });
             if (!r.status) {
-                toastLog("未找到整理背包按钮(beibaozhengliBtn)")
+                toastLog("未找到背包整理按钮")
             }
             return r;
         },
@@ -4095,6 +4166,52 @@ var tools = {
             }
             return false;
         },
+        判断修卖是否跳过: (btnName, type) => {//type=1卖，type=2修
+            var info = tools.补给操作.获取物品信息(btnName);
+            if (!info.status) {
+                toastLog("获取物品信息失败");
+                return false;
+            }
+            var str = info.value;
+            if ((str.indexOf("新") || str.indexOf("斩")) && str.indexOf("马")) {
+
+            }
+
+
+            var arr = [{
+                name: "万年雪霜",
+                pic: "wannianxueshuang.png"
+            },
+            {
+                name: "组队卷",
+                pic: "zuduijuan.png"
+            }];
+            var img = captureScreen();
+            var r = images.findMultiColors(img, "#FFDD3C", [[57, 0, "#FFDD3C"], [0, 56, "#FFDD3C"], [57, 56, "#FFDD3C"]]);
+            utils.recycleNull(img);
+            if (r && r.x > 0 && r.y > 0) {
+                for (let index = 0; index < arr.length; index++) {
+                    var item = arr[index];
+                    var result = tools.findImageArea(item.pic, r.x, r.y, r.x + 57, r.y + 56);
+                    if (result.status) {
+                        return {
+                            status: true,
+                            msg: item.name
+                        }
+                    }
+                }
+                return {
+                    status: false,
+                    msg: ""
+                }
+            }
+            else {
+                return {
+                    status: false,
+                    msg: "未找到格子选中框"
+                }
+            }
+        },
         回城补给: () => {
             tools.悬浮球描述("回城补给");
             if (挂机参数.地牢回城 == 1 || 挂机参数.地牢回城 == "1") {
@@ -4230,7 +4347,7 @@ var tools = {
             }
         },
         卖物品: () => {
-            var r = tools.补给操作.点击小贩按钮(1);
+            var r = tools.补给操作.点击小贩按钮(1, false);
             if (!r) {
                 return {
                     status: false,
@@ -4238,23 +4355,13 @@ var tools = {
                 }
             }
 
-            r = tools.补给操作.整理背包();
-            if (!r.status) {
-                tools.常用操作.关闭所有窗口();//这里尝试购买一下物品，整理按钮会出现
-                click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2))
-                var r = tools.findImageForWaitClick("goumaiwupingBtn.png", {
-                    maxTries: 6,
-                    interval: 666
-                });
+            var zhengliBtn = tools.补给操作.整理背包(false);
+            if (!zhengliBtn.status) {
+                tools.补给操作.点击小贩按钮(2, true); //这里尝试购买后，可能会出现整理按钮
                 return {
                     status: false,
                     err: "未获取到整理按钮"
                 }
-            }
-            var 卖装备背包格子 = config.zuobiao.背包格子于面板偏移量[fbl];
-            var 整理P = {
-                x: r.img.x,
-                y: r.img.y
             }
             var 是否已跳过衣服 = false;
             var 是否已跳过武器 = false;
@@ -4263,7 +4370,7 @@ var tools = {
                     tools.执行时间戳.检测认证();
                     if (当前总状态 != 总状态.已启动) {
                         return {
-                            status: false,
+                            status: true,
                             err: "程序未启动"
                         }
                     }
@@ -4274,69 +4381,51 @@ var tools = {
                         sleep(random(555, 666))
                     }
                     tools.悬浮球描述(`开始出售${index}_${index1}格子`)
-                    var p = 卖装备背包格子[`${index}_${index1}`];
-                    var randomX = random(-5, 5);
-                    var randomY = random(-5, 5);
-                    click(整理P.x + p.x + randomX, 整理P.y + p.y + randomY)
-                    var fangruName = "beibaofangruBtn.png";
-                    r = tools.findImageForWait("beibaofangruBtn.png", {
-                        maxTries: 10,
-                        interval: 200
-                    });
-                    if (!r.status) {
-                        r = tools.findImageForWait("beibaofangruBtn1.png", {
-                            maxTries: 10,
-                            interval: 200
-                        });
-                        fangruName = "beibaofangruBtn1.png";
-                    }
+                    tools.补给操作.点击背包格子(index, index1);
+                    r = tools.补给操作.获取背包操作按钮(1, false);
                     if (r.status) {
-                        if (fangruName == "beibaofangruBtn.png") {
-                            var info = tools.补给操作.判断选中格子是否跳过(false, fangruName);
-                            if (info.status) {
-                                var 是否跳过 = false;
-                                if (info.pic == "wuqi_zhanma.png") {
-                                    if (!是否已跳过武器) {
-                                        是否跳过 = true;
-                                        是否已跳过武器 = true;
-                                    }
-                                }
-                                else if (info.pic == "zhongkui_nan.png" || info.pic == "zhongkui_nv.png") {
-                                    if (!是否已跳过衣服) {
-                                        是否跳过 = true;
-                                        是否已跳过衣服 = true;
-                                    }
-                                }
-                                else {
+                        var info = tools.补给操作.判断选中格子是否跳过(false, fangruName);
+                        if (info.status) {
+                            var 是否跳过 = false;
+                            if (info.pic == "wuqi_zhanma.png") {
+                                if (!是否已跳过武器) {
                                     是否跳过 = true;
-                                }
-                                if (是否跳过) {
-                                    toastLog(info.msg);
-                                    continue;
+                                    是否已跳过武器 = true;
                                 }
                             }
-                            var 是否极品 = tools.补给操作.判断选中格子是否极品(fangruName);
-                            if (是否极品) {
-                                tools.悬浮球描述(`发现极品${index}_${index1}存仓库`)
-                                tools.补给操作.存仓库(index, index1);
-                                return {
-                                    status: false,
-                                    err: "重新卖装备"
+                            else if (info.pic == "zhongkui_nan.png" || info.pic == "zhongkui_nv.png") {
+                                if (!是否已跳过衣服) {
+                                    是否跳过 = true;
+                                    是否已跳过衣服 = true;
                                 }
                             }
-                            var 存仓库 = tools.补给操作.判断选中格子是否存仓库();
-                            if (存仓库.status) {
-                                tools.悬浮球描述(`${index}_${index1}发现${存仓库.msg}需存仓库装备`)
-                                tools.补给操作.存仓库(index, index1);
-                                return {
-                                    status: false,
-                                    err: "重新卖装备"
-                                }
+                            else {
+                                是否跳过 = true;
+                            }
+                            if (是否跳过) {
+                                toastLog(info.msg);
+                                continue;
                             }
                         }
-                        else {
-                            tools.常用方法.错误日志("使用beibaofangruBtn1.png找图成功", 3);
+                        var 是否极品 = tools.补给操作.判断选中格子是否极品(fangruName);
+                        if (是否极品) {
+                            tools.悬浮球描述(`发现极品${index}_${index1}存仓库`)
+                            tools.补给操作.存仓库(index, index1);
+                            return {
+                                status: false,
+                                err: "重新卖装备"
+                            }
                         }
+                        var 存仓库 = tools.补给操作.判断选中格子是否存仓库();
+                        if (存仓库.status) {
+                            tools.悬浮球描述(`${index}_${index1}发现${存仓库.msg}需存仓库装备`)
+                            tools.补给操作.存仓库(index, index1);
+                            return {
+                                status: false,
+                                err: "重新卖装备"
+                            }
+                        }
+
                         r = tools.findImageForWaitClick(fangruName, {
                             maxTries: 10,
                             interval: 500
