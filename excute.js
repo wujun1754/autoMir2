@@ -187,7 +187,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.9.43" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.9.52" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -769,6 +769,9 @@ var tools = {
                 maxTries: 10,
                 interval: 200
             });
+            if (!r.status) {
+                toastLog("打开角色失败")
+            }
             return r;
         },
         打开背包: () => {
@@ -824,27 +827,143 @@ var tools = {
             });
             return r;
         },
-        点击角色面板_武器: (角色面板) => {
-            var 武器 = config.zuobiao.人物面板[fbl].武器;
-            var x = 角色面板.x + 武器.x + random(-8, 8);
-            var y = 角色面板.y + 武器.y + random(-5, 5);
-            click(x, y)
-            var 卸下按钮 = tools.findImageForWait("xiexia.png", {
+        点击角色装备: (装备, 是否卸下) => {
+            var result = tools.findImageForWait("rewumianbanBtn.png", {
                 maxTries: 10,
-                interval: 222
-            });
-            return 卸下按钮;
+                interval: 200
+            })
+            if (!result.status) {
+                toastLog("未获取人物面板失败")
+                return {
+                    status: false,
+                    err: "未获取人物面板失败"
+                }
+            }
+            var 装备面板 = result.img;
+            var x = 装备面板.x + 装备.x + random(-5, 5);
+            var y = 装备面板.y + 装备.y + random(-3, 3);
+            click(x, y)
+            var r = tools.findImageForWait("xiexia.png", {
+                maxTries: 10,
+                interval: 200
+            })
+            if (r.status) {
+                if (是否卸下) {
+                    var x = r.img.x + r.size.w / 2 + random(-3, 3);
+                    var y = r.img.y + r.size.h / 2 + random(-3, 3);
+                    click(x, y)
+                }
+                return {
+                    status: true,
+                    btn: r,
+                    btnName: "xiexia.png"
+                }
+            }
+            else {
+                r = tools.findImageForWaitClick("xiexia1.png", {
+                    maxTries: 10,
+                    interval: 200
+                })
+                if (r.status) {
+                    if (是否卸下) {
+                        var x = r.img.x + r.size.w / 2 + random(-3, 3);
+                        var y = r.img.y + r.size.h / 2 + random(-3, 3);
+                        click(x, y)
+                    }
+                    tools.常用方法.错误日志("使用xiexia1.png找图成功", 3);
+                    return {
+                        status: true,
+                        btn: r,
+                        btnName: "xiexia1.png"
+                    }
+                }
+                else {
+                    toastLog("xiexia.png和xiexia1.png找图都失败")
+                    tools.常用方法.错误日志("xiexia.png和xiexia1.png找图都失败", 3);
+                    return {
+                        status: false,
+                        err: "找图都失败"
+                    }
+                }
+            }
         },
-        点击角色面板_衣服: (角色面板) => {
-            var 衣服 = config.zuobiao.人物面板[fbl].衣服;
-            var x = 角色面板.x + 衣服.x + random(-8, 8);
-            var y = 角色面板.y + 衣服.y + random(-5, 5);
-            click(x, y)
-            var 卸下按钮 = tools.findImageForWait("xiexia.png", {
-                maxTries: 10,
-                interval: 222
-            });
-            return 卸下按钮;
+        获取装备持久: (装备) => {
+            var r = tools.常用操作.点击角色装备(装备, false);
+            if (r.status) {
+                r = tools.补给操作.获取物品信息(r.btnName);
+                if (r.status && r.持久) {
+                    tools.悬浮球描述(JSON.stringify(r.持久));
+                }
+                return r;
+            }
+            return {
+                status: false
+            }
+        },
+        检查武器衣服持久: () => {
+            tools.挂机打怪.启动隐身();
+            var 角色 = tools.常用操作.打开角色();
+            if (!角色.status) {
+                return false;
+            }
+            var 衣服 = tools.常用操作.获取装备持久(config.zuobiao.人物面板[fbl].衣服);
+            var 武器 = tools.常用操作.获取装备持久(config.zuobiao.人物面板[fbl].武器);
+            tools.findImageClick("rewumianbanBtn.png")
+            tools.常用操作.关闭所有窗口();
+
+            if (挂机参数.衣服持久0回程 == 1 && 衣服.status && 衣服.持久 && 衣服.持久.剩持久 <= 2) {
+                if (!是否用过备用衣服) {
+                    var isSuccess = false;
+                    if (挂机参数.备用男重盔 == 1) {
+                        isSuccess = tools.常用操作.使用备用装备("zhongkui_nan.png");
+                    }
+                    else if (挂机参数.备用女重盔 == 1) {
+                        isSuccess = tools.常用操作.使用备用装备("zhongkui_nv.png");
+                    }
+
+                    if (isSuccess) {
+                        toastLog("使用备用衣服成功")
+                        是否用过备用衣服 = true;
+                    }
+                    else {
+                        toastLog("使用备用衣服失败")
+                        return true;
+                    }
+                }
+                else {
+                    toastLog("是否用过备用衣服 = true")
+                    return true;
+                }
+            }
+
+            if (挂机参数.武器持久0回程 == 1 && 武器.status && 武器.持久 && 武器.持久.剩持久 <= 2) {
+                var isSuccess = false;
+                if (!是否用过备用武器) {
+                    isSuccess = tools.常用操作.使用备用装备("wuqi_zhanma.png");
+                    if (isSuccess) {
+                        toastLog("使用备用武器成功")
+                        是否用过备用武器 = true;
+                    }
+                    else {
+                        toastLog("使用备用武器失败")
+                    }
+                }
+                else {
+                    toastLog("是否用过备用武器 = true")
+                }
+                if (!isSuccess) {
+                    var isOk = tools.补给操作.喝修复油();
+                    if (isOk) {
+                        toastLog("喝修复油成功")
+                    }
+                    else {
+                        toastLog("喝修复油失败")
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         },
         开启组队: () => {
             var p = config.zuobiao.按钮集合[fbl].组队;
@@ -915,6 +1034,7 @@ var tools = {
             if (!r.status) {
                 var x = 随机保护.x[0] + ((随机保护.x[1] - 随机保护.x[0]) / 2) + random(-3, 3);
                 var y = 随机保护.y[0] + ((随机保护.y[1] - 随机保护.y[0]) / 2) + random(-3, 3);
+                sleep(random(1200, 1500))
                 click(x, y)
                 sleep(random(999, 1200))
             }
@@ -1115,6 +1235,14 @@ var tools = {
                 if (r.status) {
                     return true;
                 }
+                r = tools.findImageForWait("beibaochuandaiBtn1.png", {
+                    maxTries: 3,
+                    interval: 333
+                })
+                if (r.status) {
+                    tools.常用操作.点击人物();
+                    return true;
+                }
                 r = tools.findImageForWait("beibaoshiyongBtn.png", {
                     maxTries: 3,
                     interval: 333
@@ -1144,41 +1272,6 @@ var tools = {
             utils.recycleNull(imgSmall);
             utils.recycleNull(huiduImg);
             return r;
-        },
-        获取装备持久: () => {
-            var result = {
-                武器: null,
-                衣服: null
-            };
-            var 角色 = tools.常用操作.打开角色();
-            if (!角色.status) return null;
-            var 角色面板 = tools.常用操作.获取角色面板();
-            if (!角色面板.status) return null;
-            var 装备属性明细 = config.zuobiao.人物面板[fbl].装备属性明细;
-
-            var 卸下按钮 = tools.常用操作.点击角色面板_武器(角色面板.img);
-            if (卸下按钮.status) {
-                var p = 卸下按钮.img;
-                var img = tools.截屏裁剪(null, p.x + 装备属性明细.x, p.y, p.x, p.y + 装备属性明细.y);
-                let r = ocrPladderOCR.detect(img);
-                result.武器 = tools.常用操作.根据面板获取持久(r);
-                if (result.武器) {
-                    tools.悬浮球描述(JSON.stringify(result.武器));
-                }
-            }
-            卸下按钮 = tools.常用操作.点击角色面板_衣服(角色面板.img);
-            if (卸下按钮.status) {
-                var p = 卸下按钮.img;
-                var img = tools.截屏裁剪(null, p.x + 装备属性明细.x, p.y, p.x, p.y + 装备属性明细.y);
-                let r = ocrPladderOCR.detect(img);
-                result.衣服 = tools.常用操作.根据面板获取持久(r);
-                if (result.衣服) {
-                    tools.悬浮球描述(JSON.stringify(result.衣服));
-                }
-            }
-            tools.findImageClick("rewumianbanBtn.png")
-            tools.常用操作.关闭所有窗口();
-            return result;
         },
         根据面板获取持久: (result) => {
             if (result == null) return null;
@@ -1230,61 +1323,6 @@ var tools = {
             }
             tools.常用操作.关闭所有窗口();
             return isok;
-        },
-        检查武器衣服持久: () => {
-            tools.挂机打怪.启动隐身();
-            var r = tools.常用操作.获取装备持久();
-            if (挂机参数.衣服持久0回程 == 1 && r && r.衣服 && r.衣服.剩持久 <= 2) {
-                if (!是否用过备用衣服) {
-                    var isSuccess = false;
-                    if (挂机参数.备用男重盔 == 1) {
-                        isSuccess = tools.常用操作.使用备用装备("zhongkui_nan.png");
-                    }
-                    else if (挂机参数.备用女重盔 == 1) {
-                        isSuccess = tools.常用操作.使用备用装备("zhongkui_nv.png");
-                    }
-
-                    if (isSuccess) {
-                        toastLog("使用备用衣服成功")
-                        是否用过备用衣服 = true;
-                    }
-                    else {
-                        toastLog("使用备用衣服失败")
-                        return true;
-                    }
-                }
-                else {
-                    toastLog("是否用过备用衣服 = true")
-                    return true;
-                }
-            }
-            if (挂机参数.武器持久0回程 == 1 && r && r.武器 && r.武器.剩持久 <= 2) {
-                var isSuccess = false;
-                if (!是否用过备用武器) {
-                    isSuccess = tools.常用操作.使用备用装备("wuqi_zhanma.png");
-                    if (isSuccess) {
-                        toastLog("使用备用武器成功")
-                        是否用过备用武器 = true;
-                    }
-                    else {
-                        toastLog("使用备用武器失败")
-                    }
-                }
-                else {
-                    toastLog("是否用过备用武器 = true")
-                }
-                if (!isSuccess) {
-                    var isOk = tools.补给操作.喝修复油();
-                    if (isOk) {
-                        toastLog("喝修复油成功")
-                    }
-                    else {
-                        toastLog("喝修复油失败")
-                        return true;
-                    }
-                }
-            }
-            return false;
         },
         点击人物: () => {
             var 人物中心 = config.zuobiao.人物中心[fbl];
@@ -1662,7 +1700,7 @@ var tools = {
             }
             if (new Date().getTime() - 上次检查武器衣服时间 > 检查衣服武器时间戳) {
                 tools.常用操作.点击人物();
-                tools.悬浮球描述("检查武器衣服持久开始");
+                tools.悬浮球描述("检查装备持久开始");
                 var r = tools.常用操作.检查武器衣服持久();
                 if (r) {
                     r = tools.常用操作.检测是否在游戏画面();
@@ -1671,7 +1709,7 @@ var tools = {
                     }
                 }
                 上次检查武器衣服时间 = new Date().getTime();
-                tools.悬浮球描述("检查武器衣服持久结束");
+                tools.悬浮球描述("检查装备持久结束");
             }
         },
         检测操作模式: (强制检测) => {
@@ -1808,7 +1846,7 @@ var tools = {
                 }
                 timeout = timeout * 1000;
                 var 人物是否移动 = false;
-                var 移动时间戳 = 1000 * 1.5;
+                var 移动时间戳 = 1000 * 1.8;
                 var 上一次移动 = new Date().getTime();
 
                 var 攻击时间戳 = 1000 * 5;
@@ -1868,8 +1906,18 @@ var tools = {
                         if (!是否隐身等待 && !其他玩家.status && 挂机参数.隐身走动 == 1 && 锁定的怪物.length > 0) {
                             var r = tools.挂机打怪.扫描宝宝();
                             if (r.status) {
+                                //以免宝宝超出屏幕
+                                var 人物血量中心 = config.zuobiao.人物血量中心[fbl];
+                                var 一格像素 = config.zuobiao.走一格像素[fbl];
+                                if (Math.abs(r.r.x - 人物血量中心.x) >= 一格像素.x * 4) {
+                                    r.r.x = r.r.x > 人物血量中心.x ? 人物血量中心.x + 一格像素.x * 4 : 人物血量中心.x - 一格像素.x * 4;
+                                }
+
+                                if (Math.abs(r.r.y - 人物血量中心.y) >= 一格像素.y * 3) {
+                                    r.r.y = r.r.y > 人物血量中心.y ? 人物血量中心.y + 一格像素.x * 3 : 人物血量中心.y - 一格像素.y * 3;//一格像素.y * 3;
+                                }
                                 tools.人物移动.指定像素移动(r.r.x, r.r.y);
-                                // r = tools.挂机打怪.向宝宝移动();
+                                //tools.挂机打怪.向宝宝移动();
                                 // if (!r.isMove) {
                                 //     tools.人物移动.随机走一步(random(500, 600));
                                 // }
@@ -1930,6 +1978,13 @@ var tools = {
 
                         if (挂机参数.只打满血怪 == 0 && !其他玩家.status) {
                             其他玩家 = tools.挂机打怪.扫描其他玩家();
+                            if (其他玩家.status) {
+                                是否隐身等待 = false;
+                                for (let index = 0; index < 3; index++) {
+                                    sleep(100);
+                                    click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                                }
+                            }
                         }
 
                         tools.挂机打怪.激活拾取后操作();
@@ -1953,7 +2008,7 @@ var tools = {
                         //var t1 = new Date().getTime();
                         //var t2 = new Date().getTime();
                         //tools.悬浮球临时描述("(" + ((t2 - t1) / 1000).toString() + ")");
-                        tools.悬浮球描述("(" + parseInt((timeout - (时间戳)) / 1000) + "),(" + 锁定的怪物 + "),isChange(" + isChange + ")" + 宝宝位置 + "" + (其他玩家.status ? "发现有人" : "") + "");
+                        tools.悬浮球描述("(" + parseInt((timeout - (时间戳)) / 1000) + "),(" + 锁定的怪物 + "),isChange(" + isChange + ")" + 宝宝位置 + "" + (其他玩家.status ? "发现有人" + JSON.stringify(其他玩家.r) : "") + "");
                         //sleep(111);
                     } else {
                         tools.挂机打怪.开始拾取();
@@ -2395,9 +2450,9 @@ var tools = {
             };
             var reg = [240, 53, 820, 500];
             var img = captureScreen();
-            var r = images.findMultiColors(img, color, [[1, -9, "#F1F0F0"], [2, -12, "#F7F6F6"]], {
+            var r = images.findMultiColors(img, color, [[18, 0, "#DB0000"], [18, -7, "#E4E3E2"], [19, -9, "#F1F0F0"], [20, -12, "#F7F6F6"]], {
                 region: reg,
-                threshold: 30
+                threshold: 25
             });
             utils.recycleNull(img);
             if (r && (r.x > 0 || r.y > 0)) {
@@ -3142,6 +3197,9 @@ var tools = {
                     case "紫水晶屋":
                         tools.人物移动.右上走(random(1200, 1500));
                         break;
+                    case "牛魔寺庙入口":
+                        tools.人物移动.上走一步(random(1200, 1500));
+                        break;
                     default:
                         tools.人物移动.随机走一步(random(1200, 1500))
                         break;
@@ -3539,7 +3597,7 @@ var tools = {
             let y1 = zhengliP.y + 15 + random(5, 10);
             gesture(random(666, 999), [x1, y1], [x1 - random(100, 120), y1 + random(20, 120)])
         },
-        获取背包操作按钮(type, isClick) {//type=1表示放入按钮、2表示购买、3表示修理
+        获取背包操作按钮(type, isClick, 来源) {//type=1表示放入按钮、2表示购买、3表示修理
             var r = null;
             var btnName = "";
             switch (type) {
@@ -3556,9 +3614,12 @@ var tools = {
                             maxTries: 10,
                             interval: 200
                         });
-                        // if (r.status) {
-                        //     tools.常用方法.错误日志(btnName + "找图成功", 3);
-                        // }
+                        if (r.status) {
+                            tools.常用方法.错误日志(btnName + "找图成功(" + 来源 + ")", 3);
+                        }
+                        else {
+                            tools.常用方法.错误日志("beibaofangruBtn和beibaofangruBtn1找图失败(" + 来源 + ")", 3);
+                        }
                     }
                     break;
             }
@@ -3662,12 +3723,12 @@ var tools = {
                 })
             }
             var img = captureScreen();
-            var r = images.findMultiColors(img, "#FFDD3C", [[55, 0, "#FFDD3C"], [0, 55, "#FFDD3C"]]);
+            var r = images.findMultiColors(img, "#FFDD3C", [[40, 0, "#FFDD3C"], [0, 55, "#FFDD3C"]]);
             utils.recycleNull(img);
             if (r && r.x > 0 && r.y > 0) {
                 for (let index = 0; index < arr.length; index++) {
                     var item = arr[index];
-                    var result = tools.findImageArea(item.pic, r.x - 10, r.y - 10, r.x + 70, r.y + 70, 0.8);
+                    var result = tools.findImageArea(item.pic, r.x - 10, r.y - 10, r.x + 70, r.y + 70, 0.7);
 
                     if (result.status) {
                         if (item.pic == "wuqi_zhanma.png" && btnName != null && btnName.length > 0) {
@@ -3733,12 +3794,12 @@ var tools = {
                 pic: "zuduijuan.png"
             }];
             var img = captureScreen();
-            var r = images.findMultiColors(img, "#FFDD3C", [[55, 0, "#FFDD3C"], [0, 55, "#FFDD3C"]]);
+            var r = images.findMultiColors(img, "#FFDD3C", [[40, 0, "#FFDD3C"], [0, 55, "#FFDD3C"]]);
             utils.recycleNull(img);
             if (r && r.x > 0 && r.y > 0) {
                 for (let index = 0; index < arr.length; index++) {
                     var item = arr[index];
-                    var result = tools.findImageArea(item.pic, r.x - 10, r.y - 10, r.x + 70, r.y + 70, 0.8);
+                    var result = tools.findImageArea(item.pic, r.x - 10, r.y - 10, r.x + 70, r.y + 70, 0.7);
                     if (result.status) {
                         return {
                             status: true,
@@ -3991,7 +4052,7 @@ var tools = {
                     }
                     tools.悬浮球描述(`开始出售${index}_${index1}格子`)
                     tools.补给操作.点击背包格子(index, index1, zhengliBtn);
-                    r = tools.补给操作.获取背包操作按钮(1, false);
+                    r = tools.补给操作.获取背包操作按钮(1, false, "卖物品");
                     if (r.status) {
                         if (r.btnName == "beibaofangruBtn.png") { //只有没花屏的情况才有意义
                             var info = tools.补给操作.判断选中格子是否跳过(false, r.btnName);
@@ -4071,7 +4132,6 @@ var tools = {
                                 }
                             }
                             else {
-                                tools.常用方法.错误日志("beibaofangruBtn和beibaofangruBtn1找图失败", 3);
                                 tools.常用方法.发送提醒("卖东西失败,退出游戏");
                                 tools.常用操作.退出游戏();
                             }
@@ -4096,175 +4156,6 @@ var tools = {
                 err: ""
             }
         },
-        // 卖物品: () => {
-        //     tools.常用操作.关闭所有窗口();
-        //     var 比奇小贩按钮 = config.zuobiao.比奇小贩按钮[fbl]
-        //     click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2))
-        //     var r = tools.findImageForWaitClick("chushouwupingBtn.png", {
-        //         maxTries: 10,
-        //         interval: 200
-        //     });
-        //     if (!r.status) {
-        //         return {
-        //             status: false,
-        //             err: "未获取出售物品按钮"
-        //         }
-        //     }
-        //     r = tools.findImageForWaitClick("beibaozhengliBtn.png", {
-        //         maxTries: 10,
-        //         interval: 200
-        //     });
-        //     if (!r.status) {
-        //         tools.常用操作.关闭所有窗口();//这里尝试购买一下物品，整理按钮会出现
-        //         click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2))
-        //         var r = tools.findImageForWaitClick("goumaiwupingBtn.png", {
-        //             maxTries: 6,
-        //             interval: 666
-        //         });
-        //         return {
-        //             status: false,
-        //             err: "未获取到整理按钮"
-        //         }
-        //     }
-        //     var 卖装备背包格子 = config.zuobiao.背包格子于面板偏移量[fbl];
-        //     var 整理P = {
-        //         x: r.img.x,
-        //         y: r.img.y
-        //     }
-        //     var 是否已跳过衣服 = false;
-        //     var 是否已跳过武器 = false;
-        //     for (let index = 1; index <= 5; index++) {
-        //         for (let index1 = 1; index1 <= 8; index1++) {
-        //             tools.执行时间戳.检测认证();
-        //             if (当前总状态 != 总状态.已启动) {
-        //                 return {
-        //                     status: false,
-        //                     err: "程序未启动"
-        //                 }
-        //             }
-        //             if (index == 1 && index1 == 1) {
-        //                 sleep(random(1288, 1588))
-        //             }
-        //             else {
-        //                 sleep(random(555, 666))
-        //             }
-        //             tools.悬浮球描述(`开始出售${index}_${index1}格子`)
-        //             var p = 卖装备背包格子[`${index}_${index1}`];
-        //             var randomX = random(-5, 5);
-        //             var randomY = random(-5, 5);
-        //             click(整理P.x + p.x + randomX, 整理P.y + p.y + randomY)
-        //             var fangruName = "beibaofangruBtn.png";
-        //             r = tools.findImageForWait("beibaofangruBtn.png", {
-        //                 maxTries: 10,
-        //                 interval: 200
-        //             });
-        //             if (!r.status) {
-        //                 r = tools.findImageForWait("beibaofangruBtn1.png", {
-        //                     maxTries: 10,
-        //                     interval: 200
-        //                 });
-        //                 fangruName = "beibaofangruBtn1.png";
-        //             }
-        //             if (r.status) {
-        //                 if (fangruName == "beibaofangruBtn.png") {
-        //                     var info = tools.补给操作.判断选中格子是否跳过(false, fangruName);
-        //                     if (info.status) {
-        //                         var 是否跳过 = false;
-        //                         if (info.pic == "wuqi_zhanma.png") {
-        //                             if (!是否已跳过武器) {
-        //                                 是否跳过 = true;
-        //                                 是否已跳过武器 = true;
-        //                             }
-        //                         }
-        //                         else if (info.pic == "zhongkui_nan.png" || info.pic == "zhongkui_nv.png") {
-        //                             if (!是否已跳过衣服) {
-        //                                 是否跳过 = true;
-        //                                 是否已跳过衣服 = true;
-        //                             }
-        //                         }
-        //                         else {
-        //                             是否跳过 = true;
-        //                         }
-        //                         if (是否跳过) {
-        //                             toastLog(info.msg);
-        //                             continue;
-        //                         }
-        //                     }
-        //                     var 是否极品 = tools.补给操作.判断选中格子是否极品(fangruName);
-        //                     if (是否极品) {
-        //                         tools.悬浮球描述(`发现极品${index}_${index1}存仓库`)
-        //                         tools.补给操作.存仓库(index, index1);
-        //                         return {
-        //                             status: false,
-        //                             err: "重新卖装备"
-        //                         }
-        //                     }
-        //                     var 存仓库 = tools.补给操作.判断选中格子是否存仓库();
-        //                     if (存仓库.status) {
-        //                         tools.悬浮球描述(`${index}_${index1}发现${存仓库.msg}需存仓库装备`)
-        //                         tools.补给操作.存仓库(index, index1);
-        //                         return {
-        //                             status: false,
-        //                             err: "重新卖装备"
-        //                         }
-        //                     }
-        //                 }
-        //                 else {
-        //                     tools.常用方法.错误日志("使用beibaofangruBtn1.png找图成功", 3);
-        //                 }
-        //                 r = tools.findImageForWaitClick(fangruName, {
-        //                     maxTries: 10,
-        //                     interval: 500
-        //                 });
-        //                 sleep(random(555, 666));
-        //                 r = tools.findImageForWaitClick("OKBtn.png", {
-        //                     maxTries: 10,
-        //                     interval: 500
-        //                 });
-        //             } else {
-        //                 r = tools.补给操作.判断是否出现BOSS提示();
-        //                 if (r && (r.x > 0 || r.y > 0)) {
-        //                     tools.常用方法.错误日志("卖东西时发现BOSS提示文字", 3);
-        //                     sleep(1000 * 60);
-        //                     return {
-        //                         status: false,
-        //                         err: "卖东西时发现BOSS提示文字"
-        //                     }
-        //                 }
-        //                 else {
-        //                     r = tools.常用操作.检测是否在游戏画面();
-        //                     if (r) {
-        //                         return {
-        //                             status: true,
-        //                             err: ""
-        //                         }
-        //                     }
-        //                     else {
-        //                         tools.常用方法.错误日志("beibaofangruBtn和beibaofangruBtn1找图失败", 3);
-        //                         tools.常用方法.发送提醒("卖东西失败,退出游戏");
-        //                         tools.常用操作.退出游戏();
-        //                     }
-        //                 }
-        //                 //if (tools.常用操作.检查背包是否有东西("1_1")) {
-        //                 //     return {
-        //                 //         status: false,
-        //                 //         err: "依然有东西存在，继续卖"
-        //                 //     }
-        //                 // }
-        //                 // else {
-        //                 //     return {
-        //                 //         status: true,
-        //                 //         err: ""
-        //                 //     }
-        //                 // }
-        //             }
-        //         }
-        //     }
-        //     return {
-        //         status: true,
-        //         err: ""
-        //     }
-        // },
         买物品Loops: () => {
             let 物品集合 = 挂机参数.购买物品.filter(item => parseInt(item.num) > 0).map((item, i) => {
                 var 物品页码 = config.zuobiao.购买物品页码[item["name"]];
@@ -4509,7 +4400,7 @@ var tools = {
                     sleep(1500)
                     tools.悬浮球描述(`开始修理${index}_${index1}格子`);
                     tools.补给操作.点击背包格子(index, index1, zhengliBtn);
-                    r = tools.补给操作.获取背包操作按钮(3, false);
+                    r = tools.补给操作.获取背包操作按钮(3, false, "修理装备");
                     if (r.status) {
                         var 跳过 = tools.补给操作.判断选中格子是否跳过(true, r.btnName);
                         if (跳过.status) {
@@ -4540,18 +4431,7 @@ var tools = {
             }
         },
         卸下人物装备: () => {
-            var result = tools.常用操作.打开角色();
-            result = tools.findImageForWait("rewumianbanBtn.png", {
-                maxTries: 10,
-                interval: 200
-            })
-            if (!result.status) {
-                return {
-                    status: false,
-                    err: "尝试10次未获取人物面板"
-                }
-            }
-            var 装备面板 = result.img;
+            tools.常用操作.打开角色();
             var arr = [
                 config.zuobiao.人物面板[fbl].头盔,
                 config.zuobiao.人物面板[fbl].衣服,
@@ -4565,28 +4445,9 @@ var tools = {
             ]
             for (var index = 0; index < arr.length; index++) {
                 var item = arr[index];
-                var x = 装备面板.x + item.x + random(-5, 5);
-                var y = 装备面板.y + item.y + random(-3, 3);
-                click(x, y)
-                var r = tools.findImageForWaitClick("xiexia.png", {
-                    maxTries: 10,
-                    interval: 200
-                })
-                if (!r.status) {
-                    r = tools.findImageForWaitClick("xiexia1.png", {
-                        maxTries: 10,
-                        interval: 200
-                    })
-                    if (r.status) {
-                        tools.常用方法.错误日志("使用xiexia1.png找图成功", 3);
-                    }
-                    else {
-                        tools.常用方法.错误日志("xiexia1.png和xiexia1.png找图都失败", 3);
-                    }
-                }
-                sleep(random(500, 666));
+                tools.常用操作.点击角色装备(item, true);
+                sleep(random(666, 888));
             }
-
             tools.常用操作.关闭所有窗口();
         },
         穿装备: () => {
@@ -5684,7 +5545,7 @@ function showWinConfig() {
 threads.start(function () {
     let 上次跑图时间 = new Date().getTime() - (60 * 1000);
     let 跑图时间戳 = 1.5 * 1000;
-
+    var 开启寻怪 = false;
     while (true) {
         if (isStart) {
             var 打怪次数 = 0; //大于0则坐标移动过，需强制跑图
@@ -5701,12 +5562,31 @@ threads.start(function () {
 
             tools.执行时间戳.检测认证();
 
+            var r = false;
+            while (当前总状态 == 总状态.已启动 && 开启寻怪) {
+                try {
+                    r = tools.挂机打怪.寻找打怪(打怪次数 > 0 ? true : false);
+                } catch (e) {
+                    r = false;
+                    toastLog("打怪异常" + e)
+                }
+                if (r) {
+                    打怪次数++;
+                    tools.悬浮球描述("继续攻击")
+                    continue;
+                } else {
+                    break;
+                }
+            }
+
+
             //tools.执行时间戳.检测操作模式();
 
             //tools.执行时间戳.检测内挂();
 
             //tools.执行时间戳.检测组队模式();
             if (new Date().getTime() - 上次跑图时间 > 跑图时间戳) {
+                开启寻怪 = true;
                 var 当前地图 = tools.常用操作.获取人物地图();
                 if (当前地图 == 挂机参数.挂机地图) {
                     try {
@@ -5723,22 +5603,7 @@ threads.start(function () {
             }
 
 
-            var r = false;
-            while (当前总状态 == 总状态.已启动) {
-                try {
-                    r = tools.挂机打怪.寻找打怪(打怪次数 > 0 ? true : false);
-                } catch (e) {
-                    r = false;
-                    toastLog("打怪异常" + e)
-                }
-                if (r) {
-                    打怪次数++;
-                    tools.悬浮球描述("继续攻击")
-                    continue;
-                } else {
-                    break;
-                }
-            }
+
 
 
 
