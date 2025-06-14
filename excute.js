@@ -3692,7 +3692,7 @@ var tools = {
                 var img = tools.截屏裁剪(null, p.x + 装备属性明细.x, p.y - 10, p.x, p.y + 装备属性明细.y);
                 let r = ocrPladderOCR.detect(img);
                 utils.recycleNull(img);
-                if (r) {
+                if (r && r.length > 0) {
                     var allText = '';
                     r.forEach(item => {
                         allText += item.text;
@@ -3700,6 +3700,7 @@ var tools = {
                     var 持久 = tools.常用操作.根据面板获取持久(r);
                     return {
                         status: true,
+                        名称: r[0],
                         持久: 持久,
                         value: allText
                     }
@@ -3711,104 +3712,69 @@ var tools = {
                 value: null
             }
         },
-        判断选中格子是否跳过: (排除装备, btnName) => {
+        判断选中格子动作: (是否排除装备, 是否判断存, 是否判断极品, btnName) => {
             var info = tools.补给操作.获取物品信息(btnName);
-            
-            var arr = [{
-                name: "中蓝包",
-                pic: "lanyaobao.png"
-            },
-            {
-                name: "中蓝个",
-                pic: "lanyaoge.png"
-            }, {
-                name: "修复油",
-                pic: "xiufuyou.png"
-            }];
-            if (!排除装备) {
-                arr.push({
-                    name: "护身符大",
-                    pic: "fushenfu.png"
-                })
-            }
-            if (挂机参数.备用斩马 == 1 && !排除装备) {
-                arr.push({
-                    name: "斩马",
-                    pic: "wuqi_zhanma.png"
-                })
-            }
-            if (挂机参数.备用男重盔 == 1 && !排除装备) {
-                arr.push({
-                    name: "重盔甲（男）",
-                    pic: "zhongkui_nan.png"
-                })
-            }
-            if (挂机参数.备用女重盔 == 1 && !排除装备) {
-                arr.push({
-                    name: "重盔甲（女）",
-                    pic: "zhongkui_nv.png"
-                })
-            }
-            var img = captureScreen();
-            var r = images.findMultiColors(img, "#FFDD3C", [[40, 0, "#FFDD3C"], [0, 55, "#FFDD3C"]]);
-            utils.recycleNull(img);
-            if (r && r.x > 0 && r.y > 0) {
-                for (let index = 0; index < arr.length; index++) {
-                    var item = arr[index];
-                    var result = tools.findImageArea(item.pic, r.x - 10, r.y - 10, r.x + 70, r.y + 70, 0.7);
-
-                    if (result.status) {
-                        if (item.pic == "wuqi_zhanma.png" && btnName != null && btnName.length > 0) {
-                            var info = tools.补给操作.获取物品信息(btnName);
-                            if (info.status && (info.value.indexOf("马") >= 0
-                                || info.value.indexOf("刀") >= 0
-                                || info.value.indexOf("新") >= 0
-                                || info.value.indexOf("折") >= 0
-                                || info.value.indexOf("重量27") >= 0)) {
-                                return {
-                                    status: true,
-                                    msg: item.name + "跳过",
-                                    pic: item.pic,
-                                    info: info
-                                }
-                            }
-                            else {
-                                return {
-                                    status: false,
-                                    msg: "",
-                                    info: info
-                                }
-                            }
-                        }
-                        else if (item.pic == "fushenfu.png" && btnName != null && btnName.length > 0) {
-                            var info = tools.补给操作.获取物品信息(btnName);
-                            if (info.status && (info.value.indexOf("护身") >= 0 || info.value.indexOf("符") >= 0)) {
-                                return {
-                                    status: true,
-                                    msg: item.name + "跳过",
-                                    pic: item.pic
-                                }
-                            }
-                        }
-                        else {
-                            return {
-                                status: true,
-                                msg: item.name + "跳过",
-                                pic: item.pic
-                            }
-                        }
+            if (info.status) {
+                var 是否跳过 = false;
+                var 是否存仓库 = false;
+                var 物品描述 = info.value;
+                var 物品名称 = "";
+                if ((物品描述.indexOf("魔") >= 0 || 物品描述.indexOf("法") >= 0) && (物品描述.indexOf("中") >= 0 || 物品描述.indexOf("药") >= 0)) {
+                    是否跳过 = true;
+                    物品名称 = "魔法药（中）";
+                }
+                if (物品描述.indexOf("修复") >= 0 || 物品描述.indexOf("油") >= 0) {
+                    是否跳过 = true;
+                    物品名称 = "修复油";
+                }
+                if (!是否排除装备) {
+                    if (物品描述.indexOf("护身") >= 0 || 物品描述.indexOf("符") >= 0) {
+                        是否跳过 = true;
+                        物品名称 = "护身符";
+                    }
+                    if (挂机参数.备用斩马 == 1
+                        && (info.value.indexOf("马") >= 0
+                            || info.value.indexOf("刀") >= 0
+                            || info.value.indexOf("新") >= 0
+                            || info.value.indexOf("斩") >= 0
+                            || info.value.indexOf("折") >= 0)
+                        && info.value.indexOf("27") >= 0) { //这里27是重量
+                        是否跳过 = true;
+                        物品名称 = "斩马刀";
+                    }
+                    if (挂机参数.备用男重盔 == 1
+                        && (info.value.indexOf("盔") >= 0
+                            || info.value.indexOf("甲") >= 0)
+                        && info.value.indexOf("男") >= 0
+                        && info.value.indexOf("23") >= 0) { //这里23是重量
+                        是否跳过 = true;
+                        物品名称 = "重盔甲(男)";
+                    }
+                    if (挂机参数.备用女重盔 == 1
+                        && (info.value.indexOf("盔") >= 0
+                            || info.value.indexOf("甲") >= 0)
+                        && info.value.indexOf("女") >= 0
+                        && info.value.indexOf("23") >= 0) { //这里23是重量
+                        是否跳过 = true;
+                        物品名称 = "重盔甲(女)";
                     }
                 }
-                return {
-                    status: false,
-                    msg: ""
+
+                if (是否判断存) {
+                    config.需存仓库装备.forEach((item, index) => {
+                        if (物品描述.indexOf(item) >= 0) {
+                            是否存仓库 = true;
+                            物品名称 = item;
+                        }
+                    })
                 }
+
+                
             }
-            else {
-                return {
-                    status: false,
-                    msg: "未找到格子选中框"
-                }
+            return {
+                status: false,
+                msg: "",
+                info: info
             }
         },
         判断选中格子是否跳过: (排除装备, btnName) => {
