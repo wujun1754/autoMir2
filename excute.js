@@ -187,7 +187,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.9.53" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.9.63" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -843,13 +843,12 @@ var tools = {
             var x = 装备面板.x + 装备.x + random(-5, 5);
             var y = 装备面板.y + 装备.y + random(-3, 3);
             click(x, y)
-
             return tools.补给操作.获取操作按钮(["卸下"], "点击角色 装备", 是否卸下, true);
         },
         获取装备持久: (装备) => {
             var r = tools.常用操作.点击角色装备(装备, false);
             if (r.status) {
-                r = tools.补给操作.获取物品信息(r.btnName);
+                r = tools.补给操作.获取物品信息(r.value);
                 if (r.status && r.持久) {
                     tools.悬浮球描述(JSON.stringify(r.持久));
                 }
@@ -1194,15 +1193,6 @@ var tools = {
                     }
                     return true;
                 }
-                // else {
-                //     r = tools.常用操作.检测是否在游戏画面();
-                //     if (r) {
-                //         return false;
-                //     }
-                //     else {
-                //         tools.常用操作.退出游戏("检查背包 是否有东西未发现任何按钮且检测不到游戏画面");
-                //     }
-                // }
                 tools.常用操作.关闭所有窗口();
             }
             return false;
@@ -1281,24 +1271,24 @@ var tools = {
             var 人物中心 = config.zuobiao.人物中心[fbl];
             click(人物中心.x + random(5, -5), 人物中心.y + random(5, -5))
         },
-        检测是否小退: (设置小退模式) => {
-            var r = tools.findImage("xiaotuimianban.png"); //小退面板
-            if (r.status) {
-                if (设置小退模式) {
-                    当前总状态 = 总状态.小退中;
-                }
-                return true;
-            }
-            else {
-                return false;
-            }
-        },
         检测是否在游戏画面: () => {
-            var r = tools.findImageForWait("yijianxiaoTuiBtn.png", {
-                maxTries: 5,
+            var puBtn = tools.findImageForWait("puBtn.png", {
+                maxTries: 10,
                 interval: 200
             });
-            return r.status;
+            if (puBtn.status) {
+                return true;
+            }
+            var xiaotuiBtn = tools.findImageForWait("yijianxiaoTuiBtn.png", {
+                maxTries: 10,
+                interval: 200
+            });
+            if (xiaotuiBtn.status) {
+                return true;
+            }
+
+            return false;
+
         },
         处理坐标错别字: (text) => {
             if (!text) return text;
@@ -1546,6 +1536,7 @@ var tools = {
             return true;
         },
         退出游戏: (原因) => {
+            tools.常用方法.错误日志(原因, 3);
             tools.常用方法.发送提醒(原因)
             home();
             sleep(5000);
@@ -1666,7 +1657,7 @@ var tools = {
             }
         },
         检测操作模式: (强制检测) => {
-            if (new Date().getTime() - 上次设置操作模式时间 >= 操作模式时间戳) {
+            if (new Date().getTime() - 上次设置操作模式时间 >= 操作模式时间戳 || 强制检测) {
                 tools.悬浮球描述("设置操作模式开始");
                 tools.常用操作.初始化操作模式(2);
                 上次设置操作模式时间 = new Date().getTime();
@@ -1696,20 +1687,7 @@ var tools = {
                 ocrPladderOCR = $ocr.create({
                     models: 'slim', // 指定精度相对低但速度更快的模型，若不指定则为default模型，精度高一点但速度慢一点
                 });
-
                 tools.悬浮球描述("画面自检开始");
-                r = tools.常用操作.检测是否小退(true);
-                if (r) {
-                    var time = random(60, 120);
-                    for (let index = 0; index < time; index++) {
-                        tools.悬浮球描述("等待登录(" + (time - index) + ")");
-                        sleep(1000);
-                    }
-                    tools.常用操作.小退后开始登录();
-                    当前总状态 = 总状态.已启动;
-                    tools.挂机打怪.去挂机图打怪();
-                    tools.悬浮球描述("登录成功");
-                }
                 tools.常用操作.初始化攻击面板loops();
                 画面自检时间 = new Date().getTime();
                 tools.悬浮球描述("画面自检结束");
@@ -3076,8 +3054,7 @@ var tools = {
                     tools.常用操作.关闭所有窗口();
                 }
             } else {
-                tools.常用操作.检测是否小退(true);
-                toastLog("未找到closeBtn");
+                toastLog("回老兵,未找到closeBtn");
             }
         },
         回老兵Loop: () => {
@@ -3195,8 +3172,7 @@ var tools = {
                     tools.常用操作.关闭所有窗口();
                 }
             } else {
-                tools.常用操作.检测是否小退(true);
-                toastLog("未找到closeBtn");
+                toastLog("去挂机地图,未找到closeBtn");
                 return;
             }
             return;
@@ -3480,35 +3456,32 @@ var tools = {
                 }
             }
         },
-        点击小贩按钮: (type, isClose) => { //type=1表示出售、2表示购买、3表示修理
+        点击小贩按钮: (按钮名称, isClose) => {
             if (isClose) {
                 tools.常用操作.关闭所有窗口();
             }
             var 比奇小贩按钮 = config.zuobiao.比奇小贩按钮[fbl];
-            var msg = "";
             click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2));
+            sleep(random(555, 777));
             var r = null;
-            switch (type) {
-                case 1:
+            switch (按钮名称) {
+                case "出售":
                     r = tools.findImageForWaitClick("chushouwupingBtn.png", {
-                        maxTries: 10,
-                        interval: 200
+                        maxTries: 5,
+                        interval: 500
                     });
-                    msg = "出售按钮"
                     break;
-                case 2:
+                case "购买":
                     r = tools.findImageForWaitClick("goumaiwupingBtn.png", {
-                        maxTries: 10,
-                        interval: 200
+                        maxTries: 5,
+                        interval: 500
                     });
-                    msg = "购买按钮"
                     break;
-                case 3:
+                case "普修":
                     r = tools.findImageForWaitClick("putongxiuliBtn.png", {
-                        maxTries: 10,
-                        interval: 200
+                        maxTries: 5,
+                        interval: 500
                     });
-                    msg = "普通修理按钮"
                     break;
 
 
@@ -3517,7 +3490,7 @@ var tools = {
                 return true;
             }
             else {
-                toastLog("未找到" + msg)
+                toastLog("未找到" + type + "按钮");
                 return false;
             }
         },
@@ -3616,7 +3589,7 @@ var tools = {
                 r = tools.常用操作.检测是否在游戏画面();
                 if (!r) {
                     当前总状态 = 总状态.重启中;
-                    tools.常用操作.退出游戏(JSON.stringify(按钮类型) + "获取 操作按钮失败(" + 来源 + ")");
+                    tools.常用操作.退出游戏(JSON.stringify(按钮类型) + "获取操作按钮失败(" + 来源 + ")");
                 }
             }
             return {
@@ -3637,12 +3610,8 @@ var tools = {
             }
             return r;
         },
-        获取物品信息: (btnName) => {
-            var btn = tools.findImageForWait(btnName, {
-                maxTries: 6,
-                interval: 200
-            });
-            if (btn.status) {
+        获取物品信息: (btn) => {
+            if (btn && btn.status) {
                 var p = btn.img;
                 var 装备属性明细 = config.zuobiao.人物面板[fbl].装备属性明细;
                 var img = tools.截屏裁剪(null, p.x + 装备属性明细.x, p.y - 10, p.x, p.y + 装备属性明细.y);
@@ -3668,14 +3637,15 @@ var tools = {
                 value: null
             }
         },
-        判断选中格子动作: (是否排除装备, 是否判断存, 是否判断极品, btnName) => {
-            var info = tools.补给操作.获取物品信息(btnName);
+        判断选中格子动作: (是否排除装备, 是否判断存, 是否判断极品, btn) => {
+            var info = tools.补给操作.获取物品信息(btn);
             if (info.status) {
                 var 是否跳过 = false;
                 var 是否存仓库 = false;
                 var 是否极品 = false;
                 var 物品描述 = info.value;
-                var 物品名称 = "";
+                var 物品名称 = info.名称;
+
                 if ((物品描述.indexOf("魔") >= 0 || 物品描述.indexOf("法") >= 0) && (物品描述.indexOf("中") >= 0 || 物品描述.indexOf("药") >= 0)) {
                     是否跳过 = true;
                     物品名称 = "魔法药（中）";
@@ -3720,15 +3690,22 @@ var tools = {
                 if (是否判断存) {
                     config.需存仓库装备.forEach((item, index) => {
                         if (物品描述.indexOf(item) >= 0) {
+                            toastLog("找字发现")
                             是否存仓库 = true;
-                            物品名称 = info.名称;
                         }
                     })
+                    if (!是否存仓库) {
+                        var r = tools.补给操作.判断选中格子是否存仓库()
+                        if (r.status) {
+                            toastLog("找图发现")
+                            是否存仓库 = true;
+                            物品名称 = r.msg
+                        }
+                    }
                 }
 
-                if (是否判断极品 && tools.补给操作.判断选中格子是否极品(btnName)) {
+                if (是否判断极品 && tools.补给操作.判断选中格子是否极品(btn)) {
                     是否极品 = true;
-                    物品名称 = info.名称;
                 }
                 return {
                     status: true,
@@ -3736,18 +3713,19 @@ var tools = {
                     是否存仓库: 是否存仓库,
                     是否极品: 是否极品,
                     物品名称: 物品名称,
+                    物品描述: 物品描述,
                     原生名称: info.名称,
                     持久: info.持久
                 }
             }
-            toastLog("获取物品信息失败(判断选中格子 动作)")
+            toastLog("获取物品信息失败(判断选中格子动作)")
             return {
                 status: false,
                 msg: "获取物品信息失败",
                 info: info
             }
         },
-        判断选中格子是否跳过: (排除装备, btnName) => {
+        判断选中格子是否跳过: (是否排除装备, 文字描述) => {
             var arr = [{
                 name: "中蓝包",
                 pic: "lanyaobao.png"
@@ -3757,135 +3735,75 @@ var tools = {
                 pic: "lanyaoge.png"
             }, {
                 name: "修复油",
-                pic: "xiufuyou.png"
+                pic: "xiufuyou1.png"
             }];
-            if (!排除装备) {
+            if (!是否排除装备) {
                 arr.push({
                     name: "护身符大",
                     pic: "fushenfu.png"
                 })
             }
-            if (挂机参数.备用斩马 == 1 && !排除装备) {
+            if (挂机参数.备用斩马 == 1 && !是否排除装备) {
                 arr.push({
                     name: "斩马",
                     pic: "wuqi_zhanma.png"
                 })
             }
-            if (挂机参数.备用男重盔 == 1 && !排除装备) {
+            if (挂机参数.备用男重盔 == 1 && !是否排除装备) {
                 arr.push({
                     name: "重盔甲（男）",
                     pic: "zhongkui_nan.png"
                 })
             }
-            if (挂机参数.备用女重盔 == 1 && !排除装备) {
+            if (挂机参数.备用女重盔 == 1 && !是否排除装备) {
                 arr.push({
                     name: "重盔甲（女）",
                     pic: "zhongkui_nv.png"
                 })
             }
-            var img = captureScreen();
-            var r = images.findMultiColors(img, "#FFDD3C", [[40, 0, "#FFDD3C"], [0, 55, "#FFDD3C"]]);
-            utils.recycleNull(img);
-            if (r && r.x > 0 && r.y > 0) {
-                for (let index = 0; index < arr.length; index++) {
-                    var item = arr[index];
-                    var result = tools.findImageArea(item.pic, r.x - 10, r.y - 10, r.x + 70, r.y + 70, 0.7);
-
-                    if (result.status) {
-                        if (item.pic == "wuqi_zhanma.png" && btnName != null && btnName.length > 0) {
-                            var info = tools.补给操作.获取物品信息(btnName);
-                            if (info.status && (info.value.indexOf("马") >= 0
-                                || info.value.indexOf("刀") >= 0
-                                || info.value.indexOf("新") >= 0
-                                || info.value.indexOf("折") >= 0
-                                || info.value.indexOf("重量27") >= 0)) {
-                                return {
-                                    status: true,
-                                    msg: item.name + "跳过",
-                                    pic: item.pic,
-                                    info: info
-                                }
-                            }
-                            else {
-                                return {
-                                    status: false,
-                                    msg: "",
-                                    info: info
-                                }
-                            }
-                        }
-                        else if (item.pic == "fushenfu.png" && btnName != null && btnName.length > 0) {
-                            var info = tools.补给操作.获取物品信息(btnName);
-                            if (info.status && (info.value.indexOf("护身") >= 0 || info.value.indexOf("符") >= 0)) {
-                                return {
-                                    status: true,
-                                    msg: item.name + "跳过",
-                                    pic: item.pic
-                                }
-                            }
-                        }
-                        else {
+            for (let index = 0; index < arr.length; index++) {
+                var item = arr[index];
+                var result = tools.补给操作.背包选中格子中找图(item.pic);
+                if (result.status) {
+                    if (item.pic == "wuqi_zhanma.png") {
+                        if (文字描述.indexOf("马") >= 0
+                            || 文字描述.indexOf("刀") >= 0
+                            || 文字描述.indexOf("新") >= 0
+                            || 文字描述.indexOf("斩") >= 0
+                            || 文字描述.indexOf("折") >= 0
+                            || 文字描述.indexOf("27") >= 0) {
                             return {
                                 status: true,
-                                msg: item.name + "跳过",
-                                pic: item.pic
+                                pic: item.pic,
+                                物品名称: item.name
                             }
                         }
                     }
-                }
-                return {
-                    status: false,
-                    msg: ""
-                }
-            }
-            else {
-                return {
-                    status: false,
-                    msg: "未找到格子选中框"
-                }
-            }
-        },
-        判断选中格子是否存仓库: () => {
-            var arr = [{
-                name: "万年雪霜",
-                pic: "wannianxueshuang.png"
-            },
-            {
-                name: "组队卷",
-                pic: "zuduijuan.png"
-            }];
-            var img = captureScreen();
-            var r = images.findMultiColors(img, "#FFDD3C", [[40, 0, "#FFDD3C"], [0, 55, "#FFDD3C"]]);
-            utils.recycleNull(img);
-            if (r && r.x > 0 && r.y > 0) {
-                for (let index = 0; index < arr.length; index++) {
-                    var item = arr[index];
-                    var result = tools.findImageArea(item.pic, r.x - 10, r.y - 10, r.x + 70, r.y + 70, 0.7);
-                    if (result.status) {
-                        return {
-                            status: true,
-                            msg: item.name
+                    else if (item.pic == "fushenfu.png") {
+                        if (文字描述.indexOf("护身") >= 0 || 文字描述.indexOf("符") >= 0) {
+                            return {
+                                status: true,
+                                pic: item.pic,
+                                物品名称: item.name
+                            }
                         }
                     }
-                }
-                return {
-                    status: false,
-                    msg: ""
+                    else {
+                        return {
+                            status: true,
+                            pic: item.pic,
+                            物品名称: item.name
+                        }
+                    }
+
                 }
             }
-            else {
-                return {
-                    status: false,
-                    msg: "未找到格子选中框"
-                }
+            return {
+                status: false
             }
         },
-        判断选中格子是否极品: (btnName) => {
-            var btn = tools.findImageForWait(btnName, {
-                maxTries: 6,
-                interval: 200
-            });
-            if (btn.status) {
+        判断选中格子是否极品: (btn) => {
+            if (btn && btn.status) {
                 var p = btn.img;
                 var 装备属性明细 = config.zuobiao.人物面板[fbl].装备属性明细;
                 var img = captureScreen();
@@ -3900,38 +3818,48 @@ var tools = {
             }
             return false;
         },
-        判断修卖是否跳过: (btnName, type) => {//type=1卖，type=2修
-            var info = tools.补给操作.获取物品信息(btnName);
-            if (!info.status) {
-                toastLog("获取物品信息失败");
-                return false;
-            }
-            var str = info.value;
-            if ((str.indexOf("新") || str.indexOf("斩")) && str.indexOf("马")) {
-
-            }
-
-
-            var arr = [{
-                name: "万年雪霜",
-                pic: "wannianxueshuang.png"
-            },
-            {
-                name: "组队卷",
-                pic: "zuduijuan.png"
-            }];
-            var img = captureScreen();
-            var r = images.findMultiColors(img, "#FFDD3C", [[57, 0, "#FFDD3C"], [0, 56, "#FFDD3C"], [57, 56, "#FFDD3C"]]);
-            utils.recycleNull(img);
-            if (r && r.x > 0 && r.y > 0) {
+        判断选中格子是否存仓库: (文字描述) => {
+            config.需存仓库装备.forEach((item, index) => {
+                if (文字描述.indexOf(item) >= 0) {
+                    return {
+                        status: true
+                    }
+                }
+            })
+            if (!是否存仓库) {
+                var arr = [{
+                    name: "万年雪霜",
+                    pic: "wannianxueshuang.png"
+                },
+                {
+                    name: "组队卷",
+                    pic: "zuduijuan.png"
+                }];
                 for (let index = 0; index < arr.length; index++) {
                     var item = arr[index];
-                    var result = tools.findImageArea(item.pic, r.x - 5, r.y - 5, r.x + 70, r.y + 70);
+                    var result = tools.补给操作.背包选中格子中找图(item.pic)
                     if (result.status) {
                         return {
-                            status: true,
-                            msg: item.name
+                            status: true
                         }
+                    }
+                }
+            }
+            return {
+                status: false,
+                物品名称: ""
+            }
+        },
+        背包选中格子中找图: (pic) => {
+            var img = captureScreen();
+            var r = images.findMultiColors(img, "#FFDD3C", [[40, 0, "#FFDD3C"], [0, 50, "#FFDD3C"]]);
+            utils.recycleNull(img);
+            if (r && r.x > 0 && r.y > 0) {
+                if (result.status) {
+                    var result = tools.findImageArea(pic, r.x - 10, r.y - 10, r.x + 70, r.y + 70, 0.7);
+                    return {
+                        status: true,
+                        value: result
                     }
                 }
                 return {
@@ -3940,6 +3868,7 @@ var tools = {
                 }
             }
             else {
+                toastLog("未找到格子选中框")
                 return {
                     status: false,
                     msg: "未找到格子选中框"
@@ -4070,7 +3999,7 @@ var tools = {
             }
         },
         卖物品: () => {
-            var r = tools.补给操作.点击小贩按钮(1, false);
+            var r = tools.补给操作.点击小贩按钮("出售", false);
             if (!r) {
                 return {
                     status: false,
@@ -4079,7 +4008,7 @@ var tools = {
             }
             var zhengliBtn = tools.补给操作.整理背包(false);
             if (!zhengliBtn.status) {
-                tools.补给操作.点击小贩按钮(2, true); //这里尝试购买后，可能会出现整理按钮
+                tools.补给操作.点击小贩按钮("购买", true); //这里尝试购买后，可能会出现整理按钮
                 return {
                     status: false,
                     err: "未获取到整理按钮"
@@ -4106,7 +4035,7 @@ var tools = {
                     tools.补给操作.点击背包格子(index, index1, zhengliBtn);
                     r = tools.补给操作.获取操作按钮(["放入"], "卖物品", false, true);
                     if (r.status) {
-                        var info = tools.补给操作.判断选中格子动作(false, true, true, r.btnName);
+                        var info = tools.补给操作.判断选中格子动作(false, true, true, r.value);
                         if (info.status) {
                             if (info.是否跳过) {
                                 var 是否跳过 = false;
@@ -4132,23 +4061,19 @@ var tools = {
                                     是否跳过 = true;
                                 }
                                 if (是否跳过) {
-                                    tools.悬浮球描述(`${info.物品名称}跳过`)
+                                    tools.悬浮球描述(`${info.物品描述}跳过`)
                                     continue;
                                 }
                             }
 
                             if (info.是否极品 || info.是否存仓库) {
-                                tools.悬浮球描述(`${index}_${index1}存仓库`)
+                                tools.悬浮球描述(`${info.物品描述}存仓库`)
                                 tools.补给操作.存仓库(index, index1);
-                                是否已跳过衣服 = false; //这里防止有极品  之前有跳过动作，又卖掉
-                                是否已跳过武器 = false;
-                                return {
-                                    status: false,
-                                    err: "重新卖装备"
-                                }
+                                sleep(888);
+                                tools.补给操作.点击小贩按钮("出售", false);
+                                continue;
                             }
-
-                            tools.悬浮球描述(`${info.物品名称}正常出售`)
+                            tools.悬浮球描述(`${info.物品描述}正常出售`)
                         }
                         r = tools.findImageForWaitClick(r.btnName, {
                             maxTries: 6,
@@ -4383,7 +4308,7 @@ var tools = {
             tools.悬浮球描述("修理结束");
         },
         修理装备: () => {
-            var r = tools.补给操作.点击小贩按钮(3, false);
+            var r = tools.补给操作.点击小贩按钮("普修", false);
             if (!r) {
                 return {
                     status: false,
@@ -4416,15 +4341,16 @@ var tools = {
                     sleep(1500)
                     //tools.悬浮球描述(`开始修理${index}_${index1}格子`);
                     tools.补给操作.点击背包格子(index, index1, zhengliBtn);
-                    r = tools.补给操作.获取操作按钮(["放入"], "修理装备", false, false);
+                    r = tools.补给操作.获取操作按钮(["放入"], "修理装备", false, true);
                     if (r.status) {
-                        var 跳过 = tools.补给操作.判断选中格子是否跳过(true, r.btnName);
-                        if (跳过.status) {
+                        var info = tools.补给操作.判断选中格子动作(true, false, false, r.value);
+                        if (info.status && info.是否跳过) {
                             是否返回修理 = false;
-                            tools.悬浮球描述(跳过.msg);
+                            tools.悬浮球描述(info.物品名称 + "跳过");
                             continue;
                         }
                         else {
+                            tools.悬浮球描述(info.物品名称 + "开始修理");
                             r = tools.findImageForWaitClick(r.btnName, {
                                 maxTries: 6,
                                 interval: 666
@@ -4473,46 +4399,27 @@ var tools = {
                 for (let index = 1; index <= 5; index++) {
                     for (let index1 = 1; index1 <= 8; index1++) {
                         tools.执行时间戳.检测认证();
-                        //tools.悬浮球描述("穿戴" + index + "_" + index1 + "格");
                         tools.补给操作.点击背包格子(index, index1, zhengliBtn);
-                        var r = tools.补给操作.获取操作按钮(["穿戴", "使用"], "穿 装 备", false, false);
-                        var info = tools.补给操作.判断选中格子动作(true, false, false, r.btnName);
-                        if (info.status) {
-                            if (info.是否跳过) {
-                                tools.悬浮球描述(info.物品名称 + "跳过");
-                                continue;
-                            }
-                            else {
-
+                        var r = tools.补给操作.获取操作按钮(["穿戴", "使用"], "穿 装 备", false, true);
+                        if (r.status) {
+                            var info = tools.补给操作.判断选中格子动作(true, false, false, r.value);
+                            if (info.status) {
+                                if (info.是否跳过) {
+                                    tools.悬浮球描述(info.物品名称 + "跳过");
+                                    continue;
+                                }
+                                else {
+                                    tools.悬浮球描述(info.物品名称 + "穿装备");
+                                    var btn = r.value;
+                                    var x = btn.img.x + btn.size.w / 2 + random(-5, 5);
+                                    var y = btn.img.y + btn.size.h / 2 + random(-3, 3);
+                                    click(x, y)
+                                }
                             }
                         }
-                        // var tryCount = 0;
-                        // while (true) {
-                        //     if (tryCount >= 3) {
-                        //         return
-                        //     }
-                        //     sleep(666);
-                        //     var r = tools.findImageClick("beibaochuandaiBtn.png");
-                        //     if (r) {
-                        //         break;
-                        //     }
-                        //     else {
-                        //         r = tools.findImageClick("beibaochuandaiBtn1.png");
-                        //         if (r) {
-                        //             break;
-                        //         }
-                        //         var 跳过 = tools.补给操作.判断选中格子是否跳过(true);
-                        //         if (跳过.status) {
-                        //             tools.悬浮球描述(跳过.msg);
-                        //             break;
-                        //         }
-                        //         r = tools.findImageClick("beibaoshiyongBtn.png");
-                        //         if (r) {
-                        //             break;
-                        //         }
-                        //     }
-                        //     tryCount++;
-                        // }
+                        else {
+                            return true;
+                        }
                         sleep(random(666, 777))
                     }
                 }
@@ -5003,6 +4910,9 @@ var tools = {
                     size: imgSize
                 };
             }
+        }
+        if (fileName != "closeBtn.png" && fileName != "closeBtn2.png" && fileName != "zuoguaiwuBtn.png" && fileName != "zuoguaiwumanxueBtn.png") {
+            tools.悬浮球描述('找图失败' + fileName);
         }
         return {
             status: false,
