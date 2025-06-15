@@ -187,7 +187,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.9.63" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.9.66" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -843,7 +843,7 @@ var tools = {
             var x = 装备面板.x + 装备.x + random(-5, 5);
             var y = 装备面板.y + 装备.y + random(-3, 3);
             click(x, y)
-            return tools.补给操作.获取操作按钮(["卸下"], "点击角色 装备", 是否卸下, true);
+            return tools.补给操作.获取操作按钮(["卸下"], "点击角色装备", 是否卸下, true);
         },
         获取装备持久: (装备) => {
             var r = tools.常用操作.点击角色装备(装备, false);
@@ -1186,10 +1186,11 @@ var tools = {
             if (r.status) {
                 sleep(666);
                 tools.补给操作.点击背包格子(index1, index2, r);
-                r = tools.补给操作.获取操作按钮(["穿戴", "使用"], "检查背包 是否有东西", false, true);
+                r = tools.补给操作.获取操作按钮(["穿戴", "使用"], "检查背包是否有东西", false, true);
                 if (r.status) {
                     if (r.btnName.indexOf("1") >= 0) {
-                        tools.常用操作.点击人物();
+                        click(random(5, 25), random(285, 300)) //点左面板怪物
+                        //tools.常用操作.点击人物();
                     }
                     return true;
                 }
@@ -1609,15 +1610,7 @@ var tools = {
             if (new Date().getTime() - 上次检查宝宝时间 > 检查宝宝时间戳 || 强制检测) {
                 if (挂机参数.召唤骷髅 == 1 || 挂机参数.召唤神兽 == 1) {
                     tools.悬浮球描述("检查宝宝开始");
-                    var r = tools.挂机打怪.宝宝是否存在(0);
-                    if (!r) {
-                        if (挂机参数.召唤骷髅 == 1) {
-                            tools.挂机打怪.点击召唤骷髅();
-                        }
-                        if (挂机参数.召唤神兽 == 1) {
-                            tools.挂机打怪.点击召唤神兽();
-                        }
-                    }
+                    tools.挂机打怪.宝宝是否存在("攻击", true);
                     上次检查宝宝时间 = new Date().getTime();
                     tools.悬浮球描述("检查宝宝结束");
                 }
@@ -2097,6 +2090,9 @@ var tools = {
 
         },
         初始化挂机: () => {
+
+            tools.挂机打怪.设置宝宝模式("攻击");
+
             tools.执行时间戳.检测无地牢补给(true);
 
             tools.执行时间戳.检测操作模式(true);
@@ -2104,6 +2100,7 @@ var tools = {
             //tools.执行时间戳.检测内挂(true);
 
             tools.执行时间戳.检测组队模式(true);
+
         },
         点击挂机坐标: (是否强制跑图) => {
             var 是否跑图 = false;
@@ -2311,37 +2308,87 @@ var tools = {
                 result: r
             }
         },
-        宝宝是否存在: (跟随等待时间) => {
+        宝宝是否存在: (模式, 是否召唤) => {
             var r = tools.挂机打怪.扫描宝宝();
             if (r.status) {
                 return true;
             }
+            else {
+                var r = tools.挂机打怪.设置宝宝模式(模式);
+                if (!r && 是否召唤) {
+                    if (挂机参数.召唤骷髅 == 1) {
+                        tools.挂机打怪.点击召唤骷髅();
+                    }
+                    if (挂机参数.召唤神兽 == 1) {
+                        tools.挂机打怪.点击召唤神兽();
+                    }
+                    return true;
+                }
+                return r;
+            }
+        },
+        设置宝宝模式: (模式) => {
             var tryCount = 0;
+            //var p = config.zuobiao.聊天框面板[fbl];
+            var p = config.zuobiao.聊天框最后一行[fbl];
+            var isOk = false;
             while (true) {
                 if (tryCount >= 12) {
                     break;
                 }
                 var r = tools.findImageClick("chongwuBtn.png");
-                sleep(500)
                 if (r) {
-                    r = tools.常用操作.读取聊天框最后一行信息();
-                    tools.悬浮球描述(r + "(" + tryCount + ")");
-                    if ((r.indexOf("行") >= 0 || r.indexOf("动") >= 0 || r.indexOf("属") >= 0 || r.indexOf("下") >= 0)) {
-                        if (r.indexOf("攻") >= 0 || r.indexOf("击") >= 0) {
-                            tools.常用操作.初始化攻击面板loops();
-                            return true;
-                        }
-                        else if (r.indexOf("跟") >= 0 || r.indexOf("随") >= 0) {
-                            if (跟随等待时间 && 跟随等待时间 > 0) {
-                                sleep(跟随等待时间)
-                            }
-                        }
+                    tools.悬浮球描述("设置宝宝模式(" + tryCount + ")");
+                    var pic = "";
+                    if (模式 == "攻击") {
+                        pic = "baobaomoshi_gongji.png";
+                    }
+                    else if (模式 == "跟随") {
+                        pic = "baobaomoshi_gensui.png";
+                    }
+                    else if (模式 == "休息") {
+                        pic = "baobaomoshi_xiuxi.png";
+                    }
+                    else {
+                        toast("模式无效");
+                        break;
+                    }
+                    result = tools.findImageAreaForWait(pic, p.x1, p.y1, p.x2, p.y2, {
+                        maxTries: 10,
+                        interval: 100,
+                        threshold: 0.8
+                    });
+                    if (result.status) {
+                        isOk = true;
+                        toast(模式 + "模式设置成功");
+                        break;
                     }
                 }
+                sleep(666)
                 tryCount++;
             }
             tools.常用操作.初始化攻击面板loops();
-            return false;
+            return isOk;
+        },
+        寻找宝宝: () => {
+            if (挂机点跑图顺序 <= 0) {
+                挂机点跑图顺序++;
+            }
+            else {
+                挂机点跑图顺序--;
+            }
+            tools.挂机打怪.点击挂机坐标(true);
+            tools.挂机打怪.宝宝是否存在("跟随", true);
+            while (true) {
+                var r = tools.挂机打怪.扫描宝宝();
+                if (r.status) {
+                    tools.挂机打怪.设置宝宝模式("攻击");
+                    return true;
+                }
+                else {
+                    sleep(300);
+                }
+            }
         },
         扫描宝宝: () => {
             let img = captureScreen();
@@ -2387,10 +2434,16 @@ var tools = {
             });
             utils.recycleNull(img);
             if (r && (r.x > 0 || r.y > 0)) {
-                result = {
-                    status: true,
-                    r: r
+                click(random(17, 23), random(168, 180));
+                sleep(500);
+                r = tools.挂机打怪.找非满血怪();
+                if (r && (r.x > 0 || r.y > 0)) {
+                    result = {
+                        status: true,
+                        r: r
+                    }
                 }
+                click(random(17, 23), random(293, 313));
             }
             return result;
         },
@@ -2473,25 +2526,27 @@ var tools = {
                 x: 100,
                 y: 55
             }
+            var r = null;
             while (true) {
                 if (new Date().getTime() - start > 8 * 1000) {//超过15秒自动退出
                     toastLog("移动超过时间强制结束");
-                    break;
+                    return false;
                 }
-                // if (tryCount >= 10) {
-                //     tools.悬浮球描述("扫描怪物失败随机走动");
-                //     tools.人物移动.随机走一步(random(1500, 3500));
-                //     break;
-                // }
-                // var 锁定的怪物 = tools.挂机打怪.身边锁定怪物();
-                // if (锁定的怪物.length > 0) {
-                //     toastLog("移动成功");
-                //     break;
-                // }
-                var r = tools.挂机打怪.大范围扫描锁定怪物();
-                if (r && r.x > 0 && r.y > 0) {
+                if (tryCount >= 10) {
+                    toastLog("连续10次扫描失败强制结束");
+                    return false;
+                }
+                var newR = tools.挂机打怪.大范围扫描锁定怪物();
+                if (newR && newR.x > 0 && newR.y > 0) {
+                    tools.悬浮球描述("扫描怪物" + JSON.stringify(r));
                     tryCount = 0;
-                    tools.悬浮球描述("成功扫描怪物" + JSON.stringify(r));
+                    r = newR;
+                }
+                else {
+                    tryCount++
+                    tools.悬浮球描述("扫描怪物失败");
+                }
+                if (r && r.x > 0 && r.y > 0) {
                     var x = r.x;
                     var y = r.y;
                     if (Math.abs(x - 人物中心.x) <= 允许距离.x && Math.abs(y - 人物中心.y) <= 允许距离.y) {
@@ -2535,11 +2590,6 @@ var tools = {
                     // if (Math.abs(x - 人物中心.x) <= 允许距离.x * 2.5 && Math.abs(y - 人物中心.y) <= 允许距离.y * 2.5) {
                     //     sleep(333)
                     // }
-                }
-                else {
-                    break;
-                    // sleep(666)
-                    // tryCount++;
                 }
             }
             return false;
@@ -3211,15 +3261,8 @@ var tools = {
                         if (当前地图 == 目的地) { //说明到目的地
                             tools.常用操作.点击人物();
                             tools.挂机打怪.启动隐身();
-                            var r = tools.挂机打怪.宝宝是否存在(1000 * 5);
-                            if (!r) {
-                                if (挂机参数.召唤骷髅 == 1) {
-                                    tools.挂机打怪.点击召唤骷髅();
-                                }
-                                if (挂机参数.召唤神兽 == 1) {
-                                    tools.挂机打怪.点击召唤神兽();
-                                }
-                            }
+                            tools.挂机打怪.宝宝是否存在("跟随", true);
+                            sleep(random(2500, 3000));
                             tools.挂机打怪.初始化挂机();
                             break;
                         }
@@ -3462,7 +3505,7 @@ var tools = {
             }
             var 比奇小贩按钮 = config.zuobiao.比奇小贩按钮[fbl];
             click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2));
-            sleep(random(555, 777));
+            sleep(random(777, 999));
             var r = null;
             switch (按钮名称) {
                 case "出售":
@@ -3586,6 +3629,8 @@ var tools = {
                 tryCount++;
             }
             if (notFindEixt) {
+
+
                 r = tools.常用操作.检测是否在游戏画面();
                 if (!r) {
                     当前总状态 = 总状态.重启中;
@@ -3646,61 +3691,16 @@ var tools = {
                 var 物品描述 = info.value;
                 var 物品名称 = info.名称;
 
-                if ((物品描述.indexOf("魔") >= 0 || 物品描述.indexOf("法") >= 0) && (物品描述.indexOf("中") >= 0 || 物品描述.indexOf("药") >= 0)) {
+                var r = tools.补给操作.判断选中格子是否跳过(是否排除装备, 物品描述);
+                if (r.status) {
                     是否跳过 = true;
-                    物品名称 = "魔法药（中）";
-                }
-                if (物品描述.indexOf("修复") >= 0 || 物品描述.indexOf("油") >= 0) {
-                    是否跳过 = true;
-                    物品名称 = "修复油";
-                }
-                if (!是否排除装备) {
-                    if (物品描述.indexOf("护身") >= 0 || 物品描述.indexOf("符") >= 0) {
-                        是否跳过 = true;
-                        物品名称 = "护身符";
-                    }
-                    if (挂机参数.备用斩马 == 1
-                        && (info.value.indexOf("马") >= 0
-                            || info.value.indexOf("刀") >= 0
-                            || info.value.indexOf("新") >= 0
-                            || info.value.indexOf("斩") >= 0
-                            || info.value.indexOf("折") >= 0)
-                        && info.value.indexOf("27") >= 0) { //这里27是重量
-                        是否跳过 = true;
-                        物品名称 = "斩马刀";
-                    }
-                    if (挂机参数.备用男重盔 == 1
-                        && (info.value.indexOf("盔") >= 0
-                            || info.value.indexOf("甲") >= 0)
-                        && info.value.indexOf("男") >= 0
-                        && info.value.indexOf("23") >= 0) { //这里23是重量
-                        是否跳过 = true;
-                        物品名称 = "重盔甲(男)";
-                    }
-                    if (挂机参数.备用女重盔 == 1
-                        && (info.value.indexOf("盔") >= 0
-                            || info.value.indexOf("甲") >= 0)
-                        && info.value.indexOf("女") >= 0
-                        && info.value.indexOf("23") >= 0) { //这里23是重量
-                        是否跳过 = true;
-                        物品名称 = "重盔甲(女)";
-                    }
+                    物品名称 = r.物品名称
                 }
 
                 if (是否判断存) {
-                    config.需存仓库装备.forEach((item, index) => {
-                        if (物品描述.indexOf(item) >= 0) {
-                            toastLog("找字发现")
-                            是否存仓库 = true;
-                        }
-                    })
-                    if (!是否存仓库) {
-                        var r = tools.补给操作.判断选中格子是否存仓库()
-                        if (r.status) {
-                            toastLog("找图发现")
-                            是否存仓库 = true;
-                            物品名称 = r.msg
-                        }
+                    r = tools.补给操作.判断选中格子是否存仓库(物品描述);
+                    if (r.status) {
+                        是否存仓库 = true;
                     }
                 }
 
@@ -3714,11 +3714,12 @@ var tools = {
                     是否极品: 是否极品,
                     物品名称: 物品名称,
                     物品描述: 物品描述,
-                    原生名称: info.名称,
                     持久: info.持久
                 }
             }
-            toastLog("获取物品信息失败(判断选中格子动作)")
+            else {
+                toastLog("获取物品信息失败")
+            }
             return {
                 status: false,
                 msg: "获取物品信息失败",
@@ -3826,37 +3827,34 @@ var tools = {
                     }
                 }
             })
-            if (!是否存仓库) {
-                var arr = [{
-                    name: "万年雪霜",
-                    pic: "wannianxueshuang.png"
-                },
-                {
-                    name: "组队卷",
-                    pic: "zuduijuan.png"
-                }];
-                for (let index = 0; index < arr.length; index++) {
-                    var item = arr[index];
-                    var result = tools.补给操作.背包选中格子中找图(item.pic)
-                    if (result.status) {
-                        return {
-                            status: true
-                        }
+            var arr = [{
+                name: "万年雪霜",
+                pic: "wannianxueshuang.png"
+            },
+            {
+                name: "组队卷",
+                pic: "zuduijuan.png"
+            }];
+            for (let index = 0; index < arr.length; index++) {
+                var item = arr[index];
+                var result = tools.补给操作.背包选中格子中找图(item.pic)
+                if (result.status) {
+                    return {
+                        status: true
                     }
                 }
             }
             return {
-                status: false,
-                物品名称: ""
+                status: false
             }
         },
         背包选中格子中找图: (pic) => {
             var img = captureScreen();
-            var r = images.findMultiColors(img, "#FFDD3C", [[40, 0, "#FFDD3C"], [0, 50, "#FFDD3C"]]);
+            var r = images.findMultiColors(img, "#FFDD3C", [[40, 0, "#FFDD3C"], [0, 40, "#FFDD3C"]]);
             utils.recycleNull(img);
             if (r && r.x > 0 && r.y > 0) {
+                var result = tools.findImageArea(pic, r.x - 10, r.y - 10, r.x + 70, r.y + 70, 0.7);
                 if (result.status) {
-                    var result = tools.findImageArea(pic, r.x - 10, r.y - 10, r.x + 70, r.y + 70, 0.7);
                     return {
                         status: true,
                         value: result
@@ -3998,7 +3996,23 @@ var tools = {
                 }
             }
         },
+        卖物品前替换装备: () => {//防止花屏找不到按钮
+            tools.悬浮球描述("开始寻找平替装备");
+            var isSuccess = false;
+            if (!isSuccess && 挂机参数.备用男重盔 == 1) {
+                isSuccess = tools.常用操作.使用备用装备("zhongkui_nan.png")
+            }
+            else if (!isSuccess && 挂机参数.备用女重盔 == 1) {
+                isSuccess = tools.常用操作.使用备用装备("zhongkui_nv.png")
+            }
+            else if (!isSuccess && 挂机参数.备用斩马 == 1) {
+                isSuccess = tools.常用操作.使用备用装备("wuqi_zhanma.png")
+            }
+            tools.悬浮球描述("结束寻找平替装备");
+            return isSuccess;
+        },
         卖物品: () => {
+            tools.补给操作.卖物品前替换装备();
             var r = tools.补给操作.点击小贩按钮("出售", false);
             if (!r) {
                 return {
@@ -4025,13 +4039,7 @@ var tools = {
                             err: "程序未启动"
                         }
                     }
-                    if (index == 1 && index1 == 1) {
-                        sleep(random(1288, 1588))
-                    }
-                    else {
-                        sleep(random(555, 666))
-                    }
-                    //tools.悬浮球描述(`开始出售${index}_${index1}格子`)
+                    sleep(random(1288, 1588))
                     tools.补给操作.点击背包格子(index, index1, zhengliBtn);
                     r = tools.补给操作.获取操作按钮(["放入"], "卖物品", false, true);
                     if (r.status) {
@@ -4039,7 +4047,7 @@ var tools = {
                         if (info.status) {
                             if (info.是否跳过) {
                                 var 是否跳过 = false;
-                                if (info.物品名称 == "斩马刀") {
+                                if (info.物品名称 == "斩马") {
                                     if (!是否已跳过武器) {
                                         是否跳过 = true;
                                         是否已跳过武器 = true;
@@ -4048,7 +4056,7 @@ var tools = {
                                         toastLog("已保留过武器");
                                     }
                                 }
-                                else if (info.物品名称 == "重盔甲(男)" || info.物品名称 == "重盔甲(女)") {
+                                else if (info.物品名称 == "重盔甲（男）" || info.物品名称 == "重盔甲（女）") {
                                     if (!是否已跳过衣服) {
                                         是否跳过 = true;
                                         是否已跳过衣服 = true;
@@ -4069,7 +4077,7 @@ var tools = {
                             if (info.是否极品 || info.是否存仓库) {
                                 tools.悬浮球描述(`${info.物品描述}存仓库`)
                                 tools.补给操作.存仓库(index, index1);
-                                sleep(888);
+                                sleep(1000);
                                 tools.补给操作.点击小贩按钮("出售", false);
                                 continue;
                             }
@@ -4444,53 +4452,7 @@ var tools = {
                 return 0
             }
         },
-        替换装备: () => {
-            tools.悬浮球描述("开始寻找平替装备");
-            tools.常用操作.关闭所有窗口();
-            sleep(random(555, 666));
-            tools.常用操作.打开背包();
-            var r = tools.findImageForWaitClick("beibaozhengliBtn.png", {
-                maxTries: 10,
-                interval: 333
-            });
-            if (!r.status) {
-                return {
-                    status: false,
-                    err: "未获取到整理按钮"
-                }
-            }
-            var tihuanPic = [];
-            if (挂机参数.替换男重盔 == 1 || 挂机参数.替换男重盔 == "1") {
-                tihuanPic.push("zhongkui_nan.png");
-            }
-            if (挂机参数.替换女重盔 == 1 || 挂机参数.替换女重盔 == "1") {
-                tihuanPic.push("zhongkui_nv.png");
-            }
-            if (挂机参数.替换男灵魂 == 1 || 挂机参数.替换男灵魂 == "1") {
-                tihuanPic.push("linghun_nan.png");
-            }
-            if (挂机参数.替换女灵魂 == 1 || 挂机参数.替换女灵魂 == "1") {
-                tihuanPic.push("linghun_nv.png");
-            }
-            if (挂机参数.替换降魔 == 1 || 挂机参数.替换降魔 == "1") {
-                tihuanPic.push("wuqi_xiangmo.png");
-            }
 
-            if (tihuanPic && tihuanPic.length > 0) {
-                for (let index = 0; index < tihuanPic.length; index++) {
-                    var p = tihuanPic[index];
-                    sleep(random(777, 999));
-                    r = tools.findImageClick(p, 0.9);
-                    if (r) {
-                        sleep(random(666, 999));
-                        r = tools.findImageForWaitClick("beibaochuandaiBtn.png", {
-                            maxTries: 6,
-                            interval: 333
-                        })
-                    }
-                }
-            }
-        },
         丢护身符: (格子x, 格子y, 时间戳) => {
             var fbl = `${device.width}_${device.height}`;
             var x1 = 格子x + random(-5, 5);
