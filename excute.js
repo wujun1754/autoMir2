@@ -2337,6 +2337,7 @@ var tools = {
                     break;
                 }
                 var r = tools.findImageClick("chongwuBtn.png");
+                sleep(666)
                 if (r) {
                     tools.悬浮球描述("设置宝宝模式(" + tryCount + ")");
                     var pic = "";
@@ -2364,7 +2365,6 @@ var tools = {
                         break;
                     }
                 }
-                sleep(666)
                 tryCount++;
             }
             tools.常用操作.初始化攻击面板loops();
@@ -2380,6 +2380,23 @@ var tools = {
             tools.挂机打怪.点击挂机坐标(true);
             tools.挂机打怪.宝宝是否存在("跟随", true);
             while (true) {
+                tools.悬浮球描述("寻找宝宝");
+                var r = tools.挂机打怪.扫描宝宝();
+                if (r.status) {
+                    tools.挂机打怪.设置宝宝模式("攻击");
+                    return true;
+                }
+                else {
+                    sleep(300);
+                }
+            }
+        },
+        逃跑模式: () => {
+            挂机点跑图顺序++;
+            tools.挂机打怪.点击挂机坐标(true);
+            tools.挂机打怪.宝宝是否存在("跟随", true);
+            while (true) {
+                tools.悬浮球描述("寻找宝宝");
                 var r = tools.挂机打怪.扫描宝宝();
                 if (r.status) {
                     tools.挂机打怪.设置宝宝模式("攻击");
