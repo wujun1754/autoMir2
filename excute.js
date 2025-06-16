@@ -1270,7 +1270,7 @@ var tools = {
                 }
             }
         },
-        使用备用装备_old: (pic) => {
+        使用备用装备: (pic) => {
             var isok = false;
             tools.常用操作.打开背包();
             var r = tools.findImageForWaitClick(pic, {
@@ -1288,52 +1288,6 @@ var tools = {
             }
             tools.常用操作.关闭所有窗口();
             return isok;
-        },
-        使用备用装备: (pic) => {
-            var r = tools.findImageForWait(pic, {
-                maxTries: 5,
-                interval: 200
-            })
-            if (!r.status) {
-                toastLog("未找到" + pic)
-            }
-            var 装备 = null;
-            // var arr = [
-            //     config.zuobiao.人物面板[fbl].头盔,
-            //     config.zuobiao.人物面板[fbl].衣服,
-            //     config.zuobiao.人物面板[fbl].项链,
-            //     config.zuobiao.人物面板[fbl].武器,
-            //     config.zuobiao.人物面板[fbl].手镯1,
-            //     config.zuobiao.人物面板[fbl].手镯2,
-            //     config.zuobiao.人物面板[fbl].戒指1,
-            //     config.zuobiao.人物面板[fbl].戒指2,
-            //     config.zuobiao.人物面板[fbl].护身符,
-            // ]
-            switch (pic) {
-                case "zhuangbei_daotou.png.png"://道士头盔
-                    装备 = config.zuobiao.人物面板[fbl].头盔;
-                    break;
-                case "zhuangbei_zhongkui_nan.png"://重盔男
-                case "zhuangbei_zhongkui_nv.png"://重盔女
-                    装备 = config.zuobiao.人物面板[fbl].衣服;
-                    break;
-                case "zhuangbei_zhanma.png"://斩马
-                    装备 = config.zuobiao.人物面板[fbl].武器;
-                    break;
-                case "zhuangbei_fenghuang.png"://凤凰项链
-                case "zhuangbei_moguilian.png"://魔鬼项链
-                case "zhuangbei_feichuilian.png"://蓝翡翠项链
-                    装备 = config.zuobiao.人物面板[fbl].项链;
-                    break;
-                case "zhuangbei_jianku.png"://坚固手套
-                case "zhuangbei_dashouzhuo.png"://大手镯
-                case "zhuangbei_sishenshou.png"://死神手套
-                    装备 = random(0, 1) == 0 ? config.zuobiao.人物面板[fbl].手镯1 : config.zuobiao.人物面板[fbl].手镯2;
-                    break;
-                case "zhuangbei_heisejiezhi.png"://黑色水晶戒指
-                    装备 = random(0, 1) == 0 ? config.zuobiao.人物面板[fbl].戒指1 : config.zuobiao.人物面板[fbl].戒指2;
-                    break;
-            }
         },
         点击人物: () => {
             var 人物中心 = config.zuobiao.人物中心[fbl];
@@ -4043,6 +3997,24 @@ var tools = {
             }
             return result;
         },
+        获取背包面板位置: (zhengliBtn) => {
+            var result = {
+                x1: 0,
+                y1: 0,
+                x2: 0,
+                y2: 0
+            }
+            var zhengliP = {
+                x: zhengliBtn.img.x,
+                y: zhengliBtn.img.y
+            }
+            var 背包格子偏移 = config.zuobiao.背包格子偏移[fbl];
+            result.x1 = zhengliP.x + 背包格子偏移["1_1_左上"].x;
+            result.x2 = result.x1 + 背包格子偏移.背包宽度;
+            result.y1 = zhengliP.y + 背包格子偏移["1_1_左上"].y;
+            result.y2 = result.y2 + 背包格子偏移.背包高度;
+            return result;
+        },
         判断选中格子动作: (是否排除装备, 是否判断存, 是否判断极品, zhengliBtn, btn, index1, index2) => {
             var info = tools.补给操作.获取物品信息(btn);
             if (info.status) {
@@ -4346,18 +4318,34 @@ var tools = {
                 }
             }
         },
-        替换装备: () => {//防止花屏找不到按钮
+        替换装备: () => {
+            tools.常用操作.打开背包();
+            var arr = [];
             tools.悬浮球描述("开始寻找平替装备");
-            var isSuccess = false;
-            if (!isSuccess && 挂机参数.备用男重盔 == 1) {
-                isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhongkui_nan.png")
+            var tryCount = 0;
+            while (true) {
+                if (tryCount >= 5) {
+                    break;
+                }
+                if (挂机参数.替换魔鬼项链 == 1) {
+
+                }
+                sleep(200);
+                tryCount++;
             }
-            else if (!isSuccess && 挂机参数.备用女重盔 == 1) {
-                isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhongkui_nv.png")
-            }
-            else if (!isSuccess && 挂机参数.备用斩马 == 1) {
-                isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhanma.png")
-            }
+
+            // var isSuccess = false;
+
+
+            // if (!isSuccess && 挂机参数.备用男重盔 == 1) {
+            //     isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhongkui_nan.png")
+            // }
+            // else if (!isSuccess && 挂机参数.备用女重盔 == 1) {
+            //     isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhongkui_nv.png")
+            // }
+            // else if (!isSuccess && 挂机参数.备用斩马 == 1) {
+            //     isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhanma.png")
+            // }
             tools.悬浮球描述("结束寻找平替装备");
             return isSuccess;
         },
@@ -4659,7 +4647,7 @@ var tools = {
                 tools.补给操作.修理装备();
             }
             if (当前总状态 == 总状态.已启动) {
-                tools.补给操作.穿装备();
+                tools.补给操作.穿装备Loop();
             }
             是否用过备用衣服 = false;
             是否用过备用武器 = false;
@@ -4750,7 +4738,7 @@ var tools = {
             }
             tools.常用操作.关闭所有窗口();
         },
-        穿装备: () => {
+        穿装备Loop: () => {
             var zhengliBtn = tools.补给操作.整理背包(true);
             sleep(1000, 1200);
             if (zhengliBtn.status) {
@@ -4783,6 +4771,59 @@ var tools = {
                 }
             }
 
+        },
+        穿装备: (picInfo, 位置) => {
+            var result = tools.findImageForWait("rewumianbanBtn.png", {
+                maxTries: 10,
+                interval: 200
+            })
+            if (!result.status) {
+                toastLog("未获取rewumianbanBtn.png")
+                return false;
+            }
+            var x = picInfo.img.x + picInfo.size.w / 2 + random(-5, 5);
+            var y = picInfo.img.y + picInfo.size.h / 2 + random(-3, 3);
+            if (y <= 60) { //防止拖到状态栏
+                y = 60;
+            }
+            var 装备 = null;
+            switch (位置) {
+                case "头盔":
+                    装备 = config.zuobiao.人物面板[fbl].头盔;
+                    break;
+                case "衣服":
+                    装备 = config.zuobiao.人物面板[fbl].衣服;
+                    break;
+                case "武器":
+                    装备 = config.zuobiao.人物面板[fbl].武器;
+                    break;
+                case "项链":
+                    装备 = config.zuobiao.人物面板[fbl].项链;
+                    break;
+                case "手镯1":
+                    装备 = config.zuobiao.人物面板[fbl].手镯1;
+                    break;
+                case "手镯2":
+                    装备 = config.zuobiao.人物面板[fbl].手镯2;
+                    break;
+                case "戒指1":
+                    装备 = config.zuobiao.人物面板[fbl].戒指1;
+                    break;
+                case "戒指2":
+                    装备 = config.zuobiao.人物面板[fbl].戒指2;
+                    break;
+                case "护身符":
+                    装备 = config.zuobiao.人物面板[fbl].护身符;
+                    break;
+                default:
+                    toastLog("未知装备")
+                    return false
+
+            }
+            var x2 = result.img.x + 装备.x + random(-5, 5);
+            var y2 = result.img.y + 装备.y + random(-3, 3);
+            var duration = random(888, 1288);
+            gesture(duration, [x, y], [x2, y2])
         },
         获取匹配图片的数量: (picName) => {
             var w = device.width;
