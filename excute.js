@@ -123,10 +123,11 @@ var 挂机参数 = {
     随机跑图: 0,
     无蓝回城: 0,
     无飞回城: 1,
-    替换男重盔: 0,
-    替换女重盔: 0,
-    替换男灵魂: 0,
-    替换女灵魂: 0,
+    替换魔鬼项链: 0,
+    替换翡翠项链: 0,
+    替换大手镯: 0,
+    替换坚固: 0,
+    替换道头: 0,
     备用男重盔: 0,
     备用女重盔: 0,
     备用斩马: 0,
@@ -136,7 +137,7 @@ var 挂机参数 = {
     认证自动识别: 0,
     云码认证: 0,
     地图拖动: 0,
-    替换降魔: 0,
+    替换黑色戒指: 0,
     隐身数量: 0,
     隐身走动: 0,
     拾取时长: 15,
@@ -188,7 +189,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.9.69" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.9.69_test" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -353,6 +354,10 @@ var win = floaty.rawWindow(
                             <text text="版本号" textSize="10sp" textColor="#000000" />
                             <input textSize="10sp" id="t_banbenhao" inputType="text" w="60sp" text="0" />
                         </horizontal>
+                        <horizontal>
+                            <text text="跟随几格" textSize="10sp" textColor="#000000" />
+                            <input textSize="10sp" id="t_gensuijuli" focusable="true" w="20sp" text="0" />
+                        </horizontal>
                     </horizontal>
                     <horizontal>
                         <horizontal gravity="right">
@@ -409,29 +414,29 @@ var win = floaty.rawWindow(
                     </horizontal>
                     <horizontal>
                         <horizontal gravity="left">
-                            <checkbox id="cbTiHuanNanZhongKui" text="替换男盔" textSize="10sp" />
+                            <checkbox id="cbTiHuanMoGui" text="替换魔鬼" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="right">
-                            <checkbox id="cbTiHuanNvZhongKui" text="替换女盔" textSize="10sp" />
+                            <checkbox id="cbTiHuanFeiChui" text="替换翡翠" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="left">
-                            <checkbox id="cbTiHuanNanLingHun" text="替换男灵" textSize="10sp" />
+                            <checkbox id="cbTiHuanDaShou" text="替换大手" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="right">
-                            <checkbox id="cbTiHuanNvLingHun" text="替换女灵" textSize="10sp" />
+                            <checkbox id="cbTiHuanJianGu" text="替换坚固" textSize="10sp" />
+                        </horizontal>
+
+                        <horizontal gravity="right">
+                            <checkbox id="cbTiHuanHeiSe" text="替换黑戒" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="right">
-                            <checkbox id="cbTiHuanXiangMo" text="替换降魔" textSize="10sp" />
+                            <checkbox id="cbTiHuanDaoTou" text="替换道头" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="right">
                             <checkbox id="cbIsFuGongJi" text="首攻用符" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="right">
                             <checkbox id="cbIsGenSuiBaoBao" text="跟随宝宝" textSize="10sp" />
-                        </horizontal>
-                        <horizontal>
-                            <text text="跟随几格" textSize="10sp" textColor="#000000" />
-                            <input textSize="10sp" id="t_gensuijuli" focusable="true" w="20sp" text="0" />
                         </horizontal>
                     </horizontal>
                     <horizontal>
@@ -692,21 +697,25 @@ var tools = {
             if (挂机参数.只打满血怪 == 1 || 挂机参数.只打满血怪 == "1") {
                 win.cbManXue.setChecked(true);
             }
-            if (挂机参数.替换男重盔 == 1 || 挂机参数.替换男重盔 == "1") {
-                win.cbTiHuanNanZhongKui.setChecked(true);
+            if (挂机参数.替换魔鬼项链 == 1) {
+                win.cbTiHuanMoGui.setChecked(true);
             }
-            if (挂机参数.替换女重盔 == 1 || 挂机参数.替换女重盔 == "1") {
-                win.cbTiHuanNvZhongKui.setChecked(true);
+            if (挂机参数.替换翡翠项链 == 1) {
+                win.cbTiHuanFeiChui.setChecked(true);
             }
-            if (挂机参数.替换男灵魂 == 1 || 挂机参数.替换男灵魂 == "1") {
-                win.cbTiHuanNanLingHun.setChecked(true);
+            if (挂机参数.替换大手镯 == 1) {
+                win.cbTiHuanDaShou.setChecked(true);
             }
-            if (挂机参数.替换女灵魂 == 1 || 挂机参数.替换女灵魂 == "1") {
-                win.cbTiHuanNvLingHun.setChecked(true);
+            if (挂机参数.替换坚固 == 1) {
+                win.cbTiHuanJianGu.setChecked(true);
             }
-            if (挂机参数.替换降魔 == 1 || 挂机参数.替换降魔 == "1") {
-                win.cbTiHuanXiangMo.setChecked(true);
+            if (挂机参数.替换黑色戒指 == 1) {
+                win.cbTiHuanHeiSe.setChecked(true);
             }
+            if (挂机参数.替换道头 == 1) {
+                win.cbTiHuanDaoTou.setChecked(true);
+            }
+            // <checkbox id="cbTiHuanDaoTou" text="替换道头" textSize="10sp" />
             if (挂机参数.无蓝回城 == 1 || 挂机参数.无蓝回城 == "1") {
                 win.cbIsWuLanHuiCheng.setChecked(true);
             }
@@ -885,10 +894,10 @@ var tools = {
                 if (!是否用过备用衣服) {
                     var isSuccess = false;
                     if (挂机参数.备用男重盔 == 1) {
-                        isSuccess = tools.常用操作.使用备用装备("zhongkui_nan.png");
+                        isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhongkui_nan.png");
                     }
                     else if (挂机参数.备用女重盔 == 1) {
-                        isSuccess = tools.常用操作.使用备用装备("zhongkui_nv.png");
+                        isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhongkui_nv.png");
                     }
 
                     if (isSuccess) {
@@ -909,7 +918,7 @@ var tools = {
             if (挂机参数.武器持久0回程 == 1 && 武器.status && 武器.持久 && 武器.持久.剩持久 <= 2) {
                 var isSuccess = false;
                 if (!是否用过备用武器) {
-                    isSuccess = tools.常用操作.使用备用装备("wuqi_zhanma.png");
+                    isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhanma.png");
                     if (isSuccess) {
                         toastLog("使用备用武器成功")
                         是否用过备用武器 = true;
@@ -1261,7 +1270,7 @@ var tools = {
                 }
             }
         },
-        使用备用装备: (pic) => {
+        使用备用装备_old: (pic) => {
             var isok = false;
             tools.常用操作.打开背包();
             var r = tools.findImageForWaitClick(pic, {
@@ -1279,6 +1288,52 @@ var tools = {
             }
             tools.常用操作.关闭所有窗口();
             return isok;
+        },
+        使用备用装备: (pic) => {
+            var r = tools.findImageForWait(pic, {
+                maxTries: 5,
+                interval: 200
+            })
+            if (!r.status) {
+                toastLog("未找到" + pic)
+            }
+            var 装备 = null;
+            // var arr = [
+            //     config.zuobiao.人物面板[fbl].头盔,
+            //     config.zuobiao.人物面板[fbl].衣服,
+            //     config.zuobiao.人物面板[fbl].项链,
+            //     config.zuobiao.人物面板[fbl].武器,
+            //     config.zuobiao.人物面板[fbl].手镯1,
+            //     config.zuobiao.人物面板[fbl].手镯2,
+            //     config.zuobiao.人物面板[fbl].戒指1,
+            //     config.zuobiao.人物面板[fbl].戒指2,
+            //     config.zuobiao.人物面板[fbl].护身符,
+            // ]
+            switch (pic) {
+                case "zhuangbei_daotou.png.png"://道士头盔
+                    装备 = config.zuobiao.人物面板[fbl].头盔;
+                    break;
+                case "zhuangbei_zhongkui_nan.png"://重盔男
+                case "zhuangbei_zhongkui_nv.png"://重盔女
+                    装备 = config.zuobiao.人物面板[fbl].衣服;
+                    break;
+                case "zhuangbei_zhanma.png"://斩马
+                    装备 = config.zuobiao.人物面板[fbl].武器;
+                    break;
+                case "zhuangbei_fenghuang.png"://凤凰项链
+                case "zhuangbei_moguilian.png"://魔鬼项链
+                case "zhuangbei_feichuilian.png"://蓝翡翠项链
+                    装备 = config.zuobiao.人物面板[fbl].项链;
+                    break;
+                case "zhuangbei_jianku.png"://坚固手套
+                case "zhuangbei_dashouzhuo.png"://大手镯
+                case "zhuangbei_sishenshou.png"://死神手套
+                    装备 = random(0, 1) == 0 ? config.zuobiao.人物面板[fbl].手镯1 : config.zuobiao.人物面板[fbl].手镯2;
+                    break;
+                case "zhuangbei_heisejiezhi.png"://黑色水晶戒指
+                    装备 = random(0, 1) == 0 ? config.zuobiao.人物面板[fbl].戒指1 : config.zuobiao.人物面板[fbl].戒指2;
+                    break;
+            }
         },
         点击人物: () => {
             var 人物中心 = config.zuobiao.人物中心[fbl];
@@ -4004,7 +4059,7 @@ var tools = {
                 }
 
                 if (是否判断存) {
-                    r = tools.补给操作.判断选中格子是否存仓库(物品描述);
+                    r = tools.补给操作.判断选中格子是否存仓库(物品描述, zhengliBtn, index1, index2);
                     if (r.status) {
                         是否存仓库 = true;
                     }
@@ -4053,26 +4108,26 @@ var tools = {
             if (挂机参数.备用斩马 == 1 && !是否排除装备) {
                 arr.push({
                     name: "斩马",
-                    pic: "wuqi_zhanma.png"
+                    pic: "zhuangbei_zhanma.png"
                 })
             }
             if (挂机参数.备用男重盔 == 1 && !是否排除装备) {
                 arr.push({
                     name: "重盔甲（男）",
-                    pic: "zhongkui_nan.png"
+                    pic: "zhuangbei_zhongkui_nan.png"
                 })
             }
             if (挂机参数.备用女重盔 == 1 && !是否排除装备) {
                 arr.push({
                     name: "重盔甲（女）",
-                    pic: "zhongkui_nv.png"
+                    pic: "zhuangbei_zhongkui_nv.png"
                 })
             }
             for (let index = 0; index < arr.length; index++) {
                 var item = arr[index];
-                var result = tools.补给操作.背包选中格子中找图(item.pic);
+                var result = tools.补给操作.背包选中格子中找图(item.pic, zhengliBtn, index1, index2);
                 if (result.status) {
-                    if (item.pic == "wuqi_zhanma.png") {
+                    if (item.pic == "zhuangbei_zhanma.png") {
                         if (文字描述.indexOf("马") >= 0
                             || 文字描述.indexOf("刀") >= 0
                             || 文字描述.indexOf("新") >= 0
@@ -4125,7 +4180,7 @@ var tools = {
             }
             return false;
         },
-        判断选中格子是否存仓库: (文字描述) => {
+        判断选中格子是否存仓库: (文字描述, zhengliBtn, index1, index2) => {
             config.需存仓库装备.forEach((item, index) => {
                 if (文字描述.indexOf(item) >= 0) {
                     return {
@@ -4143,7 +4198,7 @@ var tools = {
             }];
             for (let index = 0; index < arr.length; index++) {
                 var item = arr[index];
-                var result = tools.补给操作.背包选中格子中找图(item.pic)
+                var result = tools.补给操作.背包选中格子中找图(item.pic, zhengliBtn, index1, index2)
                 if (result.status) {
                     return {
                         status: true
@@ -4155,7 +4210,7 @@ var tools = {
             }
         },
         背包选中格子中找图: (pic, zhengliBtn, index1, index2) => {
-            var 格子P = tools.补给操作.获取背包格子位置(index1, index2, zhengliBtn);
+            var 格子P = tools.补给操作.获取背包格子位置(index1, index2, zhengliBtn, false);
             var result = tools.findImageArea(pic, 格子P.找图范围.x1, 格子P.找图范围.y1, 格子P.找图范围.x2, 格子P.找图范围.y2, 0.7);
             if (result.status) {
                 return {
@@ -4291,23 +4346,23 @@ var tools = {
                 }
             }
         },
-        卖物品前替换装备: () => {//防止花屏找不到按钮
+        替换装备: () => {//防止花屏找不到按钮
             tools.悬浮球描述("开始寻找平替装备");
             var isSuccess = false;
             if (!isSuccess && 挂机参数.备用男重盔 == 1) {
-                isSuccess = tools.常用操作.使用备用装备("zhongkui_nan.png")
+                isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhongkui_nan.png")
             }
             else if (!isSuccess && 挂机参数.备用女重盔 == 1) {
-                isSuccess = tools.常用操作.使用备用装备("zhongkui_nv.png")
+                isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhongkui_nv.png")
             }
             else if (!isSuccess && 挂机参数.备用斩马 == 1) {
-                isSuccess = tools.常用操作.使用备用装备("wuqi_zhanma.png")
+                isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhanma.png")
             }
             tools.悬浮球描述("结束寻找平替装备");
             return isSuccess;
         },
         卖物品: () => {
-            tools.补给操作.卖物品前替换装备();
+            tools.补给操作.替换装备();
             var r = tools.补给操作.点击小贩按钮("出售", false);
             if (!r) {
                 return {
@@ -4747,7 +4802,6 @@ var tools = {
                 return 0
             }
         },
-
         丢护身符: (格子x, 格子y, 时间戳) => {
             var fbl = `${device.width}_${device.height}`;
             var x1 = 格子x + random(-5, 5);
@@ -5520,12 +5574,12 @@ ui.run(() => {
             首次用符攻击: win.cbIsFuGongJi.isChecked() ? 1 : 0,
             只打满血怪: win.cbManXue.isChecked() ? 1 : 0,
 
-            替换男重盔: win.cbTiHuanNanZhongKui.isChecked() ? 1 : 0,
-            替换女重盔: win.cbTiHuanNvZhongKui.isChecked() ? 1 : 0,
-            替换男灵魂: win.cbTiHuanNanLingHun.isChecked() ? 1 : 0,
-            替换女灵魂: win.cbTiHuanNvLingHun.isChecked() ? 1 : 0,
-            替换降魔: win.cbTiHuanXiangMo.isChecked() ? 1 : 0,
-
+            替换魔鬼项链: win.cbTiHuanMoGui.isChecked() ? 1 : 0,
+            替换翡翠项链: win.cbTiHuanFeiChui.isChecked() ? 1 : 0,
+            替换大手镯: win.cbTiHuanDaShou.isChecked() ? 1 : 0,
+            替换坚固: win.cbTiHuanJianGu.isChecked() ? 1 : 0,
+            替换黑色戒指: win.cbTiHuanHeiSe.isChecked() ? 1 : 0,
+            替换道头: win.cbTiHuanDaoTou.isChecked() ? 1 : 0,
             备用男重盔: win.cbBeiYongNanZhongKui.isChecked() ? 1 : 0,
             备用女重盔: win.cbBeiYongNvZhongKui.isChecked() ? 1 : 0,
             备用斩马: win.cbBeiYongZhanMa.isChecked() ? 1 : 0,
