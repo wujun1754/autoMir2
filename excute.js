@@ -146,6 +146,7 @@ var 挂机参数 = {
     挂机地图: "",
     挂机城市: "",
     机器标识: "",
+    版本号: "",
     跟随宝宝: 0,
     跟随几格: 2,
     检查衣服武器时间戳: 600
@@ -187,7 +188,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.9.66" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.9.69" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -345,6 +346,12 @@ var win = floaty.rawWindow(
                         <horizontal paddingLeft="6sp">
                             <text text="检查武器" textSize="10sp" textColor="#000000" />
                             <input id="t_shoujihaoma" textSize="10sp" inputType="number" w="80sp" text="0" />
+                        </horizontal>
+                    </horizontal>
+                    <horizontal>
+                        <horizontal paddingLeft="6sp">
+                            <text text="版本号" textSize="10sp" textColor="#000000" />
+                            <input textSize="10sp" id="t_banbenhao" inputType="text" w="60sp" text="0" />
                         </horizontal>
                     </horizontal>
                     <horizontal>
@@ -607,6 +614,11 @@ var tools = {
                 win.t_jiqibiaoshi.setText(挂机参数.机器标识.toString());
             } else {
                 win.t_jiqibiaoshi.setText("");
+            }
+            if (挂机参数.版本号) {
+                win.t_banbenhao.setText(挂机参数.版本号.toString());
+            } else {
+                win.t_banbenhao.setText("");
             }
             if (挂机参数.跟随几格) {
                 win.t_gensuijuli.setText(挂机参数.跟随几格.toString());
@@ -1789,7 +1801,6 @@ var tools = {
                 var 血量预警 = false;
                 var 是否隐身等待 = false;
                 var 攻击宝宝身边怪物 = false;
-                var 宝宝位置 = "";
                 while (当前总状态 == 总状态.已启动) {
                     var 时间戳 = new Date().getTime() - start;
                     if (时间戳 > timeout) {
@@ -1804,9 +1815,12 @@ var tools = {
                     r = tools.挂机打怪.找正上锁定怪物(3, 100);
                     if (r.status) {
                         isChange = tools.挂机打怪.怪物血量是否变化();
+                        怪物 = tools.挂机打怪.获取人物身边怪物数据();
+
                         if (锁定的怪物.length <= 0) {
                             锁定的怪物 = tools.挂机打怪.身边锁定怪物();
                         }
+
                         if ((挂机参数.只打满血怪 == 1 || 其他玩家.status) && !攻击宝宝身边怪物 && isChange && 锁定的怪物.length <= 0) {
                             锁定的怪物 = tools.挂机打怪.身边锁定怪物();
                             if (锁定的怪物.length <= 0) {
@@ -1815,7 +1829,6 @@ var tools = {
                                 return true;
                             }
                         }
-                        怪物 = tools.挂机打怪.获取人物身边怪物数据();
 
                         if (挂机参数.隐身数量 > 0 && 怪物 && 怪物.length > 0 && (new Date().getTime() - 上一次隐身 >= 隐身时间戳)) {
                             if (怪物.length >= parseInt(挂机参数.隐身数量)) {
@@ -1826,13 +1839,26 @@ var tools = {
 
                         }
 
+
+                        if (挂机参数.隐身走动 == 1 && 怪物.length >= 2) {
+                            var r = tools.挂机打怪.扫描宝宝();
+                            if (!r.status) {
+                                tools.挂机打怪.寻找宝宝();
+                            }
+                        }
+
                         //var 是否到达隐身血量 = tools.挂机打怪.获取人物血量是否隐身()
                         if (!是否隐身等待 && !其他玩家.status && 挂机参数.隐身走动 == 1 && 锁定的怪物.length > 0) {
                             var r = tools.挂机打怪.扫描宝宝();
                             if (r.status) {
-                                //以免宝宝超出屏幕
                                 var 人物血量中心 = config.zuobiao.人物血量中心[fbl];
                                 var 一格像素 = config.zuobiao.走一格像素[fbl];
+                                // if (Math.abs(r.r.x - 人物血量中心.x) <= 一格像素.x * 2 && Math.abs(r.r.y - 人物血量中心.y) <= 一格像素.y * 2) {
+                                //     tools.人物移动.指定像素移动(r.r.x, r.r.y);
+                                // }
+                                // else {
+                                //     tools.挂机打怪.向宝宝移动();
+                                // }
                                 if (Math.abs(r.r.x - 人物血量中心.x) >= 一格像素.x * 4) {
                                     r.r.x = r.r.x > 人物血量中心.x ? 人物血量中心.x + 一格像素.x * 4 : 人物血量中心.x - 一格像素.x * 4;
                                 }
@@ -1841,10 +1867,6 @@ var tools = {
                                     r.r.y = r.r.y > 人物血量中心.y ? 人物血量中心.y + 一格像素.x * 3 : 人物血量中心.y - 一格像素.y * 3;//一格像素.y * 3;
                                 }
                                 tools.人物移动.指定像素移动(r.r.x, r.r.y);
-                                //tools.挂机打怪.向宝宝移动();
-                                // if (!r.isMove) {
-                                //     tools.人物移动.随机走一步(random(500, 600));
-                                // }
                                 是否隐身等待 = true;
                             }
                         }
@@ -1932,7 +1954,7 @@ var tools = {
                         //var t1 = new Date().getTime();
                         //var t2 = new Date().getTime();
                         //tools.悬浮球临时描述("(" + ((t2 - t1) / 1000).toString() + ")");
-                        tools.悬浮球描述("(" + parseInt((timeout - (时间戳)) / 1000) + "),(" + 锁定的怪物 + "),isChange(" + isChange + ")" + 宝宝位置 + "" + (其他玩家.status ? "发现有人" + JSON.stringify(其他玩家.r) : "") + "");
+                        tools.悬浮球描述("(" + parseInt((timeout - (时间戳)) / 1000) + "),(" + 锁定的怪物 + "),isChange(" + isChange + ")" + (其他玩家.status ? "发现有人" + JSON.stringify(其他玩家.r) : "") + "");
                         //sleep(111);
                     } else {
                         tools.挂机打怪.开始拾取();
@@ -2377,35 +2399,250 @@ var tools = {
             else {
                 挂机点跑图顺序--;
             }
+            let start = new Date().getTime();
+            var 移动时间戳 = 1000 * 1.8;
+            var 上一次移动 = new Date().getTime();
             tools.挂机打怪.点击挂机坐标(true);
             tools.挂机打怪.宝宝是否存在("跟随", true);
-            while (true) {
-                tools.悬浮球描述("寻找宝宝");
+            while (当前总状态 == 总状态.已启动) {
+                var 时间戳 = new Date().getTime() - start;
+                if (时间戳 > (1000 * 60)) {
+                    toastLog("超过时间强制结束");
+                    return false;
+                }
                 var r = tools.挂机打怪.扫描宝宝();
+                tools.悬浮球描述("寻找宝宝" + JSON.stringify(r));
                 if (r.status) {
                     tools.挂机打怪.设置宝宝模式("攻击");
+                    tools.挂机打怪.向宝宝移动();
                     return true;
                 }
-                else {
-                    sleep(300);
+                if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
+                    人物是否移动 = tools.人物移动.跑图坐标是否变化();
+                    if (人物是否移动) {
+                        var 当前坐标截图 = tools.常用操作.截图当前坐标();
+                        utils.recycleNull(上次坐标截图);
+                        上次坐标截图 = 当前坐标截图;
+                    }
+                    else {
+                        tools.挂机打怪.点击挂机坐标(true);
+                    }
+                    上一次移动 = new Date().getTime();
                 }
+                sleep(300);
             }
         },
-        逃跑模式: () => {
-            挂机点跑图顺序++;
-            tools.挂机打怪.点击挂机坐标(true);
-            tools.挂机打怪.宝宝是否存在("跟随", true);
-            while (true) {
-                tools.悬浮球描述("寻找宝宝");
-                var r = tools.挂机打怪.扫描宝宝();
-                if (r.status) {
-                    tools.挂机打怪.设置宝宝模式("攻击");
-                    return true;
-                }
-                else {
-                    sleep(300);
+        地图箭头: () => {
+            var closeImg = null;
+            var closeBtn = tools.findImageForWait("closeBtn.png", {
+                maxTries: 10,
+                interval: 100
+            })
+            if (closeBtn.status) {
+                closeImg = closeBtn.img;
+            } else {
+                toastLog("未找到关闭按钮")
+                return {
+                    status: false
                 }
             }
+            var x = closeImg.x - 1033;
+            var widthX = 816;
+            var y = closeImg.y + 40;
+            var widthY = 523;
+            click(x, y)
+            var img = captureScreen();
+            var r = images.findMultiColors(img, "#FEE96E", [[0, 12, "#FDDE6B"]], {
+                region: [x, y, widthX, widthY],
+                threshold: 10
+            });
+            utils.recycleNull(img);
+            return r;
+        },
+        大地图箭头: () => {
+            var closeImg = null;
+            var result = {
+                status: false
+            };
+            var closeBtn = tools.findImageForWait("closeBtn.png", {
+                maxTries: 10,
+                interval: 100
+            })
+            if (closeBtn.status) {
+                closeImg = closeBtn.img;
+            }
+            else {
+                toastLog("未找到关闭按钮")
+                return result
+            }
+            var arr = [
+                {
+                    方向: "正上",
+                    箭头: "#FEEA6E",
+                    尾1: {
+                        x: -5,
+                        y: 16,
+                        color: "#FEEA6E"
+                    },
+                    中间: {
+                        x: 0,
+                        y: 13,
+                        color: "#FDDD6E"
+                    },
+                    尾2: {
+                        x: 6,
+                        y: 16,
+                        color: "#FEEA6E"
+                    }
+                }, {
+                    方向: "左上",
+                    箭头: "#FEEA6E",
+                    尾1: {
+                        x: 7,
+                        y: 15,
+                        color: "#FEEA6E"
+                    },
+                    中间: {
+                        x: 9,
+                        y: 9,
+                        color: "#FDDD6E"
+                    },
+                    尾2: {
+                        x: 15,
+                        y: 7,
+                        color: "#FEEA6E"
+                    }
+                }, {
+                    方向: "正左",
+                    箭头: "#FEEA6E",
+                    中间: {
+                        x: 13,
+                        y: 0,
+                        color: "#FDDF6E"
+                    },
+                    尾1: {
+                        x: 15,
+                        y: -5,
+                        color: "#FEEA6E"
+                    },
+                    尾2: {
+                        x: 15,
+                        y: 6,
+                        color: "#FEEA6E"
+                    }
+                }, {
+                    方向: "左下",
+                    箭头: "#FEEA6E",
+                    尾1: {
+                        x: 7,
+                        y: -14,
+                        color: "#FEEA6E"
+                    },
+                    中间: {
+                        x: 8,
+                        y: -9,
+                        color: "#FDDD6E"
+                    },
+                    尾2: {
+                        x: 15,
+                        y: -7,
+                        color: "#FEEA6E"
+                    }
+                }, {
+                    方向: "正下",
+                    箭头: "#FEEA6E",
+                    尾1: {
+                        x: -5,
+                        y: -15,
+                        color: "#FEEA6E"
+                    },
+                    中间: {
+                        x: 0,
+                        y: -12,
+                        color: "#FDDD6E"
+                    },
+                    尾2: {
+                        x: 5,
+                        y: -15,
+                        color: "#FEEA6E"
+                    }
+                }, {
+                    方向: "右下",
+                    箭头: "#FEEA6E",
+                    尾1: {
+                        x: -13,
+                        y: -6,
+                        color: "#FEEA6E"
+                    },
+                    中间: {
+                        x: -7,
+                        y: -8,
+                        color: "#FDDC6E"
+                    },
+                    尾2: {
+                        x: -6,
+                        y: -13,
+                        color: "#FEEA6E"
+                    }
+                }, {
+                    方向: "正右",
+                    箭头: "#FEEA6E",
+                    中间: {
+                        x: -12,
+                        y: 0,
+                        color: "#FDDD6E"
+                    },
+                    尾1: {
+                        x: -15,
+                        y: -6,
+                        color: "#FEEA6E"
+                    },
+                    尾2: {
+                        x: -15,
+                        y: 6,
+                        color: "#FEEA6E"
+                    }
+                }, {
+                    方向: "右上",
+                    箭头: "#FEEA6E",
+                    中间: {
+                        x: -7,
+                        y: 9,
+                        color: "#FDDD6E"
+                    },
+                    尾1: {
+                        x: -14,
+                        y: 6,
+                        color: "#FEEA6E"
+                    },
+                    尾2: {
+                        x: -6,
+                        y: 14,
+                        color: "#FEEA6E"
+                    }
+                }]
+            var x = closeImg.x - 1033;
+            var widthX = 816;
+            var y = closeImg.y + 40;
+            var widthY = 523;
+            var img = captureScreen();
+            for (var i = 0; i < arr.length; i++) {
+                var p = arr[i];
+                r = images.findMultiColors(img, p.箭头, [[p.中间.x, p.中间.y, p.中间.color], [p.尾1.x, p.尾1.y, p.尾1.color], [p.尾2.x, p.尾2.y, p.尾2.color]], {
+                    region: [x, y, widthX, widthY],
+                    threshold: 5
+                });
+                if (r && (r.x > 0 || r.y > 0)) {
+                    result = {
+                        status: false,
+                        r: r,
+                        方向: p.方向
+                    }
+                    break;
+                }
+            }
+            utils.recycleNull(img);
+            return result;
         },
         扫描宝宝: () => {
             let img = captureScreen();
@@ -2422,11 +2659,12 @@ var tools = {
             ]
             for (let index = 0; index < regions.length; index++) {
                 var reg = regions[index];
-                var r = images.findMultiColors(img, color, [[20, 0, color]], {
+                var r = images.findMultiColors(img, color, [[8, 0, color]], {
                     region: reg,
-                    threshold: 30
+                    threshold: 15
                 });
                 if (r && (r.x > 0 || r.y > 0)) {
+                    r.x = r.x + 20; //返回宝宝中心血量的
                     result = {
                         status: true,
                         r: r
@@ -2469,9 +2707,12 @@ var tools = {
             var 人物中心 = config.zuobiao.人物血量中心[fbl];
             var 走一格像素 = config.zuobiao.走一格像素[fbl];
             var 跟随几格 = 挂机参数.跟随几格;
+            if (跟随几格 == null || 跟随几格 <= 0) {
+                跟随几格 = 3;
+            }
             var isMove = false;
             while (true) {
-                if (new Date().getTime() - start > 15 * 1000) {//超过15秒自动退出
+                if (new Date().getTime() - start > 10 * 1000) {//超过15秒自动退出
                     toastLog("移动超过时间强制结束");
                     break;
                 }
@@ -2694,6 +2935,12 @@ var tools = {
             return result;
         },
         身边锁定怪物: () => {
+            if (挂机参数.挂机地图.indexOf("兽人古墓") >= 0) {
+                var result = tools.findImageArea("wenzi_kurou.png", 555, 246, 724, 349, 0.7);
+                if (result.status) {
+                    return "骷髅(找图发现)"
+                }
+            }
             var imgSmall = tools.截屏裁剪(null, 555, 246, 724, 349);
             var huiduImg = images.grayscale(imgSmall);//灰度化
             let r = utils.ocrGetContentStr(huiduImg);
@@ -3646,8 +3893,6 @@ var tools = {
                 tryCount++;
             }
             if (notFindEixt) {
-
-
                 r = tools.常用操作.检测是否在游戏画面();
                 if (!r) {
                     当前总状态 = 总状态.重启中;
@@ -3699,7 +3944,51 @@ var tools = {
                 value: null
             }
         },
-        判断选中格子动作: (是否排除装备, 是否判断存, 是否判断极品, btn) => {
+        获取背包格子位置: (index1, index2, zhengliBtn, isClick) => {
+            var result = {
+                中心: {
+                    x: 0,
+                    y: 0
+                },
+                贴合范围: {
+                    x1: 0,
+                    y1: 0,
+                    x2: 0,
+                    y2: 0
+                },
+                找图范围: {
+                    x1: 0,
+                    y1: 0,
+                    x2: 0,
+                    y2: 0
+                }
+            }
+            var zhengliP = {
+                x: zhengliBtn.img.x,
+                y: zhengliBtn.img.y
+            }
+            var 背包格子偏移 = config.zuobiao.背包格子偏移[fbl];
+            result.中心.x = zhengliP.x + 背包格子偏移["1_1"].x + (背包格子偏移.中心点偏移量X * (index2 - 1));
+            result.中心.y = zhengliP.y + 背包格子偏移["1_1"].y + (背包格子偏移.中心点偏移量Y * (index1 - 1));
+
+            result.贴合范围.x1 = zhengliP.x + 背包格子偏移["1_1_左上"].x + (背包格子偏移.中心点偏移量X * (index2 - 1));
+            result.贴合范围.x2 = result.贴合范围.x1 + 背包格子偏移.中心点偏移量X;
+            result.贴合范围.y1 = zhengliP.y + 背包格子偏移["1_1_左上"].y + (背包格子偏移.中心点偏移量Y * (index1 - 1));
+            result.贴合范围.y2 = result.贴合范围.y2 + 背包格子偏移.中心点偏移量Y;
+
+            result.找图范围.x1 = result.贴合范围.x1 - 10;
+            result.找图范围.x2 = result.贴合范围.x2 + 20;
+            result.找图范围.y1 = result.贴合范围.y1 - 10;
+            result.找图范围.y2 = result.贴合范围.y2 + 20;
+
+            if (isClick) {
+                var x = result.中心.x + random(-5, 5)
+                var y = result.中心.y + random(-5, 5)
+                click(x, y)
+            }
+            return result;
+        },
+        判断选中格子动作: (是否排除装备, 是否判断存, 是否判断极品, zhengliBtn, btn, index1, index2) => {
             var info = tools.补给操作.获取物品信息(btn);
             if (info.status) {
                 var 是否跳过 = false;
@@ -3708,7 +3997,7 @@ var tools = {
                 var 物品描述 = info.value;
                 var 物品名称 = info.名称;
 
-                var r = tools.补给操作.判断选中格子是否跳过(是否排除装备, 物品描述);
+                var r = tools.补给操作.判断选中格子是否跳过(是否排除装备, 物品描述, zhengliBtn, index1, index2);
                 if (r.status) {
                     是否跳过 = true;
                     物品名称 = r.物品名称
@@ -3735,7 +4024,7 @@ var tools = {
                 }
             }
             else {
-                toastLog("获取物品信息失败")
+                tools.悬浮球描述("获取物品信息失败")
             }
             return {
                 status: false,
@@ -3743,7 +4032,7 @@ var tools = {
                 info: info
             }
         },
-        判断选中格子是否跳过: (是否排除装备, 文字描述) => {
+        判断选中格子是否跳过: (是否排除装备, 文字描述, zhengliBtn, index1, index2) => {
             var arr = [{
                 name: "中蓝包",
                 pic: "lanyaobao.png"
@@ -3865,29 +4154,18 @@ var tools = {
                 status: false
             }
         },
-        背包选中格子中找图: (pic) => {
-            var img = captureScreen();
-            var r = images.findMultiColors(img, "#FFDD3C", [[40, 0, "#FFDD3C"], [0, 40, "#FFDD3C"]]);
-            utils.recycleNull(img);
-            if (r && r.x > 0 && r.y > 0) {
-                var result = tools.findImageArea(pic, r.x - 10, r.y - 10, r.x + 70, r.y + 70, 0.7);
-                if (result.status) {
-                    return {
-                        status: true,
-                        value: result
-                    }
-                }
+        背包选中格子中找图: (pic, zhengliBtn, index1, index2) => {
+            var 格子P = tools.补给操作.获取背包格子位置(index1, index2, zhengliBtn);
+            var result = tools.findImageArea(pic, 格子P.找图范围.x1, 格子P.找图范围.y1, 格子P.找图范围.x2, 格子P.找图范围.y2, 0.7);
+            if (result.status) {
                 return {
-                    status: false,
-                    msg: ""
+                    status: true,
+                    value: result
                 }
             }
-            else {
-                toastLog("未找到格子选中框")
-                return {
-                    status: false,
-                    msg: "未找到格子选中框"
-                }
+            return {
+                status: false,
+                msg: ""
             }
         },
         回城补给: () => {
@@ -4060,7 +4338,7 @@ var tools = {
                     tools.补给操作.点击背包格子(index, index1, zhengliBtn);
                     r = tools.补给操作.获取操作按钮(["放入"], "卖物品", false, true);
                     if (r.status) {
-                        var info = tools.补给操作.判断选中格子动作(false, true, true, r.value);
+                        var info = tools.补给操作.判断选中格子动作(false, true, true, zhengliBtn, r.value, index, index1);
                         if (info.status) {
                             if (info.是否跳过) {
                                 var 是否跳过 = false;
@@ -4368,7 +4646,7 @@ var tools = {
                     tools.补给操作.点击背包格子(index, index1, zhengliBtn);
                     r = tools.补给操作.获取操作按钮(["放入"], "修理装备", false, true);
                     if (r.status) {
-                        var info = tools.补给操作.判断选中格子动作(true, false, false, r.value);
+                        var info = tools.补给操作.判断选中格子动作(true, false, false, zhengliBtn, r.value, index, index1);
                         if (info.status && info.是否跳过) {
                             是否返回修理 = false;
                             tools.悬浮球描述(info.物品名称 + "跳过");
@@ -4427,7 +4705,7 @@ var tools = {
                         tools.补给操作.点击背包格子(index, index1, zhengliBtn);
                         var r = tools.补给操作.获取操作按钮(["穿戴", "使用"], "穿 装 备", false, true);
                         if (r.status) {
-                            var info = tools.补给操作.判断选中格子动作(true, false, false, r.value);
+                            var info = tools.补给操作.判断选中格子动作(true, false, false, zhengliBtn, r.value, index, index1);
                             if (info.status) {
                                 if (info.是否跳过) {
                                     tools.悬浮球描述(info.物品名称 + "跳过");
@@ -5271,8 +5549,7 @@ ui.run(() => {
             隐身数量: parseInt(win.t_YinShen.getText()),
             跟随几格: parseInt(win.t_gensuijuli.getText()),
             机器标识: win.t_jiqibiaoshi.getText(),
-
-
+            版本号: win.t_banbenhao.getText(),
             检查衣服武器时间戳: parseInt(win.t_shoujihaoma.getText()),
             打怪等待: win.t_daguaidengdai.getText(),
             随机血量: parseInt(win.t_suijixueliang.getText()),
