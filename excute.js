@@ -161,6 +161,23 @@ var 总状态 = {
     重启中: "重启中"
 
 };
+var 装备枚举 = {
+    重盔女: "zhuangbei_zhongkui_nv.png",
+    重盔男: "zhuangbei_zhongkui_nan.png",
+    斩马刀: "zhuangbei_zhanma.png",
+    死神手: "zhuangbei_sishenshou.png",
+    坚固手: "zhuangbei_jianku.png",
+    大手镯: "zhuangbei_dashouzhuo.png",
+
+    魔鬼项链: "zhuangbei_moguilian.png",
+    凤凰项链: "zhuangbei_fenghuang.png",
+    翡翠项链: "zhuangbei_feichuilian.png",
+
+    黑色戒指: "zhuangbei_heisejiezhi.png",
+
+    道士头盔: "zhuangbei_daotou.png",
+
+};
 var 当前总状态 = 总状态.未启动;
 var 启动时间 = new Date().getTime();
 let lastDirection = context.getResources().getConfiguration().orientation;
@@ -4002,7 +4019,9 @@ var tools = {
                 x1: 0,
                 y1: 0,
                 x2: 0,
-                y2: 0
+                y2: 0,
+                width: 0,
+                height: 0
             }
             var zhengliP = {
                 x: zhengliBtn.img.x,
@@ -4012,7 +4031,9 @@ var tools = {
             result.x1 = zhengliP.x + 背包格子偏移["1_1_左上"].x;
             result.x2 = result.x1 + 背包格子偏移.背包宽度;
             result.y1 = zhengliP.y + 背包格子偏移["1_1_左上"].y;
-            result.y2 = result.y2 + 背包格子偏移.背包高度;
+            result.y2 = result.y1 + 背包格子偏移.背包高度;
+            result.width = 背包格子偏移.背包宽;
+            result.height = 背包格子偏移.背包高度;
             return result;
         },
         判断选中格子动作: (是否排除装备, 是否判断存, 是否判断极品, zhengliBtn, btn, index1, index2) => {
@@ -4318,9 +4339,37 @@ var tools = {
                 }
             }
         },
-        寻找替换装备: (zhengliBtn, picName) => {
+        寻找装备: (zhengliBtn, picName) => {
             var 背包面板P = tools.补给操作.获取背包面板位置(zhengliBtn);
+            var arr = tools.matchTemplateForArea(picName, 2, 0.8,
+                [背包面板P.x1, 背包面板P.y1, 背包面板P.width, 背包面板P.height]
+            )
+            var result = [];
+            if (p.count > 0) {
+                for (var index = 0; index < arr.count; index++) {
+                    var item = arr[index];
+                    var 点击P = {
+                        x: item.point.x + random(20, 40),
+                        y: item.point.y + random(21, 39),
+                    }
+                    click(点击P.x, 点击P.y); 
+                    var r = tools.补给操作.获取操作按钮(["穿戴", "使用"], "寻找装备", false, true);
+                    r = tools.补给操作.获取物品信息(r.value);
+                    if (picName == 装备枚举.道士头盔) {
+                        if (r.status && (r.value.indexOf("头") >= 0 || r.value.indexOf("盔") >= 0)) {
+                            result.push({
+                                装备: "头盔",
+                                点击P: 点击P
+                            })
+                            break;
+                        }
+                    }
+                    else if (picName == 装备枚举.坚固手 || picName == 装备枚举.大手镯 || picName == 装备枚举.死神手) {
 
+                    }
+                }
+
+            }
         },
         替换装备: () => {
             var zhengliBtn = tools.常用操作.打开背包();
@@ -4475,14 +4524,14 @@ var tools = {
                 tools.常用操作.关闭所有窗口();
                 tools.常用操作.打开背包();
                 sleep(1200);
-                var 蓝包数量 = tools.获取匹配图片的数量("lanyaobao.png", 10, 0.85).count;
-                var 蓝个数量_背包 = tools.获取匹配图片的数量("lanyaoge.png", 15, 0.85).count;
-                var 蓝个数量_格子 = tools.获取匹配图片的数量("lanyaoge_gezi.png", 6, 0.85).count;
+                var 蓝包数量 = tools.matchTemplate("lanyaobao.png", 10, 0.85).count;
+                var 蓝个数量_背包 = tools.matchTemplate("lanyaoge.png", 15, 0.85).count;
+                var 蓝个数量_格子 = tools.matchTemplate("lanyaoge_gezi.png", 6, 0.85).count;
                 var 蓝个数量 = 蓝个数量_背包 + 蓝个数量_格子;
 
-                var 护身符数量 = tools.获取匹配图片的数量("fushenfu.png", 5, 0.85).count;
-                var 修复油数量_背包 = tools.获取匹配图片的数量("xiufuyou.png", 5, 0.85).count;
-                var 修复油数量_格子 = tools.获取匹配图片的数量("xiufuyou_gezi.png", 5, 0.85).count;
+                var 护身符数量 = tools.matchTemplate("fushenfu.png", 5, 0.85).count;
+                var 修复油数量_背包 = tools.matchTemplate("xiufuyou.png", 5, 0.85).count;
+                var 修复油数量_格子 = tools.matchTemplate("xiufuyou_gezi.png", 5, 0.85).count;
                 var 修复油数量 = 修复油数量_背包 + 修复油数量_格子;
                 for (var i = 0; i < 物品集合.length; i++) {
                     if (当前总状态 == 总状态.已启动) {
@@ -5350,7 +5399,7 @@ var tools = {
         });
         utils.recycleNull(img);
         utils.recycleNull(targetImg);
-        if (r && r.matches) {
+        if (r && r.matches && r.matches.length > 0) {
             return {
                 r: r.matches,
                 count: r.matches.length
@@ -5361,7 +5410,33 @@ var tools = {
                 count: 0
             }
         }
-
+    },
+    matchTemplateForArea: (picName, max, threshold, region) => {
+        var w = device.width;
+        var h = device.height;
+        let img = captureScreen();
+        var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${picName}`;
+        var targetImg = images.read(targetImgPath);
+        var r = images.matchTemplate(img, targetImg, {
+            threshold: threshold,
+            region: region,
+            max: max
+        });
+        utils.recycleNull(img);
+        utils.recycleNull(targetImg);
+        if (r && r.matches && r.matches.length > 0) {
+            return {
+                status: true,
+                r: r.matches,
+                count: r.matches.length
+            }
+        } else {
+            return {
+                status: false,
+                r: null,
+                count: 0
+            }
+        }
     },
     获取区域文字: (x1, y1, x2, y2, param1, param2, isP1, isP2) => {
         var {
