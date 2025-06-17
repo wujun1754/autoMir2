@@ -4346,13 +4346,17 @@ var tools = {
             )
             var result = [];
             if (p.count > 0) {
+                var 是否替换过手镯 = false;
+                var 替换手镯名称 = "";
+                var 是否替换过戒指 = false;
+                var 替换戒指名称 = "";
                 for (var index = 0; index < arr.count; index++) {
                     var item = arr[index];
                     var 点击P = {
                         x: item.point.x + random(20, 40),
                         y: item.point.y + random(21, 39),
                     }
-                    click(点击P.x, 点击P.y); 
+                    click(点击P.x, 点击P.y);
                     var r = tools.补给操作.获取操作按钮(["穿戴", "使用"], "寻找装备", false, true);
                     r = tools.补给操作.获取物品信息(r.value);
                     if (picName == 装备枚举.道士头盔) {
@@ -4364,15 +4368,91 @@ var tools = {
                             break;
                         }
                     }
+                    else if (picName == 装备枚举.凤凰项链 || picName == 装备枚举.翡翠项链 || picName == 装备枚举.魔鬼项链) {
+                        if (r.status && (r.value.indexOf("项") >= 0 || r.value.indexOf("链") >= 0)) {
+                            result.push({
+                                装备: "项链",
+                                点击P: 点击P
+                            })
+                            break;
+                        }
+                    }
                     else if (picName == 装备枚举.坚固手 || picName == 装备枚举.大手镯 || picName == 装备枚举.死神手) {
-
+                        if (r.status && (r.value.indexOf("手") >= 0)) {
+                            if (!是否替换过手镯) {
+                                是否替换过手镯 = true;
+                                替换手镯名称 = random(0, 1) == 0 ? "手镯1" : "手镯2";
+                                result.push({
+                                    装备: 替换手镯名称,
+                                    点击P: 点击P
+                                })
+                            }
+                            else {
+                                替换手镯名称 = 替换手镯名称 == "手镯1" ? "手镯2" : "手镯1";
+                                result.push({
+                                    装备: 替换手镯名称,
+                                    点击P: 点击P
+                                })
+                                break;
+                            }
+                        }
+                    }
+                    else if (picName == 装备枚举.黑色戒指) {
+                        if (r.status && (r.value.indexOf("黑") >= 0 || r.value.indexOf("色") >= 0)) {
+                            if (!是否替换过戒指) {
+                                是否替换过戒指 = true;
+                                替换戒指名称 = random(0, 1) == 0 ? "戒指1" : "戒指2";
+                                result.push({
+                                    装备: 替换戒指名称,
+                                    点击P: 点击P
+                                })
+                            }
+                            else {
+                                替换戒指名称 = 替换戒指名称 == "戒指1" ? "戒指2" : "戒指1";
+                                result.push({
+                                    装备: 替换戒指名称,
+                                    点击P: 点击P
+                                })
+                                break;
+                            }
+                        }
                     }
                 }
-
             }
+            return result;
         },
         替换装备: () => {
             var zhengliBtn = tools.常用操作.打开背包();
+            var 替换 = [];
+            var result = []
+            if (挂机参数.替换道头 == 1) {
+                result.push(装备枚举.道士头盔);
+            }
+            if (挂机参数.替换翡翠项链 == 1) {
+                result.push(装备枚举.翡翠项链);
+            }
+            if (挂机参数.替换魔鬼项链 == 1) {
+                result.push(装备枚举.魔鬼项链);
+            }
+            if (挂机参数.替换坚固 == 1) {
+                result.push(装备枚举.坚固手);
+            }
+            if (挂机参数.替换大手镯 == 1) {
+                result.push(装备枚举.大手镯);
+            }
+            if (挂机参数.替换黑色戒指 == 1) {
+                result.push(装备枚举.黑色戒指);
+            }
+            for (var index = 0; index < result.length; index++) {
+                var element = result[index];
+                var arr = tools.补给操作.寻找装备(zhengliBtn, element);
+                if (arr && arr.length > 0) {
+                    for (var index1 = 0; index1 < arr.length; index1++) {
+                        替换.push(arr[index1]);
+                    }
+                }
+            }
+
             var 背包面板P = tools.补给操作.获取背包面板位置(zhengliBtn);
             var arr = [];
             tools.悬浮球描述("开始寻找平替装备");
