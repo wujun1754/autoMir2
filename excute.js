@@ -4320,7 +4320,7 @@ var tools = {
         },
         寻找替换装备: (zhengliBtn, picName) => {
             var 背包面板P = tools.补给操作.获取背包面板位置(zhengliBtn);
-            
+
         },
         替换装备: () => {
             var zhengliBtn = tools.常用操作.打开背包();
@@ -5338,7 +5338,7 @@ var tools = {
             return false
         }
     },
-    获取匹配图片的数量: (picName, max, threshold) => {
+    matchTemplate: (picName, max, threshold) => {
         var w = device.width;
         var h = device.height;
         let img = captureScreen();
