@@ -4345,13 +4345,13 @@ var tools = {
                 [背包面板P.x1, 背包面板P.y1, 背包面板P.width, 背包面板P.height]
             )
             var result = [];
-            if (p.count > 0) {
+            if (arr.count > 0) {
                 var 是否替换过手镯 = false;
                 var 替换手镯名称 = "";
                 var 是否替换过戒指 = false;
                 var 替换戒指名称 = "";
                 for (var index = 0; index < arr.count; index++) {
-                    var item = arr[index];
+                    var item = arr.r[index];
                     var 点击P = {
                         x: item.point.x + random(20, 40),
                         y: item.point.y + random(21, 39),
@@ -4422,7 +4422,7 @@ var tools = {
             return result;
         },
         替换装备: () => {
-            var zhengliBtn = tools.常用操作.打开背包();
+            var zhengliBtn = tools.补给操作.整理背包(true)
             var 替换 = [];
             var result = []
             if (挂机参数.替换道头 == 1) {
@@ -4453,49 +4453,17 @@ var tools = {
                 }
             }
 
-            var 背包面板P = tools.补给操作.获取背包面板位置(zhengliBtn);
-            var arr = [];
-            tools.悬浮球描述("开始寻找平替装备");
-            sleep(666);
-            var result = tools.findImageAreaForWait("zhuangbei_moguilian.png", 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, {
-                maxTries: 3,
-                interval: 200
-            }, 0.7);
-            if (result.status) {
-                arr.push({
-                    pic: result,
-
-                })
+            if (替换 && 替换.length > 0) {
+                tools.常用操作.打开角色();
+                for (var index = 0; index < 替换.length; index++) {
+                    var item = 替换[index];
+                    tools.补给操作.拖动穿装备(item.点击P, item.装备);
+                    sleep(random(888,1288));
+                }
             }
-            //var tryCount = 0;
-            // while (true) {
-            //     if (tryCount >= 5) {
-            //         break;
-            //     }
-            //     if (挂机参数.替换魔鬼项链 == 1) {
-
-            //     }
-            //     sleep(200);
-            //     tryCount++;
-            // }
-
-            // var isSuccess = false;
-
-
-            // if (!isSuccess && 挂机参数.备用男重盔 == 1) {
-            //     isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhongkui_nan.png")
-            // }
-            // else if (!isSuccess && 挂机参数.备用女重盔 == 1) {
-            //     isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhongkui_nv.png")
-            // }
-            // else if (!isSuccess && 挂机参数.备用斩马 == 1) {
-            //     isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhanma.png")
-            // }
             tools.悬浮球描述("结束寻找平替装备");
-            return isSuccess;
         },
         卖物品: () => {
-            tools.补给操作.替换装备();
             var r = tools.补给操作.点击小贩按钮("出售", false);
             if (!r) {
                 return {
@@ -4918,7 +4886,7 @@ var tools = {
             }
 
         },
-        穿装备: (picInfo, 位置) => {
+        拖动穿装备: (起始位置, 目标装备) => {
             var result = tools.findImageForWait("rewumianbanBtn.png", {
                 maxTries: 10,
                 interval: 200
@@ -4927,13 +4895,13 @@ var tools = {
                 toastLog("未获取rewumianbanBtn.png")
                 return false;
             }
-            var x = picInfo.img.x + picInfo.size.w / 2 + random(-5, 5);
-            var y = picInfo.img.y + picInfo.size.h / 2 + random(-3, 3);
+            var x = 起始位置.x;
+            var y = 起始位置.y;
             if (y <= 60) { //防止拖到状态栏
                 y = 60;
             }
             var 装备 = null;
-            switch (位置) {
+            switch (目标装备) {
                 case "头盔":
                     装备 = config.zuobiao.人物面板[fbl].头盔;
                     break;
