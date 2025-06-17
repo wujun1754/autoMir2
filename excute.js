@@ -4318,21 +4318,37 @@ var tools = {
                 }
             }
         },
+        寻找替换装备: (zhengliBtn, picName) => {
+            var 背包面板P = tools.补给操作.获取背包面板位置(zhengliBtn);
+            
+        },
         替换装备: () => {
-            tools.常用操作.打开背包();
+            var zhengliBtn = tools.常用操作.打开背包();
+            var 背包面板P = tools.补给操作.获取背包面板位置(zhengliBtn);
             var arr = [];
             tools.悬浮球描述("开始寻找平替装备");
-            var tryCount = 0;
-            while (true) {
-                if (tryCount >= 5) {
-                    break;
-                }
-                if (挂机参数.替换魔鬼项链 == 1) {
+            sleep(666);
+            var result = tools.findImageAreaForWait("zhuangbei_moguilian.png", 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, {
+                maxTries: 3,
+                interval: 200
+            }, 0.7);
+            if (result.status) {
+                arr.push({
+                    pic: result,
 
-                }
-                sleep(200);
-                tryCount++;
+                })
             }
+            //var tryCount = 0;
+            // while (true) {
+            //     if (tryCount >= 5) {
+            //         break;
+            //     }
+            //     if (挂机参数.替换魔鬼项链 == 1) {
+
+            //     }
+            //     sleep(200);
+            //     tryCount++;
+            // }
 
             // var isSuccess = false;
 
@@ -4459,13 +4475,14 @@ var tools = {
                 tools.常用操作.关闭所有窗口();
                 tools.常用操作.打开背包();
                 sleep(1200);
-                var 蓝包数量 = tools.补给操作.获取匹配图片的数量("lanyaobao.png");
-                var 蓝个数量_背包 = tools.补给操作.获取匹配图片的数量("lanyaoge.png");
-                var 蓝个数量_格子 = tools.补给操作.获取匹配图片的数量("lanyaoge_gezi.png");
+                var 蓝包数量 = tools.获取匹配图片的数量("lanyaobao.png", 10, 0.85).count;
+                var 蓝个数量_背包 = tools.获取匹配图片的数量("lanyaoge.png", 15, 0.85).count;
+                var 蓝个数量_格子 = tools.获取匹配图片的数量("lanyaoge_gezi.png", 6, 0.85).count;
                 var 蓝个数量 = 蓝个数量_背包 + 蓝个数量_格子;
-                var 护身符数量 = tools.补给操作.获取匹配图片的数量("fushenfu.png");
-                var 修复油数量_背包 = tools.补给操作.获取匹配图片的数量("xiufuyou.png");
-                var 修复油数量_格子 = tools.补给操作.获取匹配图片的数量("xiufuyou_gezi.png");
+
+                var 护身符数量 = tools.获取匹配图片的数量("fushenfu.png", 5, 0.85).count;
+                var 修复油数量_背包 = tools.获取匹配图片的数量("xiufuyou.png", 5, 0.85).count;
+                var 修复油数量_格子 = tools.获取匹配图片的数量("xiufuyou_gezi.png", 5, 0.85).count;
                 var 修复油数量 = 修复油数量_背包 + 修复油数量_格子;
                 for (var i = 0; i < 物品集合.length; i++) {
                     if (当前总状态 == 总状态.已启动) {
@@ -4824,24 +4841,6 @@ var tools = {
             var y2 = result.img.y + 装备.y + random(-3, 3);
             var duration = random(888, 1288);
             gesture(duration, [x, y], [x2, y2])
-        },
-        获取匹配图片的数量: (picName) => {
-            var w = device.width;
-            var h = device.height;
-            let img = captureScreen();
-            var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${picName}`;
-            var targetImg = images.read(targetImgPath);
-            var r = images.matchTemplate(img, targetImg, {
-                threshold: 0.85,
-                max: 30
-            });
-            utils.recycleNull(img);
-            utils.recycleNull(targetImg);
-            if (r && r.matches) {
-                return r.matches.length
-            } else {
-                return 0
-            }
         },
         丢护身符: (格子x, 格子y, 时间戳) => {
             var fbl = `${device.width}_${device.height}`;
@@ -5338,6 +5337,31 @@ var tools = {
             }
             return false
         }
+    },
+    获取匹配图片的数量: (picName, max, threshold) => {
+        var w = device.width;
+        var h = device.height;
+        let img = captureScreen();
+        var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${picName}`;
+        var targetImg = images.read(targetImgPath);
+        var r = images.matchTemplate(img, targetImg, {
+            threshold: threshold,
+            max: max
+        });
+        utils.recycleNull(img);
+        utils.recycleNull(targetImg);
+        if (r && r.matches) {
+            return {
+                r: r.matches,
+                count: r.matches.length
+            }
+        } else {
+            return {
+                r: null,
+                count: 0
+            }
+        }
+
     },
     获取区域文字: (x1, y1, x2, y2, param1, param2, isP1, isP2) => {
         var {
