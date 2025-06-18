@@ -125,9 +125,18 @@ var 挂机参数 = {
     无飞回城: 1,
     替换魔鬼项链: 0,
     替换翡翠项链: 0,
+    替换明珠: 0,
     替换大手镯: 0,
     替换坚固: 0,
+    替换死神: 0,
     替换道头: 0,
+    替换降妖: 0,
+    替换道德: 0,
+    替换黑色戒指: 0,
+    替换斩马: 0,
+    替换男盔: 0,
+    替换女盔: 0,
+
     备用男重盔: 0,
     备用女重盔: 0,
     备用斩马: 0,
@@ -162,9 +171,11 @@ var 总状态 = {
 
 };
 var 装备枚举 = {
+
     重盔女: "zhuangbei_zhongkui_nv.png",
     重盔男: "zhuangbei_zhongkui_nan.png",
     斩马刀: "zhuangbei_zhanma.png",
+
     死神手: "zhuangbei_sishenshou.png",
     坚固手: "zhuangbei_jianku.png",
     大手镯: "zhuangbei_dashouzhuo.png",
@@ -174,6 +185,8 @@ var 装备枚举 = {
     翡翠项链: "zhuangbei_feichuilian.png",
 
     黑色戒指: "zhuangbei_heisejiezhi.png",
+    降妖戒指: "zhuangbei_xiangyao.png",
+    道德戒指: "zhuangbei_daode.png",
 
     道士头盔: "zhuangbei_daotou.png",
 
@@ -206,7 +219,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.9.69_test" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="v:6.9.7" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -369,11 +382,53 @@ var win = floaty.rawWindow(
                     <horizontal>
                         <horizontal paddingLeft="6sp">
                             <text text="版本号" textSize="10sp" textColor="#000000" />
-                            <input textSize="10sp" id="t_banbenhao" inputType="text" w="60sp" text="0" />
+                            <input textSize="10sp" id="t_banbenhao" inputType="text" w="48sp" text="0" />
                         </horizontal>
                         <horizontal>
                             <text text="跟随几格" textSize="10sp" textColor="#000000" />
                             <input textSize="10sp" id="t_gensuijuli" focusable="true" w="20sp" text="0" />
+                        </horizontal>
+
+                        <horizontal gravity="right">
+                            <checkbox id="cbTiHuanDaoTou" text="替换道头" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbTiHuanMingZhu" text="替换明珠" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbTiHuanZhanMa" text="替换斩马" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbTiHuanNanKui" text="替换男盔" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbTiHuanNvKui" text="替换女盔" textSize="10sp" />
+                        </horizontal>
+                    </horizontal>
+                    <horizontal>
+                        <horizontal gravity="left">
+                            <checkbox id="cbTiHuanMoGui" text="替换魔鬼" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbTiHuanFeiChui" text="替换翡翠" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="left">
+                            <checkbox id="cbTiHuanDaShou" text="替换大手" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbTiHuanJianGu" text="替换坚固" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbTiHuanSiShen" text="替换死神" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbTiHuanHeiSe" text="替换黑戒" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbTiHuanXiangYao" text="替换降妖" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbTiHuanDaoDe" text="替换道德" textSize="10sp" />
                         </horizontal>
                     </horizontal>
                     <horizontal>
@@ -400,6 +455,9 @@ var win = floaty.rawWindow(
                             <checkbox id="cbDiTuTuoDong" text="地图拖动" textSize="10sp" />
                         </horizontal>
 
+                        <horizontal gravity="right">
+                            <checkbox id="cbIsGenSuiBaoBao" text="跟随宝宝" textSize="10sp" />
+                        </horizontal>
                     </horizontal>
                     <horizontal>
                         <horizontal gravity="right">
@@ -429,33 +487,7 @@ var win = floaty.rawWindow(
                             <checkbox id="cbRenzhengYunMa" text="云码认证" textSize="10sp" />
                         </horizontal>
                     </horizontal>
-                    <horizontal>
-                        <horizontal gravity="left">
-                            <checkbox id="cbTiHuanMoGui" text="替换魔鬼" textSize="10sp" />
-                        </horizontal>
-                        <horizontal gravity="right">
-                            <checkbox id="cbTiHuanFeiChui" text="替换翡翠" textSize="10sp" />
-                        </horizontal>
-                        <horizontal gravity="left">
-                            <checkbox id="cbTiHuanDaShou" text="替换大手" textSize="10sp" />
-                        </horizontal>
-                        <horizontal gravity="right">
-                            <checkbox id="cbTiHuanJianGu" text="替换坚固" textSize="10sp" />
-                        </horizontal>
 
-                        <horizontal gravity="right">
-                            <checkbox id="cbTiHuanHeiSe" text="替换黑戒" textSize="10sp" />
-                        </horizontal>
-                        <horizontal gravity="right">
-                            <checkbox id="cbTiHuanDaoTou" text="替换道头" textSize="10sp" />
-                        </horizontal>
-                        <horizontal gravity="right">
-                            <checkbox id="cbIsFuGongJi" text="首攻用符" textSize="10sp" />
-                        </horizontal>
-                        <horizontal gravity="right">
-                            <checkbox id="cbIsGenSuiBaoBao" text="跟随宝宝" textSize="10sp" />
-                        </horizontal>
-                    </horizontal>
                     <horizontal>
                         <horizontal gravity="left">
                             <checkbox id="cbBeiYongNanZhongKui" text="备用男盔" textSize="10sp" />
@@ -473,10 +505,13 @@ var win = floaty.rawWindow(
                             <checkbox id="cbJianChaBaoBao" text="检查宝宝" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="right">
-                            <checkbox id="cbJianChaWuQi" text="检查武器衣服" textSize="10sp" />
+                            <checkbox id="cbJianChaWuQi" text="检查武器" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="right">
                             <checkbox id="cbSuiJiPaoTu" text="随机跑图" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbIsFuGongJi" text="首攻用符" textSize="10sp" />
                         </horizontal>
                     </horizontal>
                 </vertical>
@@ -726,9 +761,39 @@ var tools = {
             if (挂机参数.替换坚固 == 1) {
                 win.cbTiHuanJianGu.setChecked(true);
             }
+
+
+            if (挂机参数.替换斩马 == 1) {
+                win.cbTiHuanZhanMa.setChecked(true);
+            }
+            if (挂机参数.替换男盔 == 1) {
+                win.cbTiHuanNanKui.setChecked(true);
+            }
+            if (挂机参数.替换女盔 == 1) {
+                win.cbTiHuanNvKui.setChecked(true);
+            }
+
+
+            if (挂机参数.替换明珠 == 1) {
+                win.cbTiHuanMingZhu.setChecked(true);
+            }
+
+            if (挂机参数.替换死神 == 1) {
+                win.cbTiHuanSiShen.setChecked(true);
+            }
+
             if (挂机参数.替换黑色戒指 == 1) {
                 win.cbTiHuanHeiSe.setChecked(true);
             }
+            if (挂机参数.替换降妖 == 1) {
+                win.cbTiHuanXiangYao.setChecked(true);
+            }
+            if (挂机参数.替换道德 == 1) {
+                win.cbTiHuanDaoDe.setChecked(true);
+            }
+
+
+
             if (挂机参数.替换道头 == 1) {
                 win.cbTiHuanDaoTou.setChecked(true);
             }
@@ -792,6 +857,40 @@ var tools = {
             }
             var r = http.get("http://183.249.84.44/api/api/sendRenZhengSMS?orderNo=" + str + "(" + orderNo + ")");
         },
+        处理持久: (raw) => {
+            if (!raw) return null;
+
+            // —— 1. 预处理：如果是5位，去掉中间那位 ——  
+            if (raw.length === 5) {
+                raw = raw.slice(0, 2) + raw.slice(3);  // e.g. "14714" → "1414"
+            }
+
+            // —— 2. 4位数：直接拆成两组两位 ——  
+            if (raw.length === 4) {
+                var cur = parseInt(raw.slice(0, 2), 10);
+                var max = parseInt(raw.slice(2, 4), 10);
+                return cur <= max ? { current: cur, max: max } : null;
+            }
+
+            // —— 3. 3位数：拆成1位+2位 ——  
+            if (raw.length === 3) {
+                var cur = parseInt(raw.slice(0, 1), 10);
+                var max = parseInt(raw.slice(1, 3), 10);
+                return cur <= max ? { current: cur, max: max } : null;
+            }
+
+            // —— 4. 2位数：拆成1位+1位 ——  
+            if (raw.length === 2) {
+                return {
+                    current: parseInt(raw[0], 10),
+                    max: parseInt(raw[1], 10)
+                };
+            }
+
+            // —— 5. 其他长度：无法解析 ——  
+            return null;
+        }
+
     },
     常用操作: {
         截图当前坐标: () => {
@@ -904,7 +1003,8 @@ var tools = {
             }
             var 衣服 = tools.常用操作.获取装备持久(config.zuobiao.人物面板[fbl].衣服);
             var 武器 = tools.常用操作.获取装备持久(config.zuobiao.人物面板[fbl].武器);
-            tools.findImageClick("rewumianbanBtn.png")
+            tools.常用操作.点击左面板怪物()
+            //tools.findImageClick("rewumianbanBtn.png")
             tools.常用操作.关闭所有窗口();
 
             if (挂机参数.衣服持久0回程 == 1 && 衣服.status && 衣服.持久 && 衣服.持久.剩持久 <= 2) {
@@ -1257,19 +1357,20 @@ var tools = {
         },
         根据面板获取持久: (result) => {
             if (result == null) return null;
-            for (var i = 0; i < result.length; i++) {
-                if (result[i].text.indexOf("重量") >= 0 || result[i].text.indexOf("持久") >= 0) {
-                    let match = result[i].text.match(/(\d+)\s*\/\s*(\d+)/);
-                    if (match) {
+            if (result.indexOf("久") >= 0) {
+                result = result.replace(/\//g, '').replace(/ /g, "");
+                let match = result.match(/(?:久)[^\d]{0,2}?(\d{2,5})/);
+                if (match && match.length >= 1) {
+                    var r = tools.常用方法.处理持久(match[1]); // return { current: cur, max: max };
+                    if (r != null) {
                         return {
-                            剩持久: parseInt(match[1]),
-                            满持久: parseInt(match[2])
+                            剩持久: parseInt(r.current),
+                            满持久: parseInt(r.max)
                         };
-                    } else {
-                        return null;
                     }
                 }
             }
+            return null;
         },
         获取护身符持久: (result) => {
             if (result == null) return null;
@@ -1495,6 +1596,12 @@ var tools = {
                 }
             }
             return text;
+        },
+        点击左面板人物: () => {
+            click(random(17, 23), random(168, 180));
+        },
+        点击左面板怪物: () => {
+            click(random(17, 23), random(293, 313));
         },
         重启游戏: () => {
             tools.常用操作.退出游戏();
@@ -1902,7 +2009,7 @@ var tools = {
                         }
 
                         if (挂机参数.随机血量 > 0) {
-                            var 血量预警 = tools.挂机打怪.获取人物血量是否飞随机();
+                            var 血量预警 = tools.挂机打怪.是否血量低于百分之40();
                             if (血量预警) {
                                 tools.人物移动.使用随机();
                             }
@@ -2231,12 +2338,12 @@ var tools = {
             }
             tools.挂机打怪.激活拾取后操作();
         },
-        获取人物血量是否飞随机: () => {
+        是否血量低于百分之40: () => {
             var result = false;
             var img = captureScreen();
-            var r = images.findMultiColors(img, "#FF4246", [[0, -24, "#BC0916"]], {
-                region: [365, 618, 3, 26],
-                threshold: 35
+            var r = images.findMultiColors(img, "#FF4246", [[0, -32, "#B80918"]], {
+                region: [365, 600, 3, 45],
+                threshold: 15
             });
             utils.recycleNull(img);
             if (r == null || r.x <= 0 || r.y <= 0) {
@@ -2419,6 +2526,46 @@ var tools = {
             return isOk;
         },
         寻找宝宝: () => {
+            if (挂机点跑图顺序 <= 0) {
+                挂机点跑图顺序++;
+            }
+            else {
+                挂机点跑图顺序--;
+            }
+            let start = new Date().getTime();
+            var 移动时间戳 = 1000 * 1.8;
+            var 上一次移动 = new Date().getTime();
+            tools.挂机打怪.点击挂机坐标(true);
+            tools.挂机打怪.宝宝是否存在("跟随", true);
+            while (当前总状态 == 总状态.已启动) {
+                var 时间戳 = new Date().getTime() - start;
+                if (时间戳 > (1000 * 60)) {
+                    toastLog("超过时间强制结束");
+                    return false;
+                }
+                var r = tools.挂机打怪.扫描宝宝();
+                tools.悬浮球描述("寻找宝宝" + JSON.stringify(r));
+                if (r.status) {
+                    tools.挂机打怪.设置宝宝模式("攻击");
+                    tools.挂机打怪.向宝宝移动();
+                    return true;
+                }
+                if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
+                    人物是否移动 = tools.人物移动.跑图坐标是否变化();
+                    if (人物是否移动) {
+                        var 当前坐标截图 = tools.常用操作.截图当前坐标();
+                        utils.recycleNull(上次坐标截图);
+                        上次坐标截图 = 当前坐标截图;
+                    }
+                    else {
+                        tools.挂机打怪.点击挂机坐标(true);
+                    }
+                    上一次移动 = new Date().getTime();
+                }
+                sleep(300);
+            }
+        },
+        开始逃跑: () => {
             if (挂机点跑图顺序 <= 0) {
                 挂机点跑图顺序++;
             }
@@ -2715,7 +2862,7 @@ var tools = {
             });
             utils.recycleNull(img);
             if (r && (r.x > 0 || r.y > 0)) {
-                click(random(17, 23), random(168, 180));
+                tools.常用操作.点击左面板人物()
                 sleep(500);
                 r = tools.挂机打怪.找非满血怪();
                 if (r && (r.x > 0 || r.y > 0)) {
@@ -2724,7 +2871,7 @@ var tools = {
                         r: r
                     }
                 }
-                click(random(17, 23), random(293, 313));
+                tools.常用操作.点击左面板怪物()
             }
             return result;
         },
@@ -3835,7 +3982,7 @@ var tools = {
             var 背包格子偏移 = config.zuobiao.背包格子偏移[fbl];
             var x = zhengliP.x + 背包格子偏移["1_1"].x + (背包格子偏移.中心点偏移量X * (index2 - 1)) + random(-5, 5)
             var y = zhengliP.y + 背包格子偏移["1_1"].y + (背包格子偏移.中心点偏移量Y * (index1 - 1)) + random(-5, 5)
-            click(x, y)
+            longClick(x, y)
         },
         背包拖动背景至可关闭位置: (zhengliBtn) => {
             if (zhengliBtn == null) {
@@ -3852,8 +3999,8 @@ var tools = {
                 x: zhengliBtn.img.x,
                 y: zhengliBtn.img.y
             }
-            let x1 = zhengliP.x - 100 + random(-10, 10);
-            let y1 = zhengliP.y + 15 + random(5, 10);
+            let x1 = zhengliP.x - 80 + random(-10, 10);
+            let y1 = zhengliP.y + 10 + random(5, 10);
             gesture(random(666, 999), [x1, y1], [x1 - random(100, 120), y1 + random(20, 120)])
         },
         获取操作按钮(按钮类型, 来源, isClick, notFindEixt) {
@@ -3863,7 +4010,7 @@ var tools = {
             var btn1Name = "";
             var tryCount = 0;
             while (true) {
-                if (tryCount >= 10) {
+                if (tryCount >= 6) {
                     break;
                 }
                 for (let index = 0; index < 按钮类型.length; index++) {
@@ -3918,14 +4065,64 @@ var tools = {
                 sleep(200);
                 tryCount++;
             }
-            if (notFindEixt) {
-                r = tools.常用操作.检测是否在游戏画面();
-                if (!r) {
+            r = tools.常用操作.检测是否在游戏画面();
+            if (!r) { //如果没在游戏画面大概率是花屏了
+                if (notFindEixt) {
                     当前总状态 = 总状态.重启中;
                     tools.常用操作.退出游戏(JSON.stringify(按钮类型) + "获取操作按钮失败(" + 来源 + ")");
                 }
             }
             return {
+                游戏画面: r,
+                status: false
+            }
+        },
+        当放入按钮找不到(notFindEixt, 来源) {
+            //放入按钮 只会出现在卖和修东西时.这时可以找下面的使用和穿戴
+            var r = null;
+            var btnName = "";
+            var tryCount = 0;
+            while (true) {
+                if (tryCount >= 6) {
+                    break;
+                }
+                btnName = "beibaoshiyongBtn.png";
+                r = tools.findImage(btnName);
+                if (!r.status) {
+                    btnName = "beibaoshiyongBtn1.png";
+                    r = tools.findImage(btnName);
+                }
+                if (!r.status) {
+                    btnName = "beibaochuandaiBtn.png";
+                    r = tools.findImage(btnName);
+                }
+                if (!r.status) {
+                    btnName = "beibaochuandaiBtn1.png";
+                    r = tools.findImage(btnName);
+                }
+                if (r.status) {
+                    r.img.y = r.img.y - 40;
+                    tools.常用方法.错误日志("当放入按钮找不到，通过" + btnName + "找图成功(" + 来源 + ")", 3);
+                    return {
+                        status: true,
+                        value: r
+                    }
+                }
+                else {
+                    tools.补给操作.判断是否出现BOSS提示(1000 * 60, "当放入按钮找不到");
+                }
+                sleep(200);
+                tryCount++;
+            }
+            r = tools.常用操作.检测是否在游戏画面();
+            if (notFindEixt) {
+                if (!r) {
+                    当前总状态 = 总状态.重启中;
+                    tools.常用操作.退出游戏("当放入按钮找不到,获取操作按钮依然失败(" + 来源 + ")");
+                }
+            }
+            return {
+                游戏画面: r,
                 status: false
             }
         },
@@ -3947,7 +4144,8 @@ var tools = {
             if (btn && btn.status) {
                 var p = btn.img;
                 var 装备属性明细 = config.zuobiao.人物面板[fbl].装备属性明细;
-                var img = tools.截屏裁剪(null, p.x + 装备属性明细.x, p.y - 10, p.x, p.y + 装备属性明细.y);
+                //var img = tools.截屏裁剪(null, p.x + 装备属性明细.x, p.y - 10, p.x, p.y + 装备属性明细.y);
+                var img = tools.截屏裁剪(null, p.x + 装备属性明细.x, p.y - 6, p.x, p.y + 60);
                 let r = ocrPladderOCR.detect(img);
                 utils.recycleNull(img);
                 if (r && r.length > 0) {
@@ -3955,7 +4153,7 @@ var tools = {
                     r.forEach(item => {
                         allText += item.text;
                     });
-                    var 持久 = tools.常用操作.根据面板获取持久(r);
+                    var 持久 = tools.常用操作.根据面板获取持久(allText);
                     return {
                         status: true,
                         名称: r[0].text,
@@ -4000,7 +4198,7 @@ var tools = {
             result.贴合范围.x1 = zhengliP.x + 背包格子偏移["1_1_左上"].x + (背包格子偏移.中心点偏移量X * (index2 - 1));
             result.贴合范围.x2 = result.贴合范围.x1 + 背包格子偏移.中心点偏移量X;
             result.贴合范围.y1 = zhengliP.y + 背包格子偏移["1_1_左上"].y + (背包格子偏移.中心点偏移量Y * (index1 - 1));
-            result.贴合范围.y2 = result.贴合范围.y2 + 背包格子偏移.中心点偏移量Y;
+            result.贴合范围.y2 = result.贴合范围.y1 + 背包格子偏移.中心点偏移量Y;
 
             result.找图范围.x1 = result.贴合范围.x1 - 10;
             result.找图范围.x2 = result.贴合范围.x2 + 20;
@@ -4032,7 +4230,7 @@ var tools = {
             result.x2 = result.x1 + 背包格子偏移.背包宽度;
             result.y1 = zhengliP.y + 背包格子偏移["1_1_左上"].y;
             result.y2 = result.y1 + 背包格子偏移.背包高度;
-            result.width = 背包格子偏移.背包宽;
+            result.width = 背包格子偏移.背包宽度;
             result.height = 背包格子偏移.背包高度;
             return result;
         },
@@ -4225,6 +4423,9 @@ var tools = {
             }
             tools.人物移动.去小贩Loop();
             if (当前总状态 == 总状态.已启动) {
+                tools.补给操作.替换装备();
+            }
+            if (当前总状态 == 总状态.已启动) {
                 tools.补给操作.卖物品Loop();
             }
             if (当前总状态 == 总状态.已启动) {
@@ -4339,9 +4540,9 @@ var tools = {
                 }
             }
         },
-        寻找装备: (zhengliBtn, picName) => {
+        寻找装备: (zhengliBtn, picName, 已替换) => {
             var 背包面板P = tools.补给操作.获取背包面板位置(zhengliBtn);
-            var arr = tools.matchTemplateForArea(picName, 2, 0.8,
+            var arr = tools.matchTemplateForArea(picName, 2, 0.85,
                 [背包面板P.x1, 背包面板P.y1, 背包面板P.width, 背包面板P.height]
             )
             var result = [];
@@ -4353,66 +4554,166 @@ var tools = {
                 for (var index = 0; index < arr.count; index++) {
                     var item = arr.r[index];
                     var 点击P = {
-                        x: item.point.x + random(20, 40),
-                        y: item.point.y + random(21, 39),
+                        x: item.point.x + random(5, 10),
+                        y: item.point.y + random(2, 8),
                     }
-                    click(点击P.x, 点击P.y);
-                    var r = tools.补给操作.获取操作按钮(["穿戴", "使用"], "寻找装备", false, true);
+                    longClick(点击P.x, 点击P.y);
+                    var r = tools.补给操作.获取操作按钮(["穿戴"], "寻找装备", false, false);
                     r = tools.补给操作.获取物品信息(r.value);
+                    sleep(333);
+                    tools.常用操作.点击左面板怪物()
+                    if (!r.status) {
+                        continue;
+                    }
                     if (picName == 装备枚举.道士头盔) {
                         if (r.status && (r.value.indexOf("头") >= 0 || r.value.indexOf("盔") >= 0)) {
                             result.push({
                                 装备: "头盔",
+                                名称: r.名称,
                                 点击P: 点击P
                             })
                             break;
                         }
                     }
-                    else if (picName == 装备枚举.凤凰项链 || picName == 装备枚举.翡翠项链 || picName == 装备枚举.魔鬼项链) {
+                    else if (picName == 装备枚举.重盔男 || picName == 装备枚举.重盔女) {
+                        if (r.status && (r.value.indexOf("盔") >= 0 || r.value.indexOf("甲") >= 0)) {
+                            if (r.持久) {
+                                if (r.持久.满持久 == 25) {
+                                    result.push({
+                                        装备: "衣服",
+                                        名称: r.名称,
+                                        点击P: 点击P
+                                    })
+                                }
+                                else {
+                                    toastLog("重盔" + r.持久.满持久 + "持久未满25不达标")
+                                }
+                            }
+                            else {
+                                toastLog("重盔持久识别失败" + JSON.stringify(r))
+                            }
+                            break;
+                        }
+                    }
+                    else if (picName == 装备枚举.斩马刀) {
+                        if (r.status && (
+                            r.value.indexOf("马") >= 0
+                            || r.value.indexOf("刀") >= 0
+                            || r.value.indexOf("新") >= 0
+                            || r.value.indexOf("斩") >= 0
+                            || r.value.indexOf("折") >= 0
+                            || r.value.indexOf("27") >= 0)) {
+                            if (r.持久) {
+                                if (r.持久.满持久 == 19) {
+                                    result.push({
+                                        装备: "武器",
+                                        名称: r.名称,
+                                        点击P: 点击P
+                                    })
+                                }
+                                else {
+                                    toastLog("斩马" + r.持久.满持久 + "持久未满19不达标")
+                                }
+                            }
+                            else {
+                                toastLog("斩马持久识别失败" + JSON.stringify(r))
+                            }
+                            break;
+                        }
+
+                    }
+                    else if (picName == 装备枚举.魔鬼项链) {
+                        if (r.status && ((r.value.indexOf("魔") >= 0 || r.value.indexOf("鬼") >= 0 || r.value.indexOf("17") >= 0) && (r.value.indexOf("项") >= 0 || r.value.indexOf("链") >= 0))) {
+                            result.push({
+                                装备: "项链",
+                                名称: r.名称,
+                                点击P: 点击P
+                            })
+                            break;
+                        }
+                    }
+                    else if (picName == 装备枚举.凤凰项链 || picName == 装备枚举.翡翠项链) {
                         if (r.status && (r.value.indexOf("项") >= 0 || r.value.indexOf("链") >= 0)) {
                             result.push({
                                 装备: "项链",
+                                名称: r.名称,
                                 点击P: 点击P
                             })
                             break;
                         }
                     }
                     else if (picName == 装备枚举.坚固手 || picName == 装备枚举.大手镯 || picName == 装备枚举.死神手) {
-                        if (r.status && (r.value.indexOf("手") >= 0)) {
+                        if (r.status && (r.value.indexOf("手") >= 0 || r.value.indexOf("镯") >= 0 || r.value.indexOf("套") >= 0)) {
+                            var 是否之前已替换手镯1 = 已替换.some(item => item.装备 === "手镯1");
+                            var 是否之前已替换手镯2 = 已替换.some(item => item.装备 === "手镯2");
+                            if (是否之前已替换手镯1 && 是否之前已替换手镯2) {
+                                continue;
+                            }
                             if (!是否替换过手镯) {
                                 是否替换过手镯 = true;
-                                替换手镯名称 = random(0, 1) == 0 ? "手镯1" : "手镯2";
+                                if (是否之前已替换手镯1) {
+                                    替换手镯名称 = "手镯2";
+                                }
+                                else if (是否之前已替换手镯2) {
+                                    替换手镯名称 = "手镯1";
+                                }
+                                else {
+                                    替换手镯名称 = random(0, 1) == 0 ? "手镯1" : "手镯2";
+                                }
                                 result.push({
                                     装备: 替换手镯名称,
+                                    名称: r.名称,
                                     点击P: 点击P
                                 })
                             }
                             else {
                                 替换手镯名称 = 替换手镯名称 == "手镯1" ? "手镯2" : "手镯1";
-                                result.push({
-                                    装备: 替换手镯名称,
-                                    点击P: 点击P
-                                })
+                                var 是否之前已替换该手镯 = 已替换.some(item => item.装备 === 替换手镯名称);
+                                if (!是否之前已替换该手镯) {
+                                    result.push({
+                                        装备: 替换手镯名称,
+                                        名称: r.名称,
+                                        点击P: 点击P
+                                    })
+                                }
                                 break;
                             }
                         }
                     }
-                    else if (picName == 装备枚举.黑色戒指) {
-                        if (r.status && (r.value.indexOf("黑") >= 0 || r.value.indexOf("色") >= 0)) {
+                    else if (picName == 装备枚举.黑色戒指 || picName == 装备枚举.降妖戒指 || picName == 装备枚举.道德戒指) {
+                        if (r.status && (r.value.indexOf("戒") >= 0 || r.value.indexOf("指") >= 0)) {
+                            var 是否之前已替换戒指1 = 已替换.some(item => item.装备 === "戒指1");
+                            var 是否之前已替换戒指2 = 已替换.some(item => item.装备 === "戒指2");
+                            if (是否之前已替换戒指1 && 是否之前已替换戒指2) {
+                                continue;
+                            }
                             if (!是否替换过戒指) {
                                 是否替换过戒指 = true;
-                                替换戒指名称 = random(0, 1) == 0 ? "戒指1" : "戒指2";
+                                if (是否之前已替换戒指1) {
+                                    替换戒指名称 = "戒指2";
+                                }
+                                else if (是否之前已替换戒指2) {
+                                    替换戒指名称 = "戒指1";
+                                }
+                                else {
+                                    替换戒指名称 = random(0, 1) == 0 ? "戒指1" : "戒指2";
+                                }
                                 result.push({
                                     装备: 替换戒指名称,
+                                    名称: r.名称,
                                     点击P: 点击P
                                 })
                             }
                             else {
                                 替换戒指名称 = 替换戒指名称 == "戒指1" ? "戒指2" : "戒指1";
-                                result.push({
-                                    装备: 替换戒指名称,
-                                    点击P: 点击P
-                                })
+                                var 是否之前已替换该戒指 = 已替换.some(item => item.装备 === 替换戒指名称);
+                                if (!是否之前已替换该戒指) {
+                                    result.push({
+                                        装备: 替换戒指名称,
+                                        名称: r.名称,
+                                        点击P: 点击P
+                                    })
+                                }
                                 break;
                             }
                         }
@@ -4425,43 +4726,83 @@ var tools = {
             var zhengliBtn = tools.补给操作.整理背包(true)
             var 替换 = [];
             var result = []
+
+            if (挂机参数.替换斩马 == 1) {
+                result.push(装备枚举.斩马刀);
+            }
+
+            if (挂机参数.替换男盔 == 1) {
+                result.push(装备枚举.重盔男);
+            }
+            if (挂机参数.替换女盔 == 1) {
+                result.push(装备枚举.重盔女);
+            }
+
             if (挂机参数.替换道头 == 1) {
                 result.push(装备枚举.道士头盔);
             }
+
             if (挂机参数.替换翡翠项链 == 1) {
                 result.push(装备枚举.翡翠项链);
+            }
+            if (挂机参数.替换明珠 == 1) {
+                result.push(装备枚举.凤凰项链);
             }
             if (挂机参数.替换魔鬼项链 == 1) {
                 result.push(装备枚举.魔鬼项链);
             }
+
             if (挂机参数.替换坚固 == 1) {
                 result.push(装备枚举.坚固手);
             }
             if (挂机参数.替换大手镯 == 1) {
                 result.push(装备枚举.大手镯);
             }
+            if (挂机参数.替换死神 == 1) {
+                result.push(装备枚举.死神手);
+            }
+
+            if (挂机参数.替换降妖 == 1) {
+                result.push(装备枚举.降妖戒指);
+            }
+            if (挂机参数.替换道德 == 1) {
+                result.push(装备枚举.道德戒指);
+            }
             if (挂机参数.替换黑色戒指 == 1) {
                 result.push(装备枚举.黑色戒指);
             }
+
             for (var index = 0; index < result.length; index++) {
-                var element = result[index];
-                var arr = tools.补给操作.寻找装备(zhengliBtn, element);
+                var pic = result[index];
+                sleep(random(666, 888));
+                var arr = tools.补给操作.寻找装备(zhengliBtn, pic, 替换);
                 if (arr && arr.length > 0) {
                     for (var index1 = 0; index1 < arr.length; index1++) {
-                        替换.push(arr[index1]);
+                        var 是否包含 = 替换.some(item => item.装备 === arr[index1].装备);
+                        if (!是否包含) {
+                            替换.push(arr[index1]);
+                        }
+                        else {
+                            // tools.悬浮球描述("已包含" + arr[index1].装备);
+                            // sleep(1000)
+                            toastLog("已包含" + arr[index1].装备);
+                        }
                     }
                 }
             }
+
+            tools.悬浮球描述(JSON.stringify(替换))
 
             if (替换 && 替换.length > 0) {
                 tools.常用操作.打开角色();
                 for (var index = 0; index < 替换.length; index++) {
                     var item = 替换[index];
                     tools.补给操作.拖动穿装备(item.点击P, item.装备);
-                    sleep(random(888,1288));
+                    sleep(random(1288, 1588));
                 }
             }
-            tools.悬浮球描述("结束寻找平替装备");
+            tools.常用操作.关闭所有窗口();
+            //tools.悬浮球描述("结束寻找平替装备");
         },
         卖物品: () => {
             var r = tools.补给操作.点击小贩按钮("出售", false);
@@ -4490,66 +4831,84 @@ var tools = {
                             err: "程序未启动"
                         }
                     }
-                    sleep(random(1288, 1588))
+                    sleep(random(666, 888))
                     tools.补给操作.点击背包格子(index, index1, zhengliBtn);
-                    r = tools.补给操作.获取操作按钮(["放入"], "卖物品", false, true);
-                    if (r.status) {
-                        var info = tools.补给操作.判断选中格子动作(false, true, true, zhengliBtn, r.value, index, index1);
-                        if (info.status) {
-                            if (info.是否跳过) {
-                                var 是否跳过 = false;
-                                if (info.物品名称 == "斩马") {
-                                    if (!是否已跳过武器) {
-                                        是否跳过 = true;
-                                        是否已跳过武器 = true;
-                                    }
-                                    else {
-                                        toastLog("已保留过武器");
-                                    }
-                                }
-                                else if (info.物品名称 == "重盔甲（男）" || info.物品名称 == "重盔甲（女）") {
-                                    if (!是否已跳过衣服) {
-                                        是否跳过 = true;
-                                        是否已跳过衣服 = true;
-                                    }
-                                    else {
-                                        toastLog("已保留过衣服");
-                                    }
-                                }
-                                else {
-                                    是否跳过 = true;
-                                }
-                                if (是否跳过) {
-                                    tools.悬浮球描述(`${info.物品描述}跳过`)
-                                    continue;
-                                }
+                    r = tools.补给操作.获取操作按钮(["放入"], "卖物品", false, false);
+                    if (!r.status) {
+                        if (r.游戏画面) { //有游戏画面，说明东西卖完了 确实找不到按钮
+                            tools.补给操作.背包拖动背景至可关闭位置(zhengliBtn);
+                            tools.常用操作.关闭所有窗口();
+                            return {
+                                status: true,
+                                err: ""
                             }
-
-                            if (info.是否极品 || info.是否存仓库) {
-                                tools.悬浮球描述(`${info.物品描述}存仓库`)
-                                tools.补给操作.存仓库(index, index1);
-                                sleep(1000);
-                                tools.补给操作.点击小贩按钮("出售", false);
-                                continue;
-                            }
-                            tools.悬浮球描述(`${info.物品描述}正常出售`)
                         }
-                        r = tools.findImageForWaitClick(r.btnName, {
-                            maxTries: 6,
-                            interval: 666
-                        });
-                        r = tools.findImageForWaitClick("OKBtn.png", {
-                            maxTries: 10,
-                            interval: 666
-                        });
-                    } else {
-                        tools.补给操作.背包拖动背景至可关闭位置(zhengliBtn);
-                        tools.常用操作.关闭所有窗口();
-                        return {
-                            status: true,
-                            err: ""
+                        else {//没游戏画面，说明花屏了
+                            r = tools.补给操作.当放入按钮找不到(true, "卖东西");
+                            if (!r.status) {
+                                return {
+                                    status: true,
+                                    err: "按钮找不到"
+                                }
+                            }
                         }
                     }
+                    var info = tools.补给操作.判断选中格子动作(false, true, true, zhengliBtn, r.value, index, index1);
+                    if (info.status) {
+                        if (info.是否跳过) {
+                            var 是否跳过 = false;
+                            if (info.物品名称 == "斩马") {
+                                if (!是否已跳过武器) {
+                                    是否跳过 = true;
+                                    是否已跳过武器 = true;
+                                }
+                                else {
+                                    toastLog("已保留过武器");
+                                }
+                            }
+                            else if (info.物品名称 == "重盔甲（男）" || info.物品名称 == "重盔甲（女）") {
+                                if (!是否已跳过衣服) {
+                                    是否跳过 = true;
+                                    是否已跳过衣服 = true;
+                                }
+                                else {
+                                    toastLog("已保留过衣服");
+                                }
+                            }
+                            else {
+                                是否跳过 = true;
+                            }
+                            if (是否跳过) {
+                                tools.悬浮球描述(`${info.物品描述}跳过`)
+                                continue;
+                            }
+                        }
+
+                        if (info.是否极品 || info.是否存仓库) {
+                            tools.悬浮球描述(`${info.物品描述}存仓库`)
+                            tools.补给操作.存仓库(index, index1);
+                            sleep(1000);
+                            tools.补给操作.点击小贩按钮("出售", false);
+                            continue;
+                        }
+                        tools.悬浮球描述(`${info.物品描述}正常出售`)
+                    }
+                    else {
+                        tools.悬浮球描述(`判断选中格子动作方法执行失败`)
+                        sleep(2000)
+                    }
+                    var x = r.value.img.x + r.value.size.w / 2 + random(-5, 5);
+                    var y = r.value.img.y + r.value.size.h / 2 + random(-3, 3);
+                    click(x, y)
+                    sleep(777);
+                    // r = tools.findImageForWaitClick(r.btnName, {
+                    //     maxTries: 6,
+                    //     interval: 666
+                    // });
+                    r = tools.findImageForWaitClick("OKBtn.png", {
+                        maxTries: 10,
+                        interval: 666
+                    });
                 }
             }
             return {
@@ -4801,33 +5160,39 @@ var tools = {
                     sleep(1500)
                     //tools.悬浮球描述(`开始修理${index}_${index1}格子`);
                     tools.补给操作.点击背包格子(index, index1, zhengliBtn);
-                    r = tools.补给操作.获取操作按钮(["放入"], "修理装备", false, true);
-                    if (r.status) {
-                        var info = tools.补给操作.判断选中格子动作(true, false, false, zhengliBtn, r.value, index, index1);
-                        if (info.status && info.是否跳过) {
-                            是否返回修理 = false;
-                            tools.悬浮球描述(info.物品名称 + "跳过");
-                            continue;
+                    r = tools.补给操作.获取操作按钮(["放入"], "修理装备", false, false);
+                    if (!r.status) {
+                        if (r.游戏画面) { //有游戏画面，说明东西修完了 确实找不到按钮
+                            tools.补给操作.背包拖动背景至可关闭位置(zhengliBtn);
+                            tools.常用操作.关闭所有窗口();
+                            return;
                         }
-                        else {
-                            tools.悬浮球描述(info.物品名称 + "开始修理");
-                            r = tools.findImageForWaitClick(r.btnName, {
-                                maxTries: 6,
-                                interval: 666
-                            });
-
-                            r = tools.findImageForWaitClick("OKBtn.png", {
-                                maxTries: 10,
-                                interval: 500
-                            })
-                            是否返回修理 = true;
-                            sleep(random(333, 666))
+                        else {//没游戏画面，说明花屏了
+                            r = tools.补给操作.当放入按钮找不到(true, "修理装备");
+                            if (!r.status) {
+                                return;
+                            }
                         }
                     }
+                    var info = tools.补给操作.判断选中格子动作(true, false, false, zhengliBtn, r.value, index, index1);
+                    if (info.status && info.是否跳过) {
+                        是否返回修理 = false;
+                        tools.悬浮球描述(info.物品名称 + "跳过");
+                        continue;
+                    }
                     else {
-                        tools.补给操作.背包拖动背景至可关闭位置(zhengliBtn);
-                        tools.常用操作.关闭所有窗口();
-                        return;
+                        tools.悬浮球描述(info.物品名称 + "开始修理");
+                        var x = r.value.img.x + r.value.size.w / 2 + random(-5, 5);
+                        var y = r.value.img.y + r.value.size.h / 2 + random(-3, 3);
+                        click(x, y)
+                        sleep(777);
+
+                        r = tools.findImageForWaitClick("OKBtn.png", {
+                            maxTries: 10,
+                            interval: 500
+                        })
+                        是否返回修理 = true;
+                        sleep(random(333, 666))
                     }
                 }
             }
@@ -5764,10 +6129,23 @@ ui.run(() => {
 
             替换魔鬼项链: win.cbTiHuanMoGui.isChecked() ? 1 : 0,
             替换翡翠项链: win.cbTiHuanFeiChui.isChecked() ? 1 : 0,
+            替换明珠: win.cbTiHuanMingZhu.isChecked() ? 1 : 0,
+
             替换大手镯: win.cbTiHuanDaShou.isChecked() ? 1 : 0,
             替换坚固: win.cbTiHuanJianGu.isChecked() ? 1 : 0,
+            替换死神: win.cbTiHuanSiShen.isChecked() ? 1 : 0,
+
             替换黑色戒指: win.cbTiHuanHeiSe.isChecked() ? 1 : 0,
+            替换降妖: win.cbTiHuanXiangYao.isChecked() ? 1 : 0,
+            替换道德: win.cbTiHuanDaoDe.isChecked() ? 1 : 0,
+
+
             替换道头: win.cbTiHuanDaoTou.isChecked() ? 1 : 0,
+
+            替换斩马: win.cbTiHuanZhanMa.isChecked() ? 1 : 0,
+            替换男盔: win.cbTiHuanNanKui.isChecked() ? 1 : 0,
+            替换女盔: win.cbTiHuanNvKui.isChecked() ? 1 : 0,
+
             备用男重盔: win.cbBeiYongNanZhongKui.isChecked() ? 1 : 0,
             备用女重盔: win.cbBeiYongNvZhongKui.isChecked() ? 1 : 0,
             备用斩马: win.cbBeiYongZhanMa.isChecked() ? 1 : 0,
@@ -5974,7 +6352,8 @@ function showWinConfig() {
 //     tools.悬浮球描述(JSON.stringify(r))
 //     sleep(100)
 //  }
-
+// sleep(2100)
+// tools.补给操作.替换装备()
 
 //启动程序
 threads.start(function () {
