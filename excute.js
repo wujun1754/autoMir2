@@ -2292,30 +2292,6 @@ var tools = {
             else {
                 tools.常用操作.打开大地图();
             }
-            var r = null;
-            if (挂机参数.随机跑图 == 1) {
-                var index = random(0, 挂机坐标s.result.length - 1)
-                r = 挂机坐标s.result[index];
-                msg = "随机(" + (index + 1) + ")挂点"
-            }
-            else {
-                r = 挂机坐标s.result[挂机点跑图顺序];
-                var msg = "";
-                if (挂机坐标点跑图次数 >= r.坐标范围.点击次数) {
-                    挂机坐标点跑图次数 = 0;
-                    挂机点跑图顺序++;
-                    msg = "切第(" + (挂机点跑图顺序) + ")挂点"
-                }
-                else {
-                    挂机坐标点跑图次数++;
-                    msg = "继续跑(" + (挂机点跑图顺序 + 1) + ")挂点"
-                }
-                if (挂机点跑图顺序 >= 挂机坐标s.result.length) {
-                    挂机点跑图顺序 = 0;
-                }
-            }
-            //toastLog(msg);
-            //tools.悬浮球描述(msg);
             var closeImg = null;
             var closeBtn = tools.findImageForWait("closeBtn.png", {
                 maxTries: 10,
@@ -2324,11 +2300,34 @@ var tools = {
             if (closeBtn.status) {
                 closeImg = closeBtn.img;
             } else {
+                toastLog("找不到地图关闭按钮")
                 return;
             }
-            var x = closeImg.x + random(r.x[0], r.x[1]);
-            var y = closeImg.y + random(r.y[0], r.y[1]);
-            click(x, y)
+            var r = null;
+            while (true) {
+                if (挂机参数.随机跑图 == 1) {
+                    var index = random(0, 挂机坐标s.result.length - 1)
+                    r = 挂机坐标s.result[index];
+                    msg = "随机(" + (index + 1) + ")挂点"
+                }
+                else {
+                    if (挂机点跑图顺序 >= 挂机坐标s.result.length) {
+                        挂机点跑图顺序 = 0;
+                    }
+                    r = 挂机坐标s.result[挂机点跑图顺序];
+                    msg = "(" + (挂机点跑图顺序) + ")挂点"
+                }
+                var x = closeImg.x + random(r.x[0], r.x[1]);
+                var y = closeImg.y + random(r.y[0], r.y[1]);
+                click(x, y)
+
+            }
+
+            //toastLog(msg);
+            //tools.悬浮球描述(msg);
+
+
+
             if (挂机参数.地图拖动 == 1) {
                 sleep(200);
                 tools.人物移动.拖动大地图到边缘();
@@ -5766,6 +5765,94 @@ var tools = {
             img: null,
             err: '未找到对应的图片'
         }
+    },
+    findAllColorAreaForWait: (color, x1, y1, x2, y2, options) => {
+        let interval, maxTries, threshold;
+        let tryCount = 0;
+        if (options) {
+            interval = options.interval !== undefined ? options.interval : 200;
+            maxTries = options.maxTries !== undefined ? options.maxTries : 6;
+            threshold = options.threshold !== undefined ? options.threshold : 15;
+        } else {
+            interval = 200;
+            maxTries = 6;
+            threshold = 15;
+        }
+        while (true) {
+            if (interval > 0) {
+                sleep(interval);
+            }
+            var msg = "";
+            if (maxTries && tryCount >= maxTries) {
+                msg = "超过最大尝试次数，未找到图像：" + fileName;
+                return {
+                    status: false,
+                    img: null,
+                    err: msg
+                }
+            }
+            if (new Date().getTime() - start > timeout) {
+                msg = "超时未找到图像：" + fileName;
+                return {
+                    status: false,
+                    img: null,
+                    err: msg
+                }
+            }
+            var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${fileName}`;
+            var targetImg = images.read(targetImgPath);
+            if (targetImg) {
+                var imgSize = {
+                    w: targetImg.width,
+                    h: targetImg.height
+                }
+                var img = captureScreen();
+                var r = utils.regionalFindImg2(img, targetImg, x1, y1, x2, y2, 60, 255, threshold, false, false, "");
+                utils.recycleNull(img);
+                utils.recycleNull(targetImg);
+                if (r != null && (r.x > 0 || r.y > 0)) {
+                    return {
+                        status: true,
+                        img: r,
+                        size: imgSize
+                    };
+                } else {
+                    if (fileName != "closeBtn.png" && fileName != "closeBtn2.png" && fileName != "zuoguaiwuBtn.png" && fileName != "zuoguaiwumanxueBtn.png") {
+                        tools.悬浮球描述('找图失败' + fileName);
+                    }
+                    return {
+                        status: false,
+                        img: null,
+                    }
+                }
+            }
+            else {
+                return {
+                    status: false,
+                    img: null,
+                    err: "本地无" + fileName
+                }
+            }
+            tryCount++;
+        }
+        var img = captureScreen();
+        var r = images.findAllPointsForColor(img, color, {
+            region: [x1, y1, x2 - x1, y2 - y1],
+            threshold: threshold
+        });
+        if (r && r.length > 0) {
+            result.push({
+                方向: index,
+                血量: r.length
+            })
+        }
+        var result = tools.findImageAreaForWait(fileName, x1, y1, x2, y2, options);
+        if (result.status && (result.img.x > 0 || result.img.y > 0)) {
+            var x = result.img.x + result.size.w / 2 + random(-3, 3);
+            var y = result.img.y + result.size.h / 2 + random(-3, 3);
+            click(x, y)
+        }
+        return result;
     },
     findImageAreaClick(fileName, x1, y1, x2, y2) {
         var result = tools.findImageArea(fileName, x1, y1, x2, y2);
