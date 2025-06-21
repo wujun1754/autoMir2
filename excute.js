@@ -140,7 +140,7 @@ var 挂机参数 = {
     备用男重盔: 0,
     备用女重盔: 0,
     备用斩马: 0,
-    攻击检查宝宝: 0,
+    寻找宝宝: 0,
     攻击检查武器衣服: 0,
     认证短信: 0,
     认证自动识别: 0,
@@ -235,7 +235,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="v:6.9.72" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="6.9.76" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -518,7 +518,7 @@ var win = floaty.rawWindow(
                             <checkbox id="cbYinShenZouDong" text="隐身不动" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="right">
-                            <checkbox id="cbJianChaBaoBao" text="检查宝宝" textSize="10sp" />
+                            <checkbox id="cbJianChaBaoBao" text="寻找宝宝" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="right">
                             <checkbox id="cbJianChaWuQi" text="检查武器" textSize="10sp" />
@@ -832,7 +832,7 @@ var tools = {
             if (挂机参数.隐身走动 == 1 || 挂机参数.隐身走动 == "1") {
                 win.cbYinShenZouDong.setChecked(true);
             }
-            if (挂机参数.攻击检查宝宝 == 1 || 挂机参数.攻击检查宝宝 == "1") {
+            if (挂机参数.寻找宝宝 == 1) {
                 win.cbJianChaBaoBao.setChecked(true);
             }
             if (挂机参数.攻击检查武器衣服 == 1 || 挂机参数.攻击检查武器衣服 == "1") {
@@ -993,7 +993,7 @@ var tools = {
             var x = 装备面板.x + 装备.x + random(-5, 5);
             var y = 装备面板.y + 装备.y + random(-3, 3);
             click(x, y)
-            return tools.补给操作.获取操作按钮(["卸下"], "点击角色装备", 是否卸下, true);
+            return tools.补给操作.获取操作按钮(["卸下"], "点击角色装备", 是否卸下, true, false);
         },
         获取装备持久: (装备) => {
             var r = tools.常用操作.点击角色装备(装备, false);
@@ -1024,10 +1024,10 @@ var tools = {
                 if (!是否用过备用衣服) {
                     var isSuccess = false;
                     if (挂机参数.备用男重盔 == 1) {
-                        isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhongkui_nan.png");
+                        isSuccess = tools.常用操作.使用备用装备(装备枚举.重盔男);
                     }
                     else if (挂机参数.备用女重盔 == 1) {
-                        isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhongkui_nv.png");
+                        isSuccess = tools.常用操作.使用备用装备(装备枚举.重盔女);
                     }
 
                     if (isSuccess) {
@@ -1048,7 +1048,7 @@ var tools = {
             if (挂机参数.武器持久0回程 == 1 && 武器.status && 武器.持久 && 武器.持久.剩持久 <= 2) {
                 var isSuccess = false;
                 if (!是否用过备用武器) {
-                    isSuccess = tools.常用操作.使用备用装备("zhuangbei_zhanma.png");
+                    isSuccess = tools.常用操作.使用备用装备(装备枚举.斩马刀);
                     if (isSuccess) {
                         toastLog("使用备用武器成功")
                         是否用过备用武器 = true;
@@ -1333,16 +1333,29 @@ var tools = {
             }
         },
         检查背包是否有东西: (index1, index2) => {
-            var r = tools.补给操作.整理背包(true);
-            if (r.status) {
+            var zhengliBtn = tools.补给操作.整理背包(true);
+            if (zhengliBtn.status) {
                 sleep(666);
-                tools.补给操作.点击背包格子(index1, index2, r);
-                r = tools.补给操作.获取操作按钮(["穿戴", "使用"], "检查背包是否有东西", false, true);
+                var p = tools.补给操作.获取背包面板位置(zhengliBtn);
+                r = tools.findImageAreaForWait("beibao5_7null.png", p.x1, p.y1, p.x2, p.y2, {
+                    maxTries: 5,
+                    interval: 100,
+                    threshold: 0.8
+                })
+                tools.常用操作.关闭所有窗口();
                 if (r.status) {
-                    tools.常用操作.点击左面板怪物()
                     return true;
                 }
-                tools.常用操作.关闭所有窗口();
+                else {
+                    return false;
+                }
+                //beibao5_7null.png
+                //tools.补给操作.点击背包格子(index1, index2, r);
+                // r = tools.补给操作.获取操作按钮(["穿戴", "使用"], "检查背包是否有东西", false, true, false);
+                // if (r.status) {
+                //     tools.常用操作.点击左面板怪物()
+                //     return true;
+                // }
             }
             return false;
         },
@@ -1398,20 +1411,43 @@ var tools = {
                 }
             }
         },
-        使用备用装备: (pic) => {
+        使用备用装备: (picName) => {
             var isok = false;
-            tools.常用操作.打开背包();
-            var r = tools.findImageForWaitClick(pic, {
-                maxTries: 5,
-                interval: 200
-            })
-            if (r.status) {
-                r = tools.findImageForWaitClick("beibaochuandaiBtn.png", {
-                    maxTries: 5,
-                    interval: 200
-                })
-                if (r.status) {
-                    isok = true;
+            var zhengliBtn = tools.补给操作.整理背包(true);
+            sleep(888)
+            var 背包面板P = tools.补给操作.获取背包面板位置(zhengliBtn);
+            var arr = tools.matchTemplateForArea(picName, 5, 0.7,
+                [背包面板P.x1, 背包面板P.y1, 背包面板P.width, 背包面板P.height]
+            )
+            if (arr && arr.count > 0) {
+                for (var index = 0; index < arr.count; index++) {
+                    var item = arr.r[index];
+                    var 文字图 = "";
+                    var 点击P = {
+                        x: item.point.x + random(5, 10),
+                        y: item.point.y + random(2, 8),
+                    }
+                    longClick(点击P.x, 点击P.y);
+                    var r = tools.补给操作.获取操作按钮(["穿戴"], "寻找装备", false, false);
+                    if (!r.status) {
+                        tools.常用操作.点击左面板怪物();
+                        continue;
+                    }
+                    if (picName == 装备枚举.斩马刀) {
+                        文字图 = 文字图枚举.斩;
+                    }
+                    else if (picName == 装备枚举.重盔男 || picName == 装备枚举.重盔女) {
+                        文字图 = 文字图枚举.盔;
+                    }
+                    var result = tools.补给操作.背包选中按钮中找字图(文字图, r.value)
+                    if (result.status) {
+                        var btn = r.value;
+                        var x = btn.img.x + btn.size.w / 2 + random(-5, 5);
+                        var y = btn.img.y + btn.size.h / 2 + random(-3, 3);
+                        click(x, y)
+                        isok = true;
+                        break;
+                    }
                 }
             }
             tools.常用操作.关闭所有窗口();
@@ -1983,7 +2019,7 @@ var tools = {
                         }
 
 
-                        if (挂机参数.隐身走动 == 1 && 怪物.length >= 2) {
+                        if (挂机参数.寻找宝宝 == 1 && 挂机参数.隐身数量 > 0 && 怪物.length >= 挂机参数.隐身数量) {
                             var r = tools.挂机打怪.扫描宝宝();
                             if (!r.status) {
                                 tools.挂机打怪.寻找宝宝();
@@ -2347,10 +2383,23 @@ var tools = {
                 var x2 = x1 + 817;
                 var y1 = closeImg.y + 39;
                 var y2 = y1 + 524;
-                var result = tools.findAllColorAreaForWait("#00FFFF", x1, y1, x2, y2, {
-                    maxTries: 10,
-                    interval: 100
-                })
+
+                var result = null;
+                try {
+                    result = tools.findAllColorAreaForWait("#00FFFF", x1, y1, x2, y2, {
+                        maxTries: 10,
+                        interval: 100
+                    })
+                } catch (error) {
+                    if (挂机参数.地图拖动 == 1) {
+                        sleep(200);
+                        tools.人物移动.拖动大地图到边缘();
+                    }
+                    else {
+                        tools.常用操作.关闭所有窗口();
+                    }
+                    break;
+                }
                 if (result.status && result.count >= 10) {
                     if (挂机参数.地图拖动 == 1) {
                         sleep(200);
@@ -2525,7 +2574,7 @@ var tools = {
                     break;
                 }
                 var r = tools.findImageClick("chongwuBtn.png");
-                sleep(666)
+                sleep(365)
                 if (r) {
                     tools.悬浮球描述("设置宝宝模式(" + tryCount + ")");
                     var pic = "";
@@ -3701,12 +3750,15 @@ var tools = {
                     var 是否沿途打怪 = config.沿途打怪点.some(item => item === 当前地图)
                     if (new Date().getTime() - 上次跑图时间 > 跑图时间戳) {
                         var 当前地图 = tools.常用操作.获取人物地图();
-                        if (当前地图 == 目的地) { //说明到目的地
+                        if (当前地图 == 挂机参数.挂机地图) {
                             tools.常用操作.点击人物();
                             tools.挂机打怪.启动隐身();
                             tools.挂机打怪.宝宝是否存在("跟随", true);
                             sleep(random(2500, 3000));
                             tools.挂机打怪.初始化挂机();
+                            break;
+                        }
+                        if (当前地图 == 目的地) { //说明到目的地
                             break;
                         }
                         if (上次坐标截图 == null) {
@@ -3844,7 +3896,7 @@ var tools = {
             if (r && (r.x > 0 || r.y > 0)) {
                 tools.常用方法.错误日志(来源 + "发现BOSS提示文字", 3);
                 if (等待时间 && 等待时间 > 0) {
-                    tools.悬浮球描述("发现BOSS提示文字 等待(" + 等待时间 + ")")
+                    tools.悬浮球描述("发现BOSS提示文字 等待(" + 等待时间 / 1000 + ")")
                     sleep(等待时间);
                 }
             }
@@ -4010,7 +4062,7 @@ var tools = {
             let y1 = zhengliP.y + 10 + random(5, 10);
             gesture(random(666, 999), [x1, y1], [x1 - random(100, 120), y1 + random(20, 120)])
         },
-        获取操作按钮(按钮类型, 来源, isClick, notFindEixt) {
+        获取操作按钮(按钮类型, 来源, isClick, notFindEixt, isBoss) {
             var r = null;
             var sucessBtn = "";
             var btnName = "";
@@ -4019,6 +4071,9 @@ var tools = {
             while (true) {
                 if (tryCount >= 6) {
                     break;
+                }
+                if (isBoss) {
+                    tools.补给操作.判断是否出现BOSS提示(1000 * 90, 来源);
                 }
                 for (let index = 0; index < 按钮类型.length; index++) {
                     var item = 按钮类型[index];
@@ -4049,7 +4104,6 @@ var tools = {
                         r = tools.findImage(btn1Name);
                         if (r.status) {
                             sucessBtn = btn1Name;
-                            tools.常用方法.错误日志(btn1Name + "找图成功(" + 来源 + ")", 3);
                             break;
                         }
                     }
@@ -4065,9 +4119,6 @@ var tools = {
                         btnName: sucessBtn,
                         value: r
                     }
-                }
-                else {
-                    tools.补给操作.判断是否出现BOSS提示(1000 * 60, 来源);
                 }
                 sleep(200);
                 tryCount++;
@@ -4086,7 +4137,14 @@ var tools = {
         },
         当放入按钮找不到(zhengliBtn, notFindEixt, 来源) {
             //放入按钮 只会出现在卖和修东西时.这时可以找下面的使用和穿戴
-            tools.常用操作.点击左面板怪物();
+            //tools.常用操作.点击左面板怪物();
+            var zhengliP = {
+                x: zhengliBtn.img.x,
+                y: zhengliBtn.img.y
+            }
+            let x1 = zhengliP.x - 80 + random(-10, 10);
+            let y1 = zhengliP.y + 10 + random(5, 10);
+            click(x1, y1);//点一下整理左下方，为了把花屏去掉
             sleep(666);
             var 背包面板P = tools.补给操作.获取背包面板位置(zhengliBtn);
             var shiYongOk = false;
@@ -4096,6 +4154,7 @@ var tools = {
                 if (tryCount >= 5) {
                     break;
                 }
+                tools.补给操作.判断是否出现BOSS提示(1000 * 90, "当放入 按钮找不到");
                 r = tools.findImageAreaClick(补给枚举.护身符, 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, 0.8, true);
                 if (!r) {
                     r = tools.findImageAreaClick(补给枚举.修复油_背包, 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, 0.8, true);
@@ -4108,7 +4167,6 @@ var tools = {
                 }
                 else {
                     sleep(200);
-                    tools.补给操作.判断是否出现BOSS提示(1000 * 30, "当放入 按钮找不到");
                 }
                 tryCount++;
             }
@@ -4118,138 +4176,84 @@ var tools = {
                     if (tryCount >= 5) {
                         break;
                     }
+                    tools.补给操作.判断是否出现BOSS提示(1000 * 90, "当放入 按钮找不到");
                     r = tools.findImageClick("beibaoshiyongBtn.png");
                     if (!r) {
                         r = tools.findImageClick("beibaoshiyongBtn1.png");
                     }
-                    if (r.status) {
+                    if (r) {
                         shiYongOk = true;
+                        sleep(888)
                         break;
                     }
                     else {
                         sleep(200);
-                        tools.补给操作.判断是否出现BOSS提示(1000 * 30, "当放入 按钮找不到");
                     }
                     tryCount++;
                 }
 
             }
-            
 
+
+            tryCount = 0;
             while (true) {
                 if (tryCount >= 5) {
                     break;
                 }
-                r = tools.findImageAreaClick(补给枚举.斩马刀, 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, 0.8, true);
+                tools.补给操作.判断是否出现BOSS提示(1000 * 90, "当放入 按钮找不到");
+                r = tools.findImageAreaClick(装备枚举.斩马刀, 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, 0.8, true);
                 if (!r) {
-                    r = tools.findImageAreaClick(补给枚举.重盔男, 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, 0.8, true);
+                    r = tools.findImageAreaClick(装备枚举.重盔男, 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, 0.8, true);
                 }
                 if (!r) {
-                    r = tools.findImageAreaClick(补给枚举.中蓝个_背包, 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, 0.8, true);
+                    r = tools.findImageAreaClick(装备枚举.重盔女, 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, 0.8, true);
                 }
                 if (r) {
                     break;
                 }
                 else {
                     sleep(200);
-                    tools.补给操作.判断是否出现BOSS提示(1000 * 30, "当放入 按钮找不到");
                 }
                 tryCount++;
             }
-            tryCount = 0;
             if (r) {
+                tryCount = 0;
                 while (true) {
-                    if (tryCount >= 6) {
+                    if (tryCount >= 5) {
                         break;
                     }
-                    btnName = "beibaoshiyongBtn.png";
-                    r = tools.findImageClick(btnName);
+                    tools.补给操作.判断是否出现BOSS提示(1000 * 90, "当放入 按钮找不到");
+                    r = tools.findImageClick("beibaochuandaiBtn.png");
                     if (!r) {
-                        btnName = "beibaoshiyongBtn1.png";
-                        r = tools.findImageClick(btnName);
+                        r = tools.findImageClick("beibaochuandaiBtn1.png");
                     }
-                    // if (!r.status) {
-                    //     btnName = "beibaochuandaiBtn.png";
-                    //     r = tools.findImage(btnName);
-                    // }
-                    // if (!r.status) {
-                    //     btnName = "beibaochuandaiBtn1.png";
-                    //     r = tools.findImage(btnName);
-                    // }
-                    if (r.status) {
-                        shiYongOk = true;
+                    if (r) {
+                        chuandaiOk = true;
                         break;
                     }
                     else {
                         sleep(200);
-                        tools.补给操作.判断是否出现BOSS提示(1000 * 30, "当放入 按钮找不到");
                     }
                     tryCount++;
                 }
 
             }
-            if (btnName == "beibaoshiyongBtn.png" || btnName == "beibaoshiyongBtn1.png") {
 
-            }
-            else if (btnName == "beibaochuandaiBtn.png" || btnName == "beibaochuandaiBtn1.png") {
 
-            }
-            var arr = tools.matchTemplateForArea(picName, 2, 0.85,
-                [背包面板P.x1, 背包面板P.y1, 背包面板P.width, 背包面板P.height]
-            )
-            var btnName = "";
-            var tryCount = 0;
-            while (true) {
-                if (tryCount >= 6) {
-                    break;
+            if (chuandaiOk && shiYongOk) {
+                tools.常用方法.错误日志("当[放入]按钮找不到,chuandaiOk=" + chuandaiOk + ",shiYongOk=" + shiYongOk + "", 3);
+                return {
+                    status: true
                 }
-                btnName = "beibaoshiyongBtn.png";
-                r = tools.findImage(btnName);
-                if (!r.status) {
-                    btnName = "beibaoshiyongBtn1.png";
-                    r = tools.findImage(btnName);
-                }
-                if (!r.status) {
-                    btnName = "beibaochuandaiBtn.png";
-                    r = tools.findImage(btnName);
-                }
-                if (!r.status) {
-                    btnName = "beibaochuandaiBtn1.png";
-                    r = tools.findImage(btnName);
-                }
-                if (r.status) {
-                    break;
-                }
-                else {
-                    sleep(200);
-                    tools.补给操作.判断是否出现BOSS提示(1000 * 30, "当放入 按钮找不到");
-                }
-                tryCount++;
-            }
-
-            if (r.status) {
-
-                // r.img.y = r.img.y - 40;
-                // tools.常用方法.错误日志("当放入 按钮找不到，通过" + btnName + "找图成功(" + 来源 + ")", 3);
-                // return {
-                //     status: true,
-                //     value: r
-                // }
-
             }
             else {
-                r = tools.常用操作.检测是否在游戏画面();
                 if (notFindEixt) {
-                    if (!r) {
-                        当前总状态 = 总状态.重启中;
-                        tools.常用操作.退出游戏("当放入 按钮找不到,获取操作按钮依然失败(" + 来源 + ")");
-                    }
+                    当前总状态 = 总状态.重启中;
+                    tools.常用操作.退出游戏("当[放入]按钮找不到,获取操作按钮依然失败(" + 来源 + ")");
                 }
-            }
-
-            return {
-                游戏画面: r,
-                status: false
+                return {
+                    status: false
+                }
             }
         },
         整理背包: (isOpen) => {
@@ -4557,15 +4561,15 @@ var tools = {
                 msg: ""
             }
         },
-        背包选中按钮中找字图: (btn, 字图) => {
+        背包选中按钮中找字图: (字图, btn) => {
             if (btn && btn.status) {
                 var p = btn.img;
                 var 装备属性明细 = config.zuobiao.人物面板[fbl].装备属性明细;
-                return tools.findImageArea(字图, p.x + 装备属性明细.x, p.y - 6, p.x, p.y + 60, 0.9);
+                return tools.findImageArea(字图, p.x + 装备属性明细.x, p.y - 6, p.x, p.y + 60, 0.7);
             }
             else {
                 return {
-                    status: fasle
+                    status: false
                 }
             }
         },
@@ -4695,9 +4699,120 @@ var tools = {
                 }
             }
         },
+        卖物品: () => {
+            var r = tools.补给操作.点击小贩按钮("出售", false);
+            if (!r) {
+                return {
+                    status: false,
+                    err: "未获取出售物品按钮"
+                }
+            }
+            var zhengliBtn = tools.补给操作.整理背包(false);
+            if (!zhengliBtn.status) {
+                tools.补给操作.点击小贩按钮("购买", true); //这里尝试购买后，可能会出现整理按钮
+                return {
+                    status: false,
+                    err: "未获取到整理按钮"
+                }
+            }
+            var 是否已跳过衣服 = false;
+            var 是否已跳过武器 = false;
+            for (let index = 1; index <= 5; index++) {
+                for (let index1 = 1; index1 <= 8; index1++) {
+                    tools.执行时间戳.检测认证();
+                    if (当前总状态 != 总状态.已启动) {
+                        return {
+                            status: true,
+                            err: "程序未启动"
+                        }
+                    }
+                    sleep(random(666, 888))
+                    tools.补给操作.点击背包格子(index, index1, zhengliBtn);
+                    r = tools.补给操作.获取操作按钮(["放入"], "卖物品", false, false, true);
+                    if (!r.status) {
+                        if (r.游戏画面) { //有游戏画面，说明东西卖完了 确实找不到按钮
+                            tools.补给操作.背包拖动背景至可关闭位置(zhengliBtn);
+                            tools.常用操作.关闭所有窗口();
+                            return {
+                                status: true,
+                                err: ""
+                            }
+                        }
+                        else {//没游戏画面，说明花屏了
+                            r = tools.补给操作.当放入按钮找不到(zhengliBtn, true, "卖东西");
+                            if (r.status) {
+                                toastLog("解决花屏跳过")
+                                return {
+                                    status: false,
+                                    err: ""
+                                }
+                                //continue;
+                            }
+                        }
+                    }
+                    var info = tools.补给操作.判断选中格子动作(false, true, true, zhengliBtn, r.value, index, index1);
+                    if (info.是否跳过) {
+                        var 是否跳过 = false;
+                        if (info.物品名称 == "斩马") {
+                            if (!是否已跳过武器) {
+                                是否跳过 = true;
+                                是否已跳过武器 = true;
+                            }
+                            else {
+                                toastLog("已保留过武器");
+                            }
+                        }
+                        else if (info.物品名称 == "重盔甲（男）" || info.物品名称 == "重盔甲（女）") {
+                            if (!是否已跳过衣服) {
+                                是否跳过 = true;
+                                是否已跳过衣服 = true;
+                            }
+                            else {
+                                toastLog("已保留过衣服");
+                            }
+                        }
+                        else {
+                            是否跳过 = true;
+                        }
+                        if (是否跳过) {
+                            tools.悬浮球描述(`${info.物品名称}跳过`)
+                            continue;
+                        }
+                    }
+
+                    if (info.是否极品 || info.是否存仓库) {
+                        tools.悬浮球描述(`${info.物品名称}存仓库`)
+                        tools.补给操作.存仓库(index, index1);
+                        sleep(1000);
+                        tools.补给操作.点击小贩按钮("出售", false);
+                        continue;
+                    }
+
+                    tools.悬浮球描述(`${info.物品名称}正常出售`)
+                    var x = r.value.img.x + r.value.size.w / 2 + random(-5, 5);
+                    var y = r.value.img.y + r.value.size.h / 2 + random(-3, 3);
+                    click(x, y)
+                    sleep(777);
+                    // r = tools.findImageForWaitClick(r.btnName, {
+                    //     maxTries: 6,
+                    //     interval: 666
+                    // });
+                    r = tools.findImageForWaitClick("OKBtn.png", {
+                        maxTries: 10,
+                        interval: 666
+                    });
+                }
+            }
+            tools.补给操作.背包拖动背景至可关闭位置(zhengliBtn);
+            tools.常用操作.关闭所有窗口();
+            return {
+                status: true,
+                err: ""
+            }
+        },
         寻找装备: (zhengliBtn, picName, 已替换) => {
             var 背包面板P = tools.补给操作.获取背包面板位置(zhengliBtn);
-            var arr = tools.matchTemplateForArea(picName, 2, 0.85,
+            var arr = tools.matchTemplateForArea(picName, 2, 0.8,
                 [背包面板P.x1, 背包面板P.y1, 背包面板P.width, 背包面板P.height]
             )
             var result = [];
@@ -4713,7 +4828,7 @@ var tools = {
                         y: item.point.y + random(2, 8),
                     }
                     longClick(点击P.x, 点击P.y);
-                    var r = tools.补给操作.获取操作按钮(["穿戴"], "寻找装备", false, false);
+                    var r = tools.补给操作.获取操作按钮(["穿戴"], "寻找装备", false, false, true);
                     r = tools.补给操作.获取物品信息(r.value);
                     sleep(333);
                     tools.常用操作.点击左面板怪物()
@@ -4959,115 +5074,6 @@ var tools = {
             tools.常用操作.关闭所有窗口();
             //tools.悬浮球描述("结束寻找平替装备");
         },
-        卖物品: () => {
-            var r = tools.补给操作.点击小贩按钮("出售", false);
-            if (!r) {
-                return {
-                    status: false,
-                    err: "未获取出售物品按钮"
-                }
-            }
-            var zhengliBtn = tools.补给操作.整理背包(false);
-            if (!zhengliBtn.status) {
-                tools.补给操作.点击小贩按钮("购买", true); //这里尝试购买后，可能会出现整理按钮
-                return {
-                    status: false,
-                    err: "未获取到整理按钮"
-                }
-            }
-            var 是否已跳过衣服 = false;
-            var 是否已跳过武器 = false;
-            for (let index = 1; index <= 5; index++) {
-                for (let index1 = 1; index1 <= 8; index1++) {
-                    tools.执行时间戳.检测认证();
-                    if (当前总状态 != 总状态.已启动) {
-                        return {
-                            status: true,
-                            err: "程序未启动"
-                        }
-                    }
-                    sleep(random(666, 888))
-                    tools.补给操作.点击背包格子(index, index1, zhengliBtn);
-                    r = tools.补给操作.获取操作按钮(["放入"], "卖物品", false, false);
-                    if (!r.status) {
-                        if (r.游戏画面) { //有游戏画面，说明东西卖完了 确实找不到按钮
-                            tools.补给操作.背包拖动背景至可关闭位置(zhengliBtn);
-                            tools.常用操作.关闭所有窗口();
-                            return {
-                                status: true,
-                                err: ""
-                            }
-                        }
-                        else {//没游戏画面，说明花屏了
-                            r = tools.补给操作.当放入按钮找不到(zhengliBtn, true, "卖东西");
-                            if (!r.status) {
-                                return {
-                                    status: true,
-                                    err: "按钮找不到"
-                                }
-                            }
-                        }
-                    }
-                    var info = tools.补给操作.判断选中格子动作(false, true, true, zhengliBtn, r.value, index, index1);
-                    if (info.是否跳过) {
-                        var 是否跳过 = false;
-                        if (info.物品名称 == "斩马") {
-                            if (!是否已跳过武器) {
-                                是否跳过 = true;
-                                是否已跳过武器 = true;
-                            }
-                            else {
-                                toastLog("已保留过武器");
-                            }
-                        }
-                        else if (info.物品名称 == "重盔甲（男）" || info.物品名称 == "重盔甲（女）") {
-                            if (!是否已跳过衣服) {
-                                是否跳过 = true;
-                                是否已跳过衣服 = true;
-                            }
-                            else {
-                                toastLog("已保留过衣服");
-                            }
-                        }
-                        else {
-                            是否跳过 = true;
-                        }
-                        if (是否跳过) {
-                            tools.悬浮球描述(`${info.物品名称}跳过`)
-                            continue;
-                        }
-                    }
-
-                    if (info.是否极品 || info.是否存仓库) {
-                        tools.悬浮球描述(`${info.物品名称}存仓库`)
-                        tools.补给操作.存仓库(index, index1);
-                        sleep(1000);
-                        tools.补给操作.点击小贩按钮("出售", false);
-                        continue;
-                    }
-
-                    tools.悬浮球描述(`${info.物品名称}正常出售`)
-                    var x = r.value.img.x + r.value.size.w / 2 + random(-5, 5);
-                    var y = r.value.img.y + r.value.size.h / 2 + random(-3, 3);
-                    click(x, y)
-                    sleep(777);
-                    // r = tools.findImageForWaitClick(r.btnName, {
-                    //     maxTries: 6,
-                    //     interval: 666
-                    // });
-                    r = tools.findImageForWaitClick("OKBtn.png", {
-                        maxTries: 10,
-                        interval: 666
-                    });
-                }
-            }
-            tools.补给操作.背包拖动背景至可关闭位置(zhengliBtn);
-            tools.常用操作.关闭所有窗口();
-            return {
-                status: true,
-                err: ""
-            }
-        },
         买物品Loops: () => {
             let 物品集合 = 挂机参数.购买物品.filter(item => parseInt(item.num) > 0).map((item, i) => {
                 var 物品页码 = config.zuobiao.购买物品页码[item["name"]];
@@ -5312,7 +5318,7 @@ var tools = {
                     sleep(1500)
                     //tools.悬浮球描述(`开始修理${index}_${index1}格子`);
                     tools.补给操作.点击背包格子(index, index1, zhengliBtn);
-                    r = tools.补给操作.获取操作按钮(["放入"], "修理装备", false, false);
+                    r = tools.补给操作.获取操作按钮(["放入"], "修理装备", false, false, true);
                     if (!r.status) {
                         if (r.游戏画面) { //有游戏画面，说明东西修完了 确实找不到按钮
                             tools.补给操作.背包拖动背景至可关闭位置(zhengliBtn);
@@ -5321,8 +5327,10 @@ var tools = {
                         }
                         else {//没游戏画面，说明花屏了
                             r = tools.补给操作.当放入按钮找不到(zhengliBtn, true, "修理装备");
-                            if (!r.status) {
-                                return;
+                            if (r.status) {
+                                是否返回修理 = false;
+                                toastLog("解决花屏问题跳过")
+                                continue;
                             }
                         }
                     }
@@ -5377,7 +5385,7 @@ var tools = {
                     for (let index1 = 1; index1 <= 8; index1++) {
                         tools.执行时间戳.检测认证();
                         tools.补给操作.点击背包格子(index, index1, zhengliBtn);
-                        var r = tools.补给操作.获取操作按钮(["穿戴", "使用"], "穿 装 备", false, true);
+                        var r = tools.补给操作.获取操作按钮(["穿戴", "使用"], "穿 装 备", false, true, true);
                         if (r.status) {
                             var info = tools.补给操作.判断选中格子动作(true, false, false, zhengliBtn, r.value, index, index1);
                             if (info.是否跳过) {
@@ -5906,11 +5914,18 @@ var tools = {
                     size: imgSize
                 };
             }
+            else {
+                return {
+                    status: false,
+                    img: null,
+                    err: '未找到对应的图片'
+                };
+            }
         }
         return {
             status: false,
             img: null,
-            err: '未找到对应的图片'
+            err: '本地无' + fileName + '图片'
         }
     },
     findAllColorAreaForWait: (color, x1, y1, x2, y2, options) => {
@@ -6343,7 +6358,7 @@ ui.run(() => {
             无蓝回城: win.cbIsWuLanHuiCheng.isChecked() ? 1 : 0,
             无飞回城: win.cbIsWuFeiHuiCheng.isChecked() ? 1 : 0,
             隐身走动: win.cbYinShenZouDong.isChecked() ? 1 : 0,
-            攻击检查宝宝: win.cbJianChaBaoBao.isChecked() ? 1 : 0,
+            寻找宝宝: win.cbJianChaBaoBao.isChecked() ? 1 : 0,
             攻击检查武器衣服: win.cbJianChaWuQi.isChecked() ? 1 : 0,
             随机跑图: win.cbSuiJiPaoTu.isChecked() ? 1 : 0,
             认证短信: win.cbRenzhengDuanXin.isChecked() ? 1 : 0,
