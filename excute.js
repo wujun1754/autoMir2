@@ -2572,17 +2572,44 @@ var tools = {
             var tryCount = 0;
             //var p = config.zuobiao.聊天框面板[fbl];
             var p = config.zuobiao.聊天框最后一行[fbl];
+            var 按钮 = config.zuobiao.按钮集合[fbl];
             var isOk = false;
             while (true) {
-                if (tryCount >= 12) {
+                if (tryCount >= 6) {
                     break;
                 }
                 tools.悬浮球描述("设置宝宝模式(" + tryCount + ")");
-                var r = tools.findImageClick("chongwuBtn.png");
-                sleep(365)
-                if (r) {
+                click(random(按钮.x[0], 按钮.x[1]), random(按钮.y[0], 按钮.y[1]));
+                var result = tools.findImageAreaForWait(文字图枚举.下属, p.x1, p.y1, p.x2, p.y2, {
+                    maxTries: 5,
+                    interval: 200,
+                    threshold: 0.8
+                });
+                if (result.status) {
+                    var clickNums = 0;
+                    var 当前模式 = null;
+                    var r = tools.findImageArea(文字图枚举.休息, p.x1, p.y1, p.x2, p.y2, 0.8);
+                    if (r.status) {
+                        当前模式 = "休息";
+                    }
+                    else {
+                        r = tools.findImageArea(文字图枚举.攻击, p.x1, p.y1, p.x2, p.y2, 0.8);
+                        if (r.status) {
+                            当前模式 = "攻击";
+                        }
+                        else {
+                            r = tools.findImageArea(文字图枚举.跟随, p.x1, p.y1, p.x2, p.y2, 0.8);
+                            if (r.status) {
+                                当前模式 = "跟随";
+                            }
+                            else {
+                                continue;
+                            }
+                        }
+                    }
                     var pic = "";
                     if (模式 == "攻击") {
+                        if(当前模式=="")
                         pic = "baobaomoshi_gongji.png";
                     }
                     else if (模式 == "跟随") {
