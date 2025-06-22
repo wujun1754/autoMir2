@@ -205,7 +205,11 @@ var 文字图枚举 = {
     镯: "wenzi_zhuo.png",
     戒: "wenzi_jie.png",
     符: "wenzi_fu.png",
-    盔: "wenzi_kui.png"
+    盔: "wenzi_kui.png",
+    休息: "wenzhi_xiuxi.png",
+    攻击: "wenzhi_gongji.png",
+    跟随: "wenzhi_gensui.png",
+    下属: "wenzhi_xiashu.png",
 };
 var 当前总状态 = 总状态.未启动;
 var 启动时间 = new Date().getTime();
@@ -1344,10 +1348,10 @@ var tools = {
                 })
                 tools.常用操作.关闭所有窗口();
                 if (r.status) {
-                    return true;
+                    return false;
                 }
                 else {
-                    return false;
+                    return true;
                 }
                 //beibao5_7null.png
                 //tools.补给操作.点击背包格子(index1, index2, r);
@@ -2573,10 +2577,10 @@ var tools = {
                 if (tryCount >= 12) {
                     break;
                 }
+                tools.悬浮球描述("设置宝宝模式(" + tryCount + ")");
                 var r = tools.findImageClick("chongwuBtn.png");
                 sleep(365)
                 if (r) {
-                    tools.悬浮球描述("设置宝宝模式(" + tryCount + ")");
                     var pic = "";
                     if (模式 == "攻击") {
                         pic = "baobaomoshi_gongji.png";
@@ -2592,7 +2596,7 @@ var tools = {
                         break;
                     }
                     result = tools.findImageAreaForWait(pic, p.x1, p.y1, p.x2, p.y2, {
-                        maxTries: 10,
+                        maxTries: 3,
                         interval: 100,
                         threshold: 0.8
                     });
