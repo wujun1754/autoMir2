@@ -112,8 +112,6 @@ var 挂机参数 = {
     衣服持久0回程: 1,
     武器持久0回程: 1,
     补给时点分身: 1,
-    召唤骷髅: 1,
-    召唤神兽: 0,
     沿途打怪: 0,
     地牢回城: 0,
     装备实际未满下线: 1,
@@ -220,12 +218,14 @@ var 文字图枚举 = {
 var 精英怪枚举 = {
     牛魔法师: {
         pic: "wenzhi_zuomianban_fashi.png",
+        是否隐身: true,
         是否施毒: true,
         是否打防: false,
         是否打魔: true
     },
     宝箱: {
         pic: "wenzhi_zuomianban_baoxiang.png",
+        是否隐身: false,
         是否施毒: false,
         是否打防: false,
         是否打魔: false
@@ -259,7 +259,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="6.9.77" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="6.9.78" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -503,12 +503,6 @@ var win = floaty.rawWindow(
                         </horizontal>
                     </horizontal>
                     <horizontal>
-                        <horizontal gravity="right">
-                            <checkbox id="cbZhaoHuanKuLou" text="召唤骷髅" textSize="10sp" />
-                        </horizontal>
-                        <horizontal gravity="left">
-                            <checkbox id="cbZhaoShenShou" text="召唤神兽" textSize="10sp" />
-                        </horizontal>
                         <horizontal gravity="left">
                             <checkbox id="cbYanTuDaGuai" text="沿途打怪" textSize="10sp" />
                         </horizontal>
@@ -768,12 +762,6 @@ var tools = {
             }
             if (挂机参数.补给时点分身 == 1 || 挂机参数.补给时点分身 == "1") {
                 win.cbIsFenShen.setChecked(true);
-            }
-            if (挂机参数.召唤骷髅 == 1 || 挂机参数.召唤骷髅 == "1") {
-                win.cbZhaoHuanKuLou.setChecked(true);
-            }
-            if (挂机参数.召唤神兽 == 1 || 挂机参数.召唤神兽 == "1") {
-                win.cbZhaoShenShou.setChecked(true);
             }
             if (挂机参数.沿途打怪 == 1 || 挂机参数.沿途打怪 == "1") {
                 win.cbYanTuDaGuai.setChecked(true);
@@ -1845,12 +1833,10 @@ var tools = {
         },
         检测宝宝: (强制检测) => {
             if (new Date().getTime() - 上次检查宝宝时间 > 检查宝宝时间戳 || 强制检测) {
-                if (挂机参数.召唤骷髅 == 1 || 挂机参数.召唤神兽 == 1) {
-                    tools.悬浮球描述("检查宝宝开始");
-                    tools.挂机打怪.宝宝是否存在("攻击", true);
-                    上次检查宝宝时间 = new Date().getTime();
-                    tools.悬浮球描述("检查宝宝结束");
-                }
+                tools.悬浮球描述("检查宝宝开始");
+                tools.挂机打怪.宝宝是否存在("攻击", true);
+                上次检查宝宝时间 = new Date().getTime();
+                tools.悬浮球描述("检查宝宝结束");
             }
         },
         检测蓝药: () => {
@@ -2027,6 +2013,7 @@ var tools = {
                 var 是否隐身等待 = false;
                 var 攻击宝宝身边怪物 = false;
                 var 是否正在攻击精英怪 = false;
+                var 是否强制攻击 = false;
                 while (当前总状态 == 总状态.已启动) {
                     var 时间戳 = new Date().getTime() - start;
                     if (时间戳 > timeout) {
@@ -2049,6 +2036,13 @@ var tools = {
                             锁定的怪物 = tools.挂机打怪.身边锁定怪物();
                         }
 
+                        if (挂机参数.随机血量 > 0) {
+                            var 血量预警 = tools.挂机打怪.是否血量低于百分之40();
+                            if (血量预警) {
+                                tools.挂机打怪.开始逃跑();
+                            }
+                        }
+
                         if ((挂机参数.只打满血怪 == 1 || 其他玩家.status) && !攻击宝宝身边怪物 && isChange && 锁定的怪物.length <= 0) {
                             锁定的怪物 = tools.挂机打怪.身边锁定怪物();
                             if (锁定的怪物.length <= 0) {
@@ -2062,11 +2056,11 @@ var tools = {
                             if (怪物.length >= parseInt(挂机参数.隐身数量)) {
                                 //if (是否到达隐身血量) {
                                 tools.挂机打怪.启动隐身();
+                                sleep(666);
+                                tools.挂机打怪.打防();
                                 上一次隐身 = new Date().getTime();
                             }
-
                         }
-
 
                         if (挂机参数.寻找宝宝 == 1 && 挂机参数.隐身数量 > 0 && 怪物.length >= 挂机参数.隐身数量) {
                             var r = tools.挂机打怪.扫描宝宝();
@@ -2075,8 +2069,39 @@ var tools = {
                             }
                         }
 
+                        if (!是否正在攻击精英怪) {
+                            var 精英怪 = tools.挂机打怪.寻找精英怪(true);
+
+                            if (精英怪.status) {
+                                if (精英怪.value.是否隐身) {
+                                    tools.挂机打怪.启动隐身();
+                                    上一次隐身 = new Date().getTime();
+                                }
+                                if (精英怪.value.是否施毒) {
+                                    tools.挂机打怪.施毒();
+                                }
+                                if (精英怪.value.是否打防) {
+                                    tools.挂机打怪.打防();
+                                }
+                                if (精英怪.value.是否打魔) {
+                                    tools.挂机打怪.打魔();
+                                }
+                                for (let index = 0; index < 3; index++) {
+                                    sleep(100);
+                                    click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                                }
+                                锁定的怪物 = "";
+                                上次坐标截图 = tools.常用操作.截图当前坐标();
+                                上一次移动 = new Date().getTime();
+                                start = new Date().getTime();
+                                上一次攻击 = new Date().getTime();
+                                是否正在攻击精英怪 = true;
+                                是否强制攻击 = true;
+                            }
+                        }
+
                         //var 是否到达隐身血量 = tools.挂机打怪.获取人物血量是否隐身()
-                        if (!是否隐身等待 && !其他玩家.status && 挂机参数.隐身走动 == 1 && 锁定的怪物.length > 0) {
+                        if (!是否隐身等待 && !是否强制攻击 && !其他玩家.status && 挂机参数.隐身走动 == 1 && 锁定的怪物.length > 0) {
                             var r = tools.挂机打怪.扫描宝宝();
                             if (r.status) {
                                 var 人物血量中心 = config.zuobiao.人物血量中心[fbl];
@@ -2099,18 +2124,7 @@ var tools = {
                             }
                         }
 
-                        if (挂机参数.跟随宝宝 == 1 && 挂机参数.跟随几格 > 0 && 锁定的怪物.length > 0) {
-                            tools.挂机打怪.向宝宝移动();
-                        }
-
-                        if (挂机参数.随机血量 > 0) {
-                            var 血量预警 = tools.挂机打怪.是否血量低于百分之40();
-                            if (血量预警) {
-                                tools.挂机打怪.开始逃跑();
-                            }
-                        }
-
-                        if (!是否隐身等待 && new Date().getTime() - 上一次移动 >= 移动时间戳) {
+                        if ((!是否隐身等待 || 是否强制攻击) && new Date().getTime() - 上一次移动 >= 移动时间戳) {
                             人物是否移动 = tools.人物移动.跑图坐标是否变化();
                             if (人物是否移动) {
                                 var 当前坐标截图 = tools.常用操作.截图当前坐标();
@@ -2144,14 +2158,32 @@ var tools = {
                             上一次移动 = new Date().getTime();
                         }
 
-                        if (!是否隐身等待 && new Date().getTime() - 上一次攻击 >= 攻击时间戳) {
+                        if ((!是否隐身等待 || 是否强制攻击) && new Date().getTime() - 上一次攻击 >= 攻击时间戳) {
                             click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                             上一次攻击 = new Date().getTime();
                         }
 
-                        if (是否隐身等待 && new Date().getTime() - 上一次隐身不动 >= 隐身不动时间戳 && !isChange) {
-                            click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                            上一次隐身不动 = new Date().getTime();
+                        
+                        if (挂机参数.跟随宝宝 == 1 && 挂机参数.跟随几格 > 0 && 锁定的怪物.length > 0) {
+                            tools.挂机打怪.向宝宝移动();
+                        }
+
+                        // if (是否隐身等待 && new Date().getTime() - 上一次隐身不动 >= 隐身不动时间戳 && !isChange) {
+                        //     click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                        //     上一次隐身不动 = new Date().getTime();
+                        // }
+
+
+                        if (是否隐身等待) {
+                            var 宝宝身边怪物 = tools.挂机打怪.获取宝宝身边怪物数据(1);
+                            if (宝宝身边怪物.status && 宝宝身边怪物.value && 宝宝身边怪物r.value.length > 3) {
+                                是否强制攻击 = true;
+                                for (let index = 0; index < 3; index++) {
+                                    sleep(100);
+                                    click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                                }
+                                上一次攻击 = new Date().getTime();
+                            }
                         }
 
                         if (挂机参数.只打满血怪 == 0 && !其他玩家.status) {
@@ -2162,33 +2194,6 @@ var tools = {
                                     sleep(100);
                                     click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                                 }
-                            }
-                        }
-
-                        if (!是否正在攻击精英怪) {
-                            var 精英怪 = tools.挂机打怪.寻找精英怪(true);
-                            if (精英怪.status) {
-                                锁定的怪物 = "";
-                                上次坐标截图 = tools.常用操作.截图当前坐标();
-                                上一次移动 = new Date().getTime();
-                                start = new Date().getTime();
-                                // 是否施毒: false,
-                                // 是否打防: false,
-                                // 是否打魔: false
-                                if (精英怪.是否施毒) {
-
-                                }
-                                if (精英怪.是否打防) {
-
-                                }
-                                if (精英怪.是否打魔) {
-
-                                }
-                                for (let index = 0; index < 3; index++) {
-                                    sleep(100);
-                                    click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                                }
-                                是否正在攻击精英怪 = true;
                             }
                         }
 
@@ -2632,7 +2637,7 @@ var tools = {
             while (true) {
                 var 时间戳 = new Date().getTime() - start;
                 if (时间戳 > (1000 * 6)) {
-                    toastLog("超过打符时间戳,强制结束");
+                    toastLog("超过打防时间戳,强制结束");
                     break;
                 }
                 click(random(范围.x[0], 范围.x[1]), random(范围.y[0], 范围.y[1]));
@@ -2643,12 +2648,28 @@ var tools = {
             }
         },
         打魔: () => {
-            var 范围 = config.zuobiao.按钮集合[fbl].打符;
+            var 范围 = config.zuobiao.按钮集合[fbl].打魔;
             var start = new Date().getTime();
             while (true) {
                 var 时间戳 = new Date().getTime() - start;
                 if (时间戳 > (1000 * 6)) {
-                    toastLog("超过打符时间戳,强制结束");
+                    toastLog("超过打魔时间戳,强制结束");
+                    break;
+                }
+                click(random(范围.x[0], 范围.x[1]), random(范围.y[0], 范围.y[1]));
+                var r = tools.挂机打怪.是否技能冷确中(范围);
+                if (r) {
+                    break;
+                }
+            }
+        },
+        召唤宝宝: () => {
+            var 范围 = config.zuobiao.按钮集合[fbl].召唤宝宝;
+            var start = new Date().getTime();
+            while (true) {
+                var 时间戳 = new Date().getTime() - start;
+                if (时间戳 > (1000 * 6)) {
+                    toastLog("超过召唤宝宝时间戳,强制结束");
                     break;
                 }
                 click(random(范围.x[0], 范围.x[1]), random(范围.y[0], 范围.y[1]));
@@ -2670,24 +2691,6 @@ var tools = {
                 return true;
             }
             return false;
-        },
-        点击召唤骷髅: () => {
-            tools.常用操作.点击人物();
-            for (let index = 0; index < 10; index++) {
-                tools.findImageClick("zhaohuankulouBtn.png");
-                sleep(110)
-            }
-        },
-        点击召唤神兽: () => {
-            tools.常用操作.点击人物();
-            // var r = tools.findImageForWaitClick("zhaohuanshenshouBtn.png", {
-            //     maxTries: 5,
-            //     interval: 666
-            // });
-            for (let index = 0; index < 10; index++) {
-                tools.findImageClick("zhaohuanshenshouBtn.png");
-                sleep(110)
-            }
         },
         获取挂机坐标: () => {
             var r = null;
@@ -2759,12 +2762,7 @@ var tools = {
             else {
                 var r = tools.挂机打怪.设置宝宝模式(模式);
                 if (!r && 是否召唤) {
-                    if (挂机参数.召唤骷髅 == 1) {
-                        tools.挂机打怪.点击召唤骷髅();
-                    }
-                    if (挂机参数.召唤神兽 == 1) {
-                        tools.挂机打怪.点击召唤神兽();
-                    }
+                    tools.挂机打怪.召唤宝宝();
                     return true;
                 }
                 return r;
@@ -6607,8 +6605,6 @@ ui.run(() => {
             衣服持久0回程: win.cbIsHuiChengYiFu.isChecked() ? 1 : 0,
             武器持久0回程: win.cbIsHuiChengWuQi.isChecked() ? 1 : 0,
             补给时点分身: win.cbIsFenShen.isChecked() ? 1 : 0,
-            召唤骷髅: win.cbZhaoHuanKuLou.isChecked() ? 1 : 0,
-            召唤神兽: win.cbZhaoShenShou.isChecked() ? 1 : 0,
             沿途打怪: win.cbYanTuDaGuai.isChecked() ? 1 : 0,
             地牢回城: win.cbIsDiLao.isChecked() ? 1 : 0,
             装备实际未满下线: win.cbShiJiWeiManXiaXian.isChecked() ? 1 : 0,
