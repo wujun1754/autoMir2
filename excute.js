@@ -216,6 +216,7 @@ var 文字图枚举 = {
     猪: "wenzi_zhu.png",
     蛾: "wenzi_e.png",
     魔: "wenzi_mo.png",
+    髅: "wenzi_rou.png",
     骷髅: "wenzi_kurou.png",
     休息: "wenzhi_xiuxi.png",
     攻击: "wenzhi_gongji.png",
@@ -269,7 +270,9 @@ var 是否启动初始化过 = false;
 var 是否激活拾取 = false;
 var 激活时间 = new Date().getTime();
 var isStart = false
-var isShowConfig = false
+var isShowConfig = false;
+
+var 锁定失败次数 = 0;
 var 宝宝最后位置信息 = {
     p: null,
     time: null
@@ -341,6 +344,7 @@ var win = floaty.rawWindow(
                             <radio textSize="10sp" id="radio2_3" text="石墓三层" />
                             <radio textSize="10sp" id="radio2_4" text="石墓四层" />
                             <radio textSize="10sp" id="radio2_5" text="石墓五层" />
+                            <radio textSize="10sp" id="radio2_6" text="石墓阵" />
                         </radiogroup>
                     </horizontal>
                     <horizontal id="ditu1_3" visibility="gone">
@@ -2054,14 +2058,21 @@ var tools = {
                 while (当前总状态 == 总状态.已启动) {
                     var 时间戳 = new Date().getTime() - start;
                     if (时间戳 > timeout) {
-                        tools.悬浮球描述("打怪时间超过" + timeout + "秒,强制跑图")
                         tools.挂机打怪.点击挂机坐标(true);
+                        toastLog("打怪时间超过" + timeout + "秒,强制跑图")
                         sleep(1000 * 30);
                         // var isok = tools.人物移动.使用随机();
                         // if (!isok) {
                         //     tools.挂机打怪.点击挂机坐标(true);
                         //     sleep(1000 * 30);
                         // }
+                        return false;
+                    }
+                    if (锁定失败次数 >= 5) {
+                        tools.挂机打怪.点击挂机坐标(true);
+                        toastLog("锁定失败次数" + 锁定失败次数 + ",强制跑图")
+                        锁定失败次数 = 0;
+                        sleep(1000 * 20);
                         return false;
                     }
                     r = tools.挂机打怪.找正上锁定怪物(3, 100);
@@ -2258,7 +2269,7 @@ var tools = {
                                     上一次移动 = new Date().getTime();
                                     上一次攻击 = new Date().getTime() - (60 * 1000);
                                     start = new Date().getTime();
-                                    toastLog("攻击宝宝身边怪物")
+                                    //toastLog("攻击宝宝身边怪物")
                                 }
                             }
                         }
@@ -2286,6 +2297,13 @@ var tools = {
                         tools.悬浮球描述("(" + parseInt((timeout - (时间戳)) / 1000) + "),(" + 锁定的怪物 + ")" + 宝宝身边 + "");
                         //sleep(111);
                     } else {
+                        if (isChange) {
+                            锁定失败次数 = 0;
+                        }
+                        else {
+                            锁定失败次数++;
+                            toastLog("锁定失败(" + 锁定失败次数 + ")")
+                        }
                         tools.挂机打怪.开始拾取();
                         r = tools.挂机打怪.获取宝宝身边怪物数据(1);
                         if (r.status && r.value && r.value.length > 0) {
@@ -3687,16 +3705,10 @@ var tools = {
             return result;
         },
         身边锁定怪物: () => {
-            // var imgSmall = tools.截屏裁剪(null, 552, 246, 727, 359);
-            var P = {
-                x1: 552,
-                y1: 246,
-                x2: 727,
-                y2: 359
-            }
+            var p = config.zuobiao.身边怪物范围[fbl];
             var t = 0.65;
             if (挂机参数.挂机地图.indexOf("兽人古墓") >= 0) {
-                var result = tools.findImageArea(文字图枚举.骷髅, p.x1, p.y1, p.x2, p.y2, t);
+                var result = tools.findImageArea(文字图枚举.髅, p.x1, p.y1, p.x2, p.y2, t);
                 if (result.status) {
                     return "骷髅(找图发现)"
                 }
@@ -3737,7 +3749,7 @@ var tools = {
                     }
                 }
             }
-            var imgSmall = tools.截屏裁剪(null, 552, 246, 727, 359);
+            var imgSmall = tools.截屏裁剪(null, p.x1, p.y1, p.x2, p.y2);
             var huiduImg = images.grayscale(imgSmall);//灰度化
             let r = utils.ocrGetContentStr(huiduImg);
             if (r) {
@@ -3778,6 +3790,74 @@ var tools = {
         },
     },
     人物移动: {
+        点击左边空位: (强制跑动) => {
+            var img = captureScreen();
+            var 第0格 = {
+                x: 619,
+                y: 287
+            };
+            var color = "#DB0000";
+            var 血条间隔 = 64;
+            var 血条宽度 = 42;
+            var 血条高度 = 47;//这个需要检测第二排和第三排，因为如果第二排或第三排有怪会点中
+            var result = []
+            var isClick = false;
+            for (let index = 0; index < 5; index++) {
+                if(强制跑动 && index <=0){
+                    continue;
+                }
+                var x = 第0格.x - ((index + 1) * 血条间隔);
+                var r = images.findColor(img, color, {
+                    region: [x, 第0格.y, 血条宽度, 血条高度],
+                    threshold: 4
+                })
+                if (r != null && r.x >0  && r.y >0) {
+                    result.push({
+                        index:index,
+                        r:r
+                    })
+                    // toastLog(index)
+                    // break;
+                }
+                else{
+                    if(!isClick){
+                        click(x + random(5,-5),333 + random(5,-5))
+                    }
+                     result.push({
+                        index:index,
+                        r:null
+                    })
+                }
+            }
+            utils.recycleNull(img);
+        },
+        点击右边空位: (强制跑动) => {
+            sleep(1000)
+            var img = captureScreen();
+            var 第0格 = {
+                x: 619,
+                y: 287
+            };
+            var color = "#DB0000";
+            var 血条间隔 = 64;
+            var 血条宽度 = 42;
+            var 血条高度 = 47;//这个需要检测第二排和第三排，因为如果第二排或第三排有怪会点中
+            for (let index = 0; index < 5; index++) {
+                if(强制跑动){
+                    continue;
+                }
+                var x = 第0格.x - ((index + 1) * 血条间隔);
+                var r = images.findColor(img, color, {
+                    region: [x, 第0格.y, 血条宽度, 血条高度],
+                    threshold: 4
+                })
+                if (r == null) {
+                    click(x + random(5,-5),333 + random(5,-5))
+                }
+            }
+            utils.recycleNull(img);
+            return result;
+        },
         使用地牢: () => {
             var isOk = false;
             tools.常用操作.打开背包();
@@ -3948,6 +4028,13 @@ var tools = {
                 var p = config.zuobiao.遥感中心位置[fbl];
                 let dx1 = random(-5, 5);
                 let dx2 = random(40, 70);
+                gesture(duration, [p.x - dx1, p.y - dx1], [random(80, 85), random(575, 580)])
+            }
+        },
+        左下跑: (duration) => {
+            if (duration > 0) {
+                var p = config.zuobiao.遥感中心位置[fbl];
+                let dx1 = random(-5, 5);
                 gesture(duration, [p.x - dx1, p.y - dx1], [random(80, 85), random(575, 580)])
             }
         },
@@ -4209,45 +4296,38 @@ var tools = {
             }
         },
         去挂机地图: (目的地, 当前地图) => {
-            // tools.常用操作.点击人物();
-            // sleep(1288);
-            if (挂机参数.地图拖动 == 1) {
-                tools.人物移动.拖动大地图到中心();
+            var isCheck = false;
+            if (当前地图 == "阴森石屋" || 当前地图 == "阴森石路" || 当前地图 == "紫水晶屋") {
+                isCheck = true;
             }
-            else {
-                var isCheck = false;
-                if (当前地图 == "阴森石屋" || 当前地图 == "阴森石路" || 当前地图 == "紫水晶屋") {
-                    isCheck = true;
+            if (isCheck) {
+                var r = tools.findImageForWaitClick("fenshenquedingjiashiBtn.png", {
+                    maxTries: 6,
+                    interval: 200
+                })
+                if (r.status) {
+                    tools.常用操作.关闭所有窗口();
                 }
-                if (isCheck) {
-                    var r = tools.findImageForWaitClick("fenshenquedingjiashiBtn.png", {
-                        maxTries: 6,
-                        interval: 200
-                    })
-                    if (r.status) {
-                        tools.常用操作.关闭所有窗口();
-                    }
-                }
-                switch (当前地图) { //这里走动是为了防止有时点地图点不动，走一步就可以了
-                    case "阴森石屋":
-                        tools.人物移动.左走一步(random(1200, 1500));
-                        break;
-                    case "阴森石路":
-                        tools.人物移动.下走一步(random(1200, 1500));
-                        break;
-                    case "紫水晶屋":
-                    case "石墓入口":
-                        tools.人物移动.右上走(random(1200, 1500));
-                        break;
-                    case "牛魔寺庙入口":
-                        tools.人物移动.上走一步(random(1200, 1500));
-                        break;
-                    default:
-                        tools.人物移动.随机走一步(random(1200, 1500))
-                        break;
-                }
-                tools.常用操作.打开大地图();
             }
+            switch (当前地图) { //这里走动是为了防止有时点地图点不动，走一步就可以了
+                case "阴森石屋":
+                    tools.人物移动.左走一步(random(1200, 1500));
+                    break;
+                case "阴森石路":
+                    tools.人物移动.下走一步(random(1200, 1500));
+                    break;
+                case "紫水晶屋":
+                case "石墓入口":
+                    tools.人物移动.右上走(random(1200, 1500));
+                    break;
+                case "牛魔寺庙入口":
+                    tools.人物移动.上走一步(random(1200, 1500));
+                    break;
+                default:
+                    //tools.人物移动.随机走一步(random(1200, 1500))
+                    break;
+            }
+            tools.常用操作.打开大地图();
             var closeBtn = tools.findImageForWait("closeBtn.png", {
                 maxTries: 10,
                 interval: 200
@@ -4280,8 +4360,14 @@ var tools = {
                     }
                     else {
                         var 偏移 = config.zuobiao.打怪点偏移[fbl];
-                        x = closeImg.x + (r.x - 偏移.x) + random(-5, 5);
-                        y = closeImg.y + (r.y - 偏移.y) + random(-5, 5);
+                        if (目的地 == "石墓阵") {
+                            x = closeImg.x + (r.x - 偏移.x);
+                            y = closeImg.y + (r.y - 偏移.y);
+                        }
+                        else {
+                            x = closeImg.x + (r.x - 偏移.x) + random(-5, 5);
+                            y = closeImg.y + (r.y - 偏移.y) + random(-5, 5);
+                        }
                     }
                     click(x, y)
                     sleep(random(1200, 1600));
@@ -4298,6 +4384,25 @@ var tools = {
                 return;
             }
             return;
+        },
+        进入石墓阵: () => {
+            while (当前总状态 == 总状态.已启动) {
+                var r = tools.findImageClick("shimuzhengrukou.png", 0.8);
+                if (r) {
+                    tools.悬浮球描述("点击入口")
+                    sleep(random(333, 555))
+                } else {
+                    var 当前地图 = tools.常用操作.获取人物地图();
+                    if (当前地图 == "石墓阵") {
+                        toastLog("到达石墓阵")
+                        return true;
+                    }
+                    else {
+                        toastLog("未知错误")
+                        return false;
+                    }
+                }
+            }
         },
         去挂机地图Loop: () => {
             var 是否跑图 = false;
@@ -4325,11 +4430,21 @@ var tools = {
                 var routes = routesGroup[index];
                 var last = routes[routes.length - 1];
                 var 目的地 = (index == routesGroup.length - 1 ? last[0] : last[1]);
+                if (挂机参数.挂机地图 == "石墓阵" && 当前地图 == "石墓五层") {
+                    目的地 = "石墓阵"
+                }
                 while (当前总状态 == 总状态.已启动) {
                     tools.执行时间戳.检测认证();
                     var 是否沿途打怪 = config.沿途打怪点.some(item => item === 当前地图)
                     if (new Date().getTime() - 上次跑图时间 > 跑图时间戳) {
                         var 当前地图 = tools.常用操作.获取人物地图();
+                        if (挂机参数.挂机地图 == "石墓阵" && 当前地图 == "石墓五层") {
+                            r = tools.findImage("shimuzhengrukou.png", 0.85);
+                            if (r.status) {
+                                toastLog("找到附近")
+                                break;
+                            }
+                        }
                         if (当前地图 == 挂机参数.挂机地图 || 挂机参数.挂机地图 == "比奇野外") {
                             tools.常用操作.点击人物();
                             tools.挂机打怪.启动隐身();
@@ -7210,8 +7325,13 @@ threads.start(function () {
                     r = tools.挂机打怪.寻找打怪(打怪次数 > 0 ? true : false);
                 } catch (e) {
                     r = false;
-                    tools.常用方法.错误日志("打怪异常" + e, 7);
-                    toastLog("打怪异常" + e)
+                    let msg = typeof e === "object" && e.stack ? e.stack : e.toString();
+                    tools.常用方法.错误日志("打怪异常: \n" + msg, 7);
+                    toastLog("打怪异常: \n" + msg);
+
+
+                    // tools.常用方法.错误日志("打怪异常" + e, 7);
+                    // toastLog("打怪异常" + e)
                 }
                 if (r) {
                     打怪次数++;
