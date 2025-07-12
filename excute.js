@@ -218,6 +218,7 @@ var 文字图枚举 = {
     蛾: "wenzi_e.png",
     魔: "wenzi_mo.png",
     髅: "wenzi_rou.png",
+    髅左面板: "wenzhi_zuomianban_ku.png",
     骷髅: "wenzi_kurou.png",
     休息: "wenzhi_xiuxi.png",
     攻击: "wenzhi_gongji.png",
@@ -1988,7 +1989,7 @@ var tools = {
     },
     挂机打怪: {
         石墓阵打怪: () => {
-            var index =  random(0, 3);
+            var index = random(0, 3);
             石墓阵上一次跑图点
             var 门点 = null;
             var 目的地 = null;
@@ -2130,20 +2131,53 @@ var tools = {
             var isFind = false;
             var isShiQu = false;
             var r = null;
-            if (挂机参数.只打满血怪 == 1) {
-                r = tools.挂机打怪.找满血怪();
-                if (r && (r.x > 0 || r.y > 0)) {
-                    click(r.x + random(12, 20), r.y + random(-3, 3))
-                    isFind = true;
+
+            tools.悬浮球描述("扫描怪物");
+            if (挂机参数.挂机地图.indexOf("兽人古墓") >= 0) {
+                var p = config.zuobiao.左攻击面板[fbl].怪物集合;
+                var arr = tools.matchTemplateForArea(文字图枚举.髅左面板, 5, 0.7,
+                    [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]]
+                )
+                if (arr.count > 0) {
+                    var img = captureScreen();
+                    for (var index = 0; index < arr.count; index++) {
+                        var item = arr.r[index];
+                        var 血条范围 = {
+                            x: p.x[0],
+                            y: item.point.y,
+                            w: p.x[1] - p.x[0],
+                            h: 35,
+                        }
+                        var r = images.findMultiColors(img, p.找色[0].color, [[p.找色[1].x, p.找色[1].y, p.找色[1].color], [p.找色[2].x, p.找色[2].y, p.找色[2].color]], {
+                            region: [血条范围.x, 血条范围.y, 血条范围.w, 血条范围.h],
+                            threshold: 15
+                        });
+                        if (r && (r.x > 0 || r.y > 0)) {
+                            click(r.x + random(12, 20), r.y + random(-3, 3))
+                            isFind = true;
+                            break;
+                        }
+                    }
+                    utils.recycleNull(img);
                 }
             }
             else {
-                r = tools.挂机打怪.找非满血怪();
-                if (r && (r.x > 0 || r.y > 0)) {
-                    click(random(选择怪物攻击.x[0], 选择怪物攻击.x[1]), random(选择怪物攻击.y[0], 选择怪物攻击.y[1]))
-                    isFind = true;
+                if (挂机参数.只打满血怪 == 1) {
+                    r = tools.挂机打怪.找满血怪();
+                    if (r && (r.x > 0 || r.y > 0)) {
+                        click(r.x + random(12, 20), r.y + random(-3, 3))
+                        isFind = true;
+                    }
+                }
+                else {
+                    r = tools.挂机打怪.找非满血怪();
+                    if (r && (r.x > 0 || r.y > 0)) {
+                        click(random(选择怪物攻击.x[0], 选择怪物攻击.x[1]), random(选择怪物攻击.y[0], 选择怪物攻击.y[1]))
+                        isFind = true;
+                    }
                 }
             }
+
             if (isFind) {
                 if (挂机参数.首次用符攻击 == 1) {
                     tools.挂机打怪.打符();
@@ -2163,6 +2197,9 @@ var tools = {
                     toastLog("锁定失败");
                     isFind = false;
                 }
+            }
+            else {
+                tools.挂机打怪.激活拾取后操作();
             }
             if (isShiQu) {
                 var timeout = 挂机参数.打怪等待;// 1000 * 60 * 10;
@@ -2192,18 +2229,15 @@ var tools = {
                 var 是否正在攻击精英怪 = false;
                 var 是否锁定危险怪 = false;
                 var 是否强制攻击 = false;
-                var 扫描宝宝 = null;
+                var 扫描宝宝 = {
+                    status: false
+                };
                 while (当前总状态 == 总状态.已启动) {
                     var 时间戳 = new Date().getTime() - start;
                     if (时间戳 > timeout) {
                         tools.挂机打怪.点击挂机坐标(true);
                         toastLog("打怪时间超过" + timeout + "秒,强制跑图")
                         sleep(1000 * 30);
-                        // var isok = tools.人物移动.使用随机();
-                        // if (!isok) {
-                        //     tools.挂机打怪.点击挂机坐标(true);
-                        //     sleep(1000 * 30);
-                        // }
                         return false;
                     }
                     if (锁定失败次数 >= 5) {
@@ -2213,11 +2247,13 @@ var tools = {
                         sleep(1000 * 20);
                         return false;
                     }
-                    r = tools.挂机打怪.找正上锁定怪物(3, 100);
+                    r = tools.挂机打怪.找正上锁定怪物(1, 100);
                     if (r.status) {
                         isChange = tools.挂机打怪.怪物血量是否变化();
-                        怪物 = tools.挂机打怪.获取人物身边怪物数据();
-                        扫描宝宝 = tools.挂机打怪.扫描宝宝();
+                        if (挂机参数.隐身数量 > 0) {
+                            怪物 = tools.挂机打怪.获取人物身边怪物数据();
+                            扫描宝宝 = tools.挂机打怪.扫描宝宝();
+                        }
                         if (锁定的怪物.length <= 0) {
                             锁定的怪物 = tools.挂机打怪.身边锁定怪物();
                         }
@@ -2280,7 +2316,7 @@ var tools = {
                             锁定的怪物 = tools.挂机打怪.身边锁定怪物();
                             if (锁定的怪物.length <= 0) {
                                 click(random(726, 736), random(25, 35));
-                                toastLog("血量变动,放弃归属");
+                                // tools.悬浮球描述("血量变动,放弃归属");
                                 return true;
                             }
                         }
@@ -2443,40 +2479,41 @@ var tools = {
                             toastLog("锁定失败(" + 锁定失败次数 + ")")
                         }
                         tools.挂机打怪.开始拾取();
-                        r = tools.挂机打怪.获取宝宝身边怪物数据(1);
-                        if (r.status && r.value && r.value.length > 0) {
-                            var 是否攻击宝宝身边 = false;
-                            if (挂机参数.隐身走动 == 0) {
-                                是否攻击宝宝身边 = true;
-                            }
-                            else if (r.value.length >= 挂机参数.攻击宝宝身边) {
-                                是否攻击宝宝身边 = true;
-                            }
-                            var r1 = tools.挂机打怪.攻击宝宝身边怪物(r, 是否攻击宝宝身边);
-                            if (r1) {
-                                if (是否攻击宝宝身边) {
-                                    是否强制攻击 = true;
+                        if (挂机参数.挂机地图.indexOf("兽人古墓") < 0) {
+                            r = tools.挂机打怪.获取宝宝身边怪物数据(1);
+                            if (r.status && r.value && r.value.length > 0) {
+                                var 是否攻击宝宝身边 = false;
+                                if (挂机参数.隐身走动 == 0) {
+                                    是否攻击宝宝身边 = true;
                                 }
-                                else {
-                                    是否强制攻击 = false;
+                                else if (r.value.length >= 挂机参数.攻击宝宝身边) {
+                                    是否攻击宝宝身边 = true;
                                 }
-                                锁定的怪物 = "";
-                                是否锁定危险怪 = false;
-                                上次坐标截图 = tools.常用操作.截图当前坐标();
-                                上一次移动 = new Date().getTime();
-                                上一次攻击 = new Date().getTime() - (60 * 1000);
-                                start = new Date().getTime();
-                                continue;
+                                var r1 = tools.挂机打怪.攻击宝宝身边怪物(r, 是否攻击宝宝身边);
+                                if (r1) {
+                                    if (是否攻击宝宝身边) {
+                                        是否强制攻击 = true;
+                                    }
+                                    else {
+                                        是否强制攻击 = false;
+                                    }
+                                    锁定的怪物 = "";
+                                    是否锁定危险怪 = false;
+                                    上次坐标截图 = tools.常用操作.截图当前坐标();
+                                    上一次移动 = new Date().getTime();
+                                    上一次攻击 = new Date().getTime() - (60 * 1000);
+                                    start = new Date().getTime();
+                                    continue;
+                                }
                             }
-                        }
-                        else {
-                            toastLog("宝宝身边怪物0")
+                            else {
+                                toastLog("宝宝身边怪物0")
+                            }
                         }
                         break;
                     }
                 }
             }
-            //tools.悬浮球描述("("+minute+":"+second+")");
             return isFind;
         },
         寻找精英怪: () => {
@@ -2611,8 +2648,6 @@ var tools = {
             是否激活拾取 = true;
             var 拾取 = config.zuobiao.按钮集合[fbl].拾取;
             click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
-            tools.挂机打怪.拾取延时();
-            tools.挂机打怪.激活拾取后操作();
         },
         拾取延时: () => { //避免click太频繁导致 拾取失败
             var 拾取延时 = 0;
@@ -2628,6 +2663,7 @@ var tools = {
         },
         激活拾取后操作: () => {
             if (是否激活拾取) {
+                tools.挂机打怪.拾取延时();
                 var 拾取 = config.zuobiao.按钮集合[fbl].拾取;
                 var p = config.zuobiao.聊天框最后一行[fbl];
                 let start = new Date().getTime();
@@ -2687,7 +2723,7 @@ var tools = {
 
         },
         石墓阵跑图: () => {
-            var index =  random(0, 3);
+            var index = random(0, 3);
             石墓阵上一次跑图点
             var 门点 = null;
             var 目的地 = null;
@@ -7497,9 +7533,9 @@ threads.start(function () {
             while (开启寻怪) {
                 try {
                     if (当前地图 == "石墓阵") {
-                       r =  tools.挂机打怪.石墓阵打怪();
+                        r = tools.挂机打怪.石墓阵打怪();
                     }
-                    else{
+                    else {
                         r = tools.挂机打怪.寻找打怪();
                     }
                 } catch (e) {
