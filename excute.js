@@ -296,7 +296,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="6.9.86" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="6.9.87" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -2343,7 +2343,7 @@ var tools = {
 
                     if (!是否强制攻击 && (new Date().getTime() - 发现其他玩家时间) <= 发现其他玩家时间等待) { //二分钟内发现玩家需要强制攻击
                         是否强制攻击 = true;
-                        toastLog("发现玩家,强制攻击")
+                        toastLog((new Date().getTime() - 发现其他玩家时间) / 1000 + "秒前发现玩家,强制攻击")
                     }
 
                     if (!是否隐身等待 && !是否强制攻击 && 挂机参数.隐身走动 == 1 && 锁定的怪物.length > 0) {
@@ -2527,7 +2527,7 @@ var tools = {
                     发现其他玩家时间 = new Date().getTime();
                     return {
                         status: true,
-                        来源: "发现玩家"
+                        来源: "发现男玩家"
                     };
                 }
 
@@ -2540,7 +2540,7 @@ var tools = {
                     发现其他玩家时间 = new Date().getTime();
                     return {
                         status: true,
-                        来源: "发现玩家"
+                        来源: "发现女玩家"
                     };
                 }
             }
@@ -2686,6 +2686,7 @@ var tools = {
                 var 拾取 = config.zuobiao.按钮集合[fbl].拾取;
                 var p = config.zuobiao.聊天框最后一行[fbl];
                 let start = new Date().getTime();
+                var 是否强制拾取 = false;
                 while (当前总状态 == 总状态.已启动) {
                     var isFind = tools.findImageArea(文字图枚举.已满, p.x1, p.y1, p.x2, p.y2, 0.85);
                     if (isFind.status) {
@@ -2701,7 +2702,8 @@ var tools = {
                     utils.recycleNull(img);
 
 
-                    if (r && (r.x > 0 || r.y > 0)) { //说明是激活状态
+
+                    if ((r && (r.x > 0 || r.y > 0)) || 是否强制拾取) { //说明是激活状态
                         tools.悬浮球描述("拾取(" + parseInt(((挂机参数.拾取时长 * 1000) - (new Date().getTime() - start)) / 1000) + ")");
                         if (new Date().getTime() - start > (挂机参数.拾取时长 * 1000)) {
                             toastLog("拾取超时")
@@ -2727,18 +2729,20 @@ var tools = {
                             }
                             上一次移动 = new Date().getTime();
                         }
+
                         isFind = tools.findImageArea(文字图枚举.不能拾取, p.x1, p.y1, p.x2, p.y2, 0.85);
                         if (isFind.status) {
                             var 拾取明细 = tools.挂机打怪.需要拾取明细()
                             if (拾取明细 && 拾取明细.count >= 3) {
                                 累计未移动次数 = 0;
+                                是否强制拾取 = true;
                                 toastLog("数量>3强制拾取")
                                 click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
-                                sleep(999);
+                                sleep(1200);
                                 click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
                                 continue;
                             }
-                            else {
+                            else if (!是否强制拾取) {
                                 toastLog("不能拾取")
                                 禁止拾取时间 = new Date().getTime() + (1000 * 15);
                                 click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
@@ -3715,16 +3719,16 @@ var tools = {
         },
         向怪物移动: () => {
             var start = new Date().getTime();
-            var 人物中心 = config.zuobiao.人物中心[fbl];
+            var 人物中心 = config.zuobiao.人物血量左上[fbl];
             var tryCount = 0;
             var 允许距离 = {
-                x: 95,
-                y: 55
+                x: 64 + 5,
+                y: 42 + 5
             }
             var r = null;
             tools.悬浮球描述("向怪物移动")
             while (true) {
-                if (new Date().getTime() - start > 10 * 1000) {//超过5秒自动退出
+                if (new Date().getTime() - start > 15 * 1000) {//超过5秒自动退出
                     toastLog("向怪物移动超过时间,强制结束");
                     return false;
                 }
@@ -3748,19 +3752,8 @@ var tools = {
                         return true;
                     }
                     var duartion = 333;
-                    var 点击延时 = 666;
-                    if (x > 人物中心.x) {
-                        x += 30;
-                    }
-                    else {
-                        x -= 30;
-                    }
-                    if (y > 人物中心.y) {
-                        x += 15;
-                    }
-                    else {
-                        x -= 15;
-                    }
+                    var 点击延时 = 10;
+
                     if (Math.abs(x - 人物中心.x) > 允许距离.x) {
                         if (x < 人物中心.x) {
                             var r = tools.人物移动.点击左边空位(true);
@@ -3806,8 +3799,7 @@ var tools = {
 
                         }
                     }
-
-                }
+                };
             }
         },
         获取人物身边怪物数据: () => {
@@ -3949,7 +3941,7 @@ var tools = {
             let r = utils.ocrGetContentStr(huiduImg);
             if (r) {
                 //r = r.replace(/[0-9\/]/g, '');
-                r = r.replace(/[0-9\/a-zA-Z]/g, '').replace(/\./g, "").replace(/,/g, "").replace(/:/g, "").replace(/\|/g, '').replace(/\\/g, '');
+                r = r.replace(/[0-9\/a-zA-Z]/g, '').replace(/\./g, "").replace(/,/g, "").replace(/-/g, "").replace(/:/g, "").replace(/\|/g, '').replace(/\\/g, '');
             }
             utils.recycleNull(imgSmall);
             utils.recycleNull(huiduImg);
@@ -3996,9 +3988,10 @@ var tools = {
                     var result = tools.findImageArea(item.pic, p.x1, p.y1, p.x2, p.y2, t);
                     if (result.status) {
                         var r = result.img;
-                        r = tools.挂机打怪.通过文字计算血条位置(r.x, r.y);
-
-                        break;
+                        r = tools.挂机打怪.通过文字计算血条位置(r.x, r.y, false);
+                        if (r.status) {
+                            return r;
+                        }
                     }
                 }
             }
@@ -4008,8 +4001,10 @@ var tools = {
                     var info = r[index];
                     let hasNumber = /\d/.test(info.text);
                     if (!hasNumber) {
-                        文字坐标 = info;
-                        break;
+                        r = tools.挂机打怪.通过文字计算血条位置(info.x, info.y, true);
+                        if (r.status) {
+                            return r;
+                        }
                     }
                 }
             }
@@ -4017,84 +4012,56 @@ var tools = {
         },
         通过文字计算血条位置: (文字x, 文字y, 是否找色验证) => {
             var p = config.zuobiao.屏幕血条分布[fbl];
+            var 人物血量格数 = config.zuobiao.人物血量所在格数[fbl];
+
             var result_x = 0;
+            var result_x_index = 0;
             var result_y = 0;
+            var result_y_index = 0;
             for (let index = 0; index < p.x_max; index++) {
                 var 血条x1 = p.x起点 + (index * + p.血条宽度间隔);
                 var 血条x2 = 血条x1 + p.血条宽度;
-                if (文字x >= (血条x1 - 15) && 文字x <= (血条x2 + 30)) {
-                    result_x = 血条x1;
+                if (文字x >= (血条x1 - 5) && 文字x <= (血条x2 + 10)) {
+                    result_x = p.x起点 + (index * + p.血条宽度间隔) - 1;
+                    result_x_index = index;
                     break;
                 }
             }
 
             for (let index = 0; index < p.y_max; index++) {
                 var 血条y1 = p.y起点 + (index * + p.血条高度间隔);
-                var 血条y2 = 血条y1 + p.血条宽度;
-                if ((文字y - p.文字距离血条高度) >= (血条y1 - 10) && (文字y - p.文字距离血条高度) <= (血条y2 + 20)) {
-                    result_y = 血条y1;
+                if ((文字y - p.文字距离血条高度) >= (血条y1 - 10) && (文字y - p.文字距离血条高度) <= (血条y1 + 20)) {
+                    result_y = 血条y1 - - Math.abs(index - 人物血量格数.y)
+                    result_y_index = index;
                     break;
                 }
             }
 
             if (result_x > 0 && result_y > 0) {
                 if (是否找色验证) {
-                    var p1 = config.zuobiao.左攻击面板[fbl].怪物集合;
-
-                    var color = "#DB0000";
-                    var value = [];
-                    var regions = [
-                        [p.x - 2, p.y - 45, 50, 8], // 正上方
-                        [p.x - 67, p.y - 45, 50, 8], // 左上方
-                        [p.x + 61, p.y - 45, 50, 8], // 右上方
-    
-                        [p.x - 2, p.y + 40, 50, 8], // 正下方
-                        [p.x - 67, p.y + 40, 50, 8], // 左下方
-                        [p.x + 61, p.y + 40, 50, 8], // 右下方
-    
-                        [p.x - 67, p.y - 2, 50, 8], // 正左方
-                        [p.x + 61, p.y - 2, 50, 8], // 正右方
-                    ]
-                    regions.forEach((reg, index) => {
-                        var r = null;
-                        try {
-                            r = images.findColor(img, color, {
-                                region: reg, // 正上方
-                                threshold: 6
-                            });
-                        } catch (error) {
-                            r = null;
-                        }
-                        if (status == 0) {
-                            value.push(r)
-                        }
-                        else if (status == 1) {
-                            if (r && r.x > 0 && r.y > 0) {
-                                value.push(r)
-                            }
-                        }
-                        else if (status == 2) {
-                            if (r == null || r.x <= 0 || r.y <= 0) {
-                                value.push(r)
-                            }
-                        }
-                    })
                     var img = captureScreen();
-                    var r = images.findMultiColors(img, p1.找色非满血[0].color, [[p1.找色非满血[1].x, p1.找色非满血[1].y, p1.找色非满血[1].color]], {
-                        region: [result_x - 15, result_y - 10, result_x + p.血条宽度间隔 + 30, result_y + 25],
-                        threshold: 15
-                    });
+                    var r = null;
+                    try {
+                        r = images.findColor("#DB0000", color, {
+                            region: [result_x - 5, result_y - 10, result_x + p.血条宽度间隔 + 10, result_y + 20],
+                            threshold: 4
+                        });
+                    } catch (error) {
+                        r = null;
+                    }
                     utils.recycleNull(img);
-                    if (r && (r.x > 0 || r.y > 0)) {
+                    if (r && r.x > 0 && r.y > 0) {
                         return {
                             status: true,
                             x: result_x,
-                            y: result_y
+                            y: result_y,
+                            x_index: result_x_index,
+                            y_index: result_y_index,
                         }
-                    }
-                    else {
+                    } else {
                         return {
-                            status: false
+                            status: false,
+                            msg: "找色验证失败"
                         }
                     }
                 }
@@ -4102,12 +4069,17 @@ var tools = {
                     return {
                         status: true,
                         x: result_x,
-                        y: result_y
+                        y: result_y,
+                        x_index: result_x_index,
+                        y_index: result_y_index,
                     }
                 }
             }
             else {
-
+                return {
+                    status: false,
+                    msg: "定位失败"
+                }
             }
         },
         怪物血量是否变化: () => {
@@ -5170,35 +5142,41 @@ var tools = {
             click(random(比奇小贩按钮.x1, 比奇小贩按钮.x2), random(比奇小贩按钮.y1, 比奇小贩按钮.y2));
             sleep(random(777, 999));
             var r = null;
+            var p = null;
             switch (按钮名称) {
                 case "出售":
-                    r = tools.findImageForWaitClick("chushouwupingBtn.png", {
-                        maxTries: 5,
-                        interval: 500
-                    });
+                    // r = tools.findImageForWaitClick("chushouwupingBtn.png", {
+                    //     maxTries: 5,
+                    //     interval: 500
+                    // });
+                    p = config.zuobiao.比奇小贩面板.出售物品[fbl];
                     break;
                 case "购买":
-                    r = tools.findImageForWaitClick("goumaiwupingBtn.png", {
-                        maxTries: 5,
-                        interval: 500
-                    });
+                    // r = tools.findImageForWaitClick("goumaiwupingBtn.png", {
+                    //     maxTries: 5,
+                    //     interval: 500
+                    // });
+                    p = config.zuobiao.比奇小贩面板.购买物品[fbl];
                     break;
                 case "普修":
-                    r = tools.findImageForWaitClick("putongxiuliBtn.png", {
-                        maxTries: 5,
-                        interval: 500
-                    });
+                    // r = tools.findImageForWaitClick("putongxiuliBtn.png", {
+                    //     maxTries: 5,
+                    //     interval: 500
+                    // });
+                    p = config.zuobiao.比奇小贩面板.普通修理[fbl];
                     break;
 
 
             }
-            if (r.status) {
-                return true;
-            }
-            else {
-                toastLog("未找到" + type + "按钮");
-                return false;
-            }
+            click(random(p.x1, p.x2), random(p.y1, p.y2));
+            return true;
+            // if (r.status) {
+            //     return true;
+            // }
+            // else {
+            //     toastLog("未找到" + 按钮名称 + "按钮");
+            //     return false;
+            // }
         },
         点击背包格子: (index1, index2, zhengliBtn) => {
             var zhengliP = {
@@ -7799,7 +7777,7 @@ threads.start(function () {
                     }
                 } catch (e) {
                     r = false;
-                    let msg = typeof e === "object" && e.stack ? e.stack : e.toString();
+                    let msg = typeof e === "object" && e.stack ? e.stack + "\n" + e.toString() : e.toString()
                     tools.常用方法.错误日志("打怪异常: \n" + msg, 7);
                     toastLog("打怪异常: \n" + msg);
                 }
