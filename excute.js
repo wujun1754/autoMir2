@@ -166,6 +166,7 @@ var 挂机参数 = {
     挂机城市: "",
     机器标识: "",
     版本号: "",
+    组队: "",
     跟随宝宝: 0,
     跟随几格: 2,
     检查衣服武器时间戳: 600
@@ -234,6 +235,7 @@ var 文字图枚举 = {
     怪物名将军: "wenzhi_jiangjun.png",
     不能拾取: "wenzhi_bunengshiqu.png",
     已满: "wenzi_yiman.png",
+    组: "wenzhi_zudui.png",
 };
 
 var 精英怪枚举 = {
@@ -279,6 +281,7 @@ var 是否激活拾取 = false;
 var 激活时间 = new Date().getTime();
 var isStart = false
 var isShowConfig = false;
+var 是否有组队任务 = false;
 
 var 锁定失败次数 = 0;
 var 宝宝最后位置信息 = {
@@ -472,6 +475,10 @@ var win = floaty.rawWindow(
                             <text text="攻击宝宝身边怪物" textSize="10sp" textColor="#000000" />
                             <input textSize="10sp" id="t_gongjishuliang" focusable="true" w="20sp" text="0" />
                         </horizontal>
+                        <horizontal paddingLeft="6sp">
+                            <text text="组队好友" textSize="10sp" textColor="#000000" />
+                            <input textSize="10sp" id="t_zudui" focusable="true" w="40sp" text="0" />
+                        </horizontal>
                         <horizontal >
                             <text text="版本号" textSize="10sp" textColor="#000000" />
                             <input textSize="10sp" id="t_banbenhao" inputType="text" w="48sp" text="0" />
@@ -615,9 +622,9 @@ var win = floaty.rawWindow(
                 <button id="btnReset" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="重启" />
                 <button id="btnBuJi" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="补给" />
                 <button id="btnSetFouse" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="焦点" />
-                <button id="btnClose" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="关闭" />
+                <button id="btnRenZheng" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="组队" />
                 <button id="btnExit" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="退出" />
-                <button id="btnRenZheng" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="测试" />
+                <button id="btnClose" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="关闭" />
             </horizontal>
         </vertical>
 
@@ -766,6 +773,11 @@ var tools = {
                 win.t_gongjishuliang.setText("0");
             }
 
+            if (挂机参数.组队) {
+                win.t_zudui.setText(挂机参数.组队);
+            } else {
+                win.t_zudui.setText("");
+            }
 
             if (挂机参数.机器标识) {
                 win.t_jiqibiaoshi.setText(挂机参数.机器标识.toString());
@@ -1173,6 +1185,43 @@ var tools = {
             }, 0.9);
             tools.常用操作.关闭所有窗口();
         },
+        组队好友: () => {
+            var arr = 挂机参数.组队.split(",");
+            if (arr != null && arr.length > 0) {
+                var p = config.zuobiao.按钮集合[fbl].好友;
+                click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]))
+                sleep(1200);
+                var x = 1005;
+                var y = 0;
+                for (var index = 0; index < arr.length; index++) {
+                    var item = arr[index];
+                    switch (parseInt(item)) {
+                        case 1:
+                            y = 152;
+                            break;
+                        case 2:
+                            y = 222;
+                            break;
+                        case 3:
+                            y = 292;
+                            break;
+                        case 4:
+                            y = 358;
+                            break;
+                    }
+                    click(x + random(-50, 50), y + random(-15, 15));
+                    sleep(1000);
+                    tools.findImageForWaitClick(文字图枚举.组, {
+                        maxTries: 6,
+                        interval: 200
+                    }, 0.9);
+                    sleep(1000);
+                    toastLog("已完成" + (index + 1) + "号好友组队");
+                }
+                tools.常用操作.关闭所有窗口();
+            }
+            是否有组队任务 = false;
+        },
         设置内挂: () => {
             var 高亮显血自己 = config.zuobiao.设置面板[fbl].高亮显血自己;
             var 高亮显血组队 = config.zuobiao.设置面板[fbl].高亮显血组队;
@@ -1403,11 +1452,15 @@ var tools = {
             if (result != null && result.length > 0) {
                 result = tools.常用操作.处理地图错别字(result[0].text);
                 if (上次所在地图 != result) {
-                    上次所在地图 = result;
-                    tools.执行时间戳.检测内挂(true);
-                    tools.常用操作.初始化大地图面板(true);
-                    tools.常用操作.初始化攻击面板loops();
-                    tools.执行时间戳.检测无地牢补给(true);
+                    var isok = tools.常用操作.检测是否在游戏画面();
+                    if (isok) {
+                        上次所在地图 = result;
+                        tools.执行时间戳.检测内挂(true);
+                        tools.常用操作.初始化大地图面板(true);
+                        tools.常用操作.初始化攻击面板loops();
+                        tools.执行时间戳.检测组队模式(true);
+                        //tools.执行时间戳.检测无地牢补给(true);
+                    }
 
                 }
             }
@@ -1542,6 +1595,55 @@ var tools = {
         点击人物: () => {
             var 人物中心 = config.zuobiao.人物中心[fbl];
             click(人物中心.x + random(5, -5), 人物中心.y + random(5, -5))
+        },
+        捆雪霜: () => {
+            var t = 0.85;
+            var 取回数量 = 0;
+            var 仓库p = config.zuobiao.存取范围[fbl].仓库;
+            var 包袱p = config.zuobiao.存取范围[fbl].包袱;
+            var r = tools.matchTemplateForArea(补给枚举.万年雪霜, 12, t,
+                [仓库p.x, 仓库p.y, 仓库p.w, 仓库p.h]
+            )
+            var 雪霜数量 = r.count;
+            if (r.status && 雪霜数量 >= 6) {
+                while (true) {
+                    var r = tools.findImageAreaForWait(补给枚举.万年雪霜, 仓库p.x, 仓库p.y, 仓库p.x + 仓库p.w, 仓库p.y + 仓库p.h, {
+                        maxTries: 10,
+                        interval: 100,
+                        threshold: t
+                    })
+                    if (r.status) {
+                        取回数量++;
+                        if (取回数量 > 6) {
+                            break;
+                        }
+                        var x1 = r.img.x + r.size.w / 2 + random(5, 10);
+                        var y1 = r.img.y + r.size.h / 2 + random(5, 10);
+                        var x2 = 包袱p.中心.x + random(5, 10);
+                        var y2 = 包袱p.中心.y + random(5, 10);
+                        gesture(random(666, 999), [x1, y1], [x2, y2])
+                        tools.悬浮球描述("雪霜数量(" + 雪霜数量 + "),已取出(" + 取回数量 + ")");
+                        sleep(random(666, 999));
+                    }
+                    else{
+                        break;
+                    }
+                }
+
+                // var arr = r.r;
+                // arr.r.sort((a, b) => b.point.y - a.point.y);
+                // for (var index = 0; index < arr.length; index++) {
+                //     var item = arr[index];
+                //     var x1 = item.point.x + random(5, 10);
+                //     var y1 = item.point.y + random(5, 10);
+                //     var x2 = 包袱p.中心.x + random(5, 10);
+                //     var y2 = 包袱p.中心.y + random(5, 10);
+                //     gesture(random(666, 999), [x1, y1], [x2, y2])
+                //     sleep(random(666, 999));
+                // }
+            }
+            
+            return r
         },
         检测是否在游戏画面: () => {
             var puBtn = tools.findImageForWait("puBtn.png", {
@@ -2192,9 +2294,11 @@ var tools = {
                     }
                 }
             }
-            tools.挂机打怪.激活拾取后操作();
             if (isFind) {
                 click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+            }
+            tools.挂机打怪.激活拾取后操作();
+            if (isFind) {
                 var r = tools.挂机打怪.找正上锁定怪物(3, 100);
                 if (r.status) {
                     utils.recycleNull(被攻击怪物血量截图);
@@ -2266,6 +2370,10 @@ var tools = {
                 r = tools.挂机打怪.找正上锁定怪物(2, 100);
                 if (r.status) {
                     isChange = tools.挂机打怪.怪物血量是否变化();
+                    if ((!是否隐身等待 || 是否强制攻击) && new Date().getTime() - 上一次攻击 >= 攻击时间戳) { //点攻击放最上面，效率会高一些
+                        click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                        上一次攻击 = new Date().getTime();
+                    }
                     if (挂机参数.隐身数量 > 0) {
                         怪物 = tools.挂机打怪.获取人物身边怪物数据();
                         扫描宝宝 = tools.挂机打怪.扫描宝宝();
@@ -2393,11 +2501,6 @@ var tools = {
                             }
                         }
                         上一次移动 = new Date().getTime();
-                    }
-
-                    if ((!是否隐身等待 || 是否强制攻击) && new Date().getTime() - 上一次攻击 >= 攻击时间戳) {
-                        click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                        上一次攻击 = new Date().getTime();
                     }
 
                     if (是否隐身等待 && !是否强制攻击) {
@@ -2688,6 +2791,7 @@ var tools = {
                 let start = new Date().getTime();
                 var 是否强制拾取 = false;
                 while (当前总状态 == 总状态.已启动) {
+                    var 是否激活状态 = false;
                     var isFind = tools.findImageArea(文字图枚举.已满, p.x1, p.y1, p.x2, p.y2, 0.85);
                     if (isFind.status) {
                         toastLog("包袱已满")
@@ -2700,14 +2804,17 @@ var tools = {
                         threshold: 4
                     });
                     utils.recycleNull(img);
+                    if ((r && (r.x > 0 || r.y > 0))) {
+                        是否激活状态 = true;
+                    }
 
-
-
-                    if ((r && (r.x > 0 || r.y > 0)) || 是否强制拾取) { //说明是激活状态
+                    if (是否激活状态 || 是否强制拾取) {
                         tools.悬浮球描述("拾取(" + parseInt(((挂机参数.拾取时长 * 1000) - (new Date().getTime() - start)) / 1000) + ")");
                         if (new Date().getTime() - start > (挂机参数.拾取时长 * 1000)) {
                             toastLog("拾取超时")
-                            click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+                            if (是否激活状态) {
+                                click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+                            }
                             禁止拾取时间 = new Date().getTime() + (1000 * 15);
                             break;
                         }
@@ -2722,7 +2829,9 @@ var tools = {
                             else {
                                 累计未移动次数++;
                                 if (累计未移动次数 >= 3) {
-                                    click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+                                    if (是否激活状态) {
+                                        click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+                                    }
                                     禁止拾取时间 = new Date().getTime() + (1000 * 15);
                                     break;
                                 }
@@ -2731,24 +2840,47 @@ var tools = {
                         }
 
                         isFind = tools.findImageArea(文字图枚举.不能拾取, p.x1, p.y1, p.x2, p.y2, 0.85);
-                        if (isFind.status) {
-                            var 拾取明细 = tools.挂机打怪.需要拾取明细()
-                            if (拾取明细 && 拾取明细.count >= 3) {
-                                累计未移动次数 = 0;
-                                是否强制拾取 = true;
-                                toastLog("数量>3强制拾取")
-                                click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+                        if (是否强制拾取) {
+                            if (isFind.status) {
+                                if (是否激活状态) {
+                                    click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+                                    sleep(1200);
+                                    click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+                                }
+                                else {
+                                    click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+                                }
                                 sleep(1200);
-                                click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
-                                continue;
                             }
-                            else if (!是否强制拾取) {
-                                toastLog("不能拾取")
-                                禁止拾取时间 = new Date().getTime() + (1000 * 15);
-                                click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
-                                break;
+                            else {
+                                sleep(200);
+                            }
+                            continue;
+                        }
+                        else {
+                            if (isFind.status) {
+                                var 拾取明细 = tools.挂机打怪.需要拾取明细()
+                                if (拾取明细 && 拾取明细.count >= 3) {
+                                    累计未移动次数 = 0;
+                                    是否强制拾取 = true;
+                                    toastLog("拾取数（" + 拾取明细.count + "）强制拾取")
+                                    continue;
+                                }
+                                else {
+                                    toastLog("不能拾取")
+                                    if (是否激活状态) {
+                                        click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+                                    }
+                                    禁止拾取时间 = new Date().getTime() + (1000 * 15);
+                                    break;
+                                }
+                            }
+                            else {
+                                sleep(200);
                             }
                         }
+
+
                     }
                     else {
                         break;
@@ -5217,9 +5349,6 @@ var tools = {
                 if (tryCount >= 6) {
                     break;
                 }
-                if (isBoss) {
-                    tools.补给操作.判断是否出现BOSS提示(1000 * 90, 来源);
-                }
                 for (let index = 0; index < 按钮类型.length; index++) {
                     var item = 按钮类型[index];
                     switch (item) {
@@ -5263,6 +5392,11 @@ var tools = {
                         status: true,
                         btnName: sucessBtn,
                         value: r
+                    }
+                }
+                else {
+                    if (isBoss) {
+                        tools.补给操作.判断是否出现BOSS提示(1000 * 90, 来源);
                     }
                 }
                 sleep(200);
@@ -7560,6 +7694,7 @@ ui.run(() => {
             拾取延时: parseInt(win.t_shiquyanshi.getText()),
             隐身数量: parseInt(win.t_YinShen.getText()),
             跟随几格: parseInt(win.t_gensuijuli.getText()),
+            组队: win.t_zudui.getText(),
             机器标识: win.t_jiqibiaoshi.getText(),
             版本号: win.t_banbenhao.getText(),
             检查衣服武器时间戳: parseInt(win.t_shoujihaoma.getText()),
@@ -7575,14 +7710,14 @@ ui.run(() => {
     win.btnRenZheng.click(() => {
         isShowConfig = false
         win.setPosition(-10000, padding_top);
+        是否有组队任务 = true;
+        // threads.start(function () {
+        //     setTimeout(() => {
+        //         var r = tools.findImage("xiexia1.png");
+        //         toastLog(JSON.stringify(r));
+        //     }, 2000)
 
-        threads.start(function () {
-            setTimeout(() => {
-                var r = tools.findImage("xiexia1.png");
-                toastLog(JSON.stringify(r));
-            }, 2000)
-
-        });
+        // });
     });
 
 
@@ -7753,6 +7888,9 @@ threads.start(function () {
     let 跑图时间戳 = 1.5 * 1000;
     var 开启寻怪 = false;
     while (true) {
+        if (是否有组队任务) {
+            tools.常用操作.组队好友();
+        }
         if (当前总状态 == 总状态.已启动) {
             var 打怪次数 = 0; //大于0则坐标移动过，需强制跑图
             if (!是否启动初始化过) {
@@ -7764,6 +7902,7 @@ threads.start(function () {
                 toastLog("强制回城补给")
                 tools.挂机打怪.回城补给在挂机("强行补给");
             }
+
             var 当前地图 = tools.常用操作.获取人物地图();
             tools.执行时间戳.检测认证();
             var r = false;
@@ -7778,7 +7917,6 @@ threads.start(function () {
                 } catch (e) {
                     r = false;
                     let msg = typeof e === "object" && e.stack ? e.stack + "\n" + e.toString() : e.toString()
-                    tools.常用方法.错误日志("打怪异常: \n" + msg, 7);
                     toastLog("打怪异常: \n" + msg);
                 }
                 if (r) {
