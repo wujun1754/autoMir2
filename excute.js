@@ -154,6 +154,7 @@ var 挂机参数 = {
     认证短信: 0,
     认证自动识别: 0,
     云码认证: 0,
+    捆雪霜包: 0,
     地图拖动: 0,
     替换黑色戒指: 0,
     隐身数量: 0,
@@ -582,6 +583,9 @@ var win = floaty.rawWindow(
                         <horizontal gravity="right">
                             <checkbox id="cbRenzhengYunMa" text="云码认证" textSize="10sp" />
                         </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbKunxueshuangBao" text="捆雪霜包" textSize="10sp" />
+                        </horizontal>
                     </horizontal>
 
                     <horizontal>
@@ -948,6 +952,12 @@ var tools = {
             if (挂机参数.云码认证 == 1) {
                 win.cbRenzhengYunMa.setChecked(true);
             }
+            if (挂机参数.捆雪霜包 == 1) {
+                win.cbKunxueshuangBao.setChecked(true);
+            }
+
+
+
             if (挂机参数.地图拖动 == 1) {
                 win.cbDiTuTuoDong.setChecked(true);
             }
@@ -1597,109 +1607,6 @@ var tools = {
         点击人物: () => {
             var 人物中心 = config.zuobiao.人物中心[fbl];
             click(人物中心.x + random(5, -5), 人物中心.y + random(5, -5))
-        },
-        购买捆药绳: () => {
-            var 铺 = config.zuobiao.按钮集合[fbl].铺;
-            var 绳 = config.zuobiao.按钮集合[fbl].捆药绳;
-            var 购 = config.zuobiao.按钮集合[fbl].购买物品;
-            var 确定 = config.zuobiao.按钮集合[fbl].购买确定;
-            var 铺关闭 = config.zuobiao.按钮集合[fbl].铺关闭;
-            click(random(铺.x[0], 铺.x[1]), random(铺.y[0], 铺.y[1]))
-            sleep(2000);
-            click(random(绳.x[0], 绳.x[1]), random(绳.y[0], 绳.y[1]))
-            sleep(1200);
-            click(random(购.x[0], 购.x[1]), random(购.y[0], 购.y[1]))
-            sleep(2000);
-            click(random(确定.x[0], 确定.x[1]), random(确定.y[0], 确定.y[1]))
-            sleep(1200);
-            click(random(铺关闭.x[0], 铺关闭.x[1]), random(铺关闭.y[0], 铺关闭.y[1]))
-            sleep(666);
-        },
-        取出雪霜: () => {
-            var t = 0.85;
-            var 取回数量 = 0;
-            var 仓库p = config.zuobiao.存取范围[fbl].仓库;
-            var 包袱p = config.zuobiao.存取范围[fbl].包袱;
-            var r = tools.matchTemplateForArea(补给枚举.万年雪霜, 12, t,
-                [仓库p.x, 仓库p.y, 仓库p.w, 仓库p.h]
-            )
-            var 雪霜数量 = r.count;
-            if (r.status && 雪霜数量 >= 6) {
-                while (true) {
-                    var r = tools.findImageAreaForWait(补给枚举.万年雪霜, 仓库p.x, 仓库p.y, 仓库p.x + 仓库p.w, 仓库p.y + 仓库p.h, {
-                        maxTries: 10,
-                        interval: 100,
-                        threshold: t
-                    })
-                    if (r.status) {
-                        取回数量++;
-                        if (取回数量 > 6) {
-                            return {
-                                status: true
-                            };
-                        }
-                        var x1 = r.img.x + r.size.w / 2 + random(5, 10);
-                        var y1 = r.img.y + r.size.h / 2 + random(5, 10);
-                        var x2 = 包袱p.中心.x + random(5, 10);
-                        var y2 = 包袱p.中心.y + random(5, 10);
-                        gesture(random(666, 999), [x1, y1], [x2, y2])
-                        tools.悬浮球描述("雪霜数量(" + 雪霜数量 + "),已取出(" + 取回数量 + ")");
-                        sleep(random(666, 999));
-                    }
-                    else {
-                        return {
-                            status: false,
-                            msg: "未获取到雪霜图片"
-                        };
-                    }
-                }
-            }
-            else {
-                return {
-                    status: false,
-                    msg: "雪霜数量(" + 雪霜数量 + ")"
-                };
-            }
-        },
-        捆雪霜: () => {
-            var r = tools.findImageAreaForWaitClick(补给枚举.捆药绳, 包袱p.x, 包袱p.y, 包袱p.x + 包袱p.w, 包袱p.y + 包袱p.h, {
-                maxTries: 10,
-                interval: 100,
-                threshold: 0.8
-            })
-            if (r.status) {
-                var r = tools.补给操作.获取操作按钮(["使用"], "捆雪霜", true, true, true);
-                if (r.status) {
-                    click(random(万年雪霜包p.x[0], 万年雪霜包p.x[1]), random(万年雪霜包p.y[0], 万年雪霜包p.y[1]))
-                    sleep(1200)
-                    return {
-                        status: true,
-                    }
-                }
-                else {
-                    return {
-                        status: false,
-                        msg: "未找到捆药绳使用按钮"
-                    }
-                }
-            }
-            else {
-                return {
-                    status: false,
-                    msg: "未找到捆药绳"
-                }
-            }
-        },
-        检查仓库雪霜: () => {
-            var r = tools.常用操作.取出雪霜();
-            if (r.status) {
-                tools.常用操作.购买捆药绳();
-
-
-            }
-            else {
-
-            }
         },
         检测是否在游戏画面: () => {
             var puBtn = tools.findImageForWait("puBtn.png", {
@@ -5333,27 +5240,17 @@ var tools = {
             var p = null;
             switch (按钮名称) {
                 case "出售":
-                    // r = tools.findImageForWaitClick("chushouwupingBtn.png", {
-                    //     maxTries: 5,
-                    //     interval: 500
-                    // });
                     p = config.zuobiao.比奇小贩面板.出售物品[fbl];
                     break;
                 case "购买":
-                    // r = tools.findImageForWaitClick("goumaiwupingBtn.png", {
-                    //     maxTries: 5,
-                    //     interval: 500
-                    // });
                     p = config.zuobiao.比奇小贩面板.购买物品[fbl];
                     break;
                 case "普修":
-                    // r = tools.findImageForWaitClick("putongxiuliBtn.png", {
-                    //     maxTries: 5,
-                    //     interval: 500
-                    // });
                     p = config.zuobiao.比奇小贩面板.普通修理[fbl];
                     break;
-
+                case "保存":
+                    p = config.zuobiao.比奇小贩面板.保存物品[fbl];
+                    break;
 
             }
             click(random(p.x1, p.x2), random(p.y1, p.y2));
@@ -5939,6 +5836,10 @@ var tools = {
             if (当前总状态 == 总状态.已启动) {
                 tools.补给操作.买物品Loops();
                 tools.常用方法.错误日志("买物品Loops完成", 2)
+            }
+            if (当前总状态 == 总状态.已启动 && 挂机参数.捆雪霜包 == 1) {
+                var msg = tools.补给操作.检查仓库雪霜();
+                tools.常用方法.错误日志("检查仓库雪霜:" + msg, 2);
             }
             tools.常用方法.错误日志("补给完成", 2)
             tools.悬浮球描述("补给完成");
@@ -6846,6 +6747,148 @@ var tools = {
             var y2 = random(config.zuobiao.丢东西范围[fbl].y[0], config.zuobiao.丢东西范围[fbl].y[1]);
             gesture(时间戳, [x1, y1], [x2, y2]);
         },
+        购买捆药绳: () => {
+            var 铺 = config.zuobiao.按钮集合[fbl].铺;
+            var 绳 = config.zuobiao.按钮集合[fbl].捆药绳;
+            var 购 = config.zuobiao.按钮集合[fbl].购买物品;
+            var 确定 = config.zuobiao.按钮集合[fbl].购买确定;
+            var 铺关闭 = config.zuobiao.按钮集合[fbl].铺关闭;
+            click(random(铺.x[0], 铺.x[1]), random(铺.y[0], 铺.y[1]))
+            sleep(2000);
+            click(random(绳.x[0], 绳.x[1]), random(绳.y[0], 绳.y[1]))
+            sleep(1200);
+            click(random(购.x[0], 购.x[1]), random(购.y[0], 购.y[1]))
+            sleep(2000);
+            click(random(确定.x[0], 确定.x[1]), random(确定.y[0], 确定.y[1]))
+            sleep(1200);
+            click(random(铺关闭.x[0], 铺关闭.x[1]), random(铺关闭.y[0], 铺关闭.y[1]))
+            sleep(666);
+        },
+        取出雪霜: () => {
+            var t = 0.85;
+            var 取回数量 = 0;
+            var 仓库p = config.zuobiao.存取范围[fbl].仓库;
+            var 包袱p = config.zuobiao.存取范围[fbl].包袱;
+            var r = tools.matchTemplateForArea(补给枚举.万年雪霜, 12, t,
+                [仓库p.x, 仓库p.y, 仓库p.w, 仓库p.h]
+            )
+            var 雪霜数量 = r.count;
+            if (r.status && 雪霜数量 >= 6) {
+                while (true) {
+                    var r = tools.findImageAreaForWait(补给枚举.万年雪霜, 仓库p.x, 仓库p.y, 仓库p.x + 仓库p.w, 仓库p.y + 仓库p.h, {
+                        maxTries: 10,
+                        interval: 100,
+                        threshold: t
+                    })
+                    if (r.status) {
+                        取回数量++;
+                        if (取回数量 > 6) {
+                            return {
+                                status: true
+                            };
+                        }
+                        var x1 = r.img.x + r.size.w / 2 + random(5, 10);
+                        var y1 = r.img.y + r.size.h / 2 + random(5, 10);
+                        var x2 = 包袱p.中心.x + random(5, 10);
+                        var y2 = 包袱p.中心.y + random(5, 10);
+                        gesture(random(666, 999), [x1, y1], [x2, y2])
+                        tools.悬浮球描述("雪霜数量(" + 雪霜数量 + "),已取出(" + 取回数量 + ")");
+                        sleep(random(666, 999));
+                    }
+                    else {
+                        return {
+                            status: false,
+                            msg: "未获取到雪霜图片"
+                        };
+                    }
+                }
+            }
+            else {
+                return {
+                    status: false,
+                    msg: "雪霜数量小于(" + 雪霜数量 + ")"
+                };
+            }
+        },
+        捆雪霜: () => {
+            var 包袱p = config.zuobiao.存取范围[fbl].包袱;
+            var 万年雪霜包p = config.zuobiao.按钮集合[fbl].万年雪霜包;
+            var r = tools.findImageAreaForWaitClick(补给枚举.捆药绳, 包袱p.x, 包袱p.y, 包袱p.x + 包袱p.w, 包袱p.y + 包袱p.h, {
+                maxTries: 10,
+                interval: 100,
+                threshold: 0.8
+            })
+            if (r.status) {
+                var r = tools.补给操作.获取操作按钮(["使用"], "捆雪霜", true, true, true);
+                if (r.status) {
+                    click(random(万年雪霜包p.x[0], 万年雪霜包p.x[1]), random(万年雪霜包p.y[0], 万年雪霜包p.y[1]))
+                    sleep(1200)
+                    return {
+                        status: true,
+                    }
+                }
+                else {
+                    return {
+                        status: false,
+                        msg: "未找到捆药绳使用按钮"
+                    }
+                }
+            }
+            else {
+                return {
+                    status: false,
+                    msg: "未找到捆药绳"
+                }
+            }
+        },
+        存雪霜包: () => {
+            var 包袱p = config.zuobiao.存取范围[fbl].包袱;
+            var 仓库p = config.zuobiao.存取范围[fbl].仓库;
+            var r = tools.findImageAreaForWait(补给枚举.万年雪霜包, 包袱p.x, 包袱p.y, 包袱p.x + 包袱p.w, 包袱p.y + 包袱p.h, {
+                maxTries: 10,
+                interval: 100,
+                threshold: 0.8
+            })
+            if (r.status) {
+                var x1 = r.img.x + r.size.w / 2 + random(5, 10);
+                var y1 = r.img.y + r.size.h / 2 + random(5, 10);
+                var x2 = 仓库p.中心.x + random(5, 10);
+                var y2 = 仓库p.中心.y + random(5, 10);
+                gesture(random(666, 999), [x1, y1], [x2, y2])
+                sleep(random(666, 999));
+                return {
+                    status: true
+                };
+            }
+            else {
+                return {
+                    status: false,
+                    msg: "未获取到雪霜包图片"
+                };
+            }
+        },
+        检查仓库雪霜: () => {
+            tools.补给操作.点击小贩按钮("保存", false);
+            sleep(2000);
+            var r = tools.补给操作.取出雪霜();
+            if (!r.status) {
+            }
+            sleep(1200);
+            tools.补给操作.购买捆药绳();
+            sleep(1200);
+            r = tools.补给操作.捆雪霜();
+            if (!r.status) {
+                return r.msg;
+            }
+            sleep(1200);
+            r = tools.补给操作.存雪霜包();
+            if (r.status) {
+                return "捆雪霜成功";
+            }
+            else {
+                return r.msg;
+            }
+        },
     },
     验证码认证: {
         检测是否有认证: (img) => {
@@ -7741,6 +7784,9 @@ ui.run(() => {
             认证短信: win.cbRenzhengDuanXin.isChecked() ? 1 : 0,
             认证自动识别: win.cbRenzhengShiBie.isChecked() ? 1 : 0,
             云码认证: win.cbRenzhengYunMa.isChecked() ? 1 : 0,
+            捆雪霜包: win.cbKunxueshuangBao.isChecked() ? 1 : 0,
+
+
             地图拖动: win.cbDiTuTuoDong.isChecked() ? 1 : 0,
             跟随宝宝: win.cbIsGenSuiBaoBao.isChecked() ? 1 : 0,
             挂机地图: 挂机地图,
@@ -7936,7 +7982,7 @@ function showWinConfig() {
 //     sleep(100)
 //  }
 // sleep(2100)
-// tools.常用操作.捆雪霜();
+// tools.常用操作.检查仓库雪霜();
 
 //启动程序
 threads.start(function () {
