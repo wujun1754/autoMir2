@@ -204,12 +204,14 @@ var 补给枚举 = {
     红毒: "buji_hongdu.png",
     祝福油: "buji_zhufuyou.png",
     万年雪霜: "buji_wannianxueshuang.png",
+    万年雪霜包: "buji_wannianxueshuangbao.png",
     组队卷: "buji_zuduijuan.png",
     修复油_背包: "buji_xiufuyou.png",
     修复油_格子: "buji_xiufuyou_gezi.png",
     中蓝个_背包: "buji_lanyaoge.png",
     中蓝个_格子: "buji_lanyaoge_gezi.png",
     中蓝包: "buji_lanyaobao.png",
+    捆药绳: "buji_kunyaoshen.png",
 }
 var 文字图枚举 = {
     斩: "wenzi_zhan.png",
@@ -1596,7 +1598,24 @@ var tools = {
             var 人物中心 = config.zuobiao.人物中心[fbl];
             click(人物中心.x + random(5, -5), 人物中心.y + random(5, -5))
         },
-        捆雪霜: () => {
+        购买捆药绳: () => {
+            var 铺 = config.zuobiao.按钮集合[fbl].铺;
+            var 绳 = config.zuobiao.按钮集合[fbl].捆药绳;
+            var 购 = config.zuobiao.按钮集合[fbl].购买物品;
+            var 确定 = config.zuobiao.按钮集合[fbl].购买确定;
+            var 铺关闭 = config.zuobiao.按钮集合[fbl].铺关闭;
+            click(random(铺.x[0], 铺.x[1]), random(铺.y[0], 铺.y[1]))
+            sleep(2000);
+            click(random(绳.x[0], 绳.x[1]), random(绳.y[0], 绳.y[1]))
+            sleep(1200);
+            click(random(购.x[0], 购.x[1]), random(购.y[0], 购.y[1]))
+            sleep(2000);
+            click(random(确定.x[0], 确定.x[1]), random(确定.y[0], 确定.y[1]))
+            sleep(1200);
+            click(random(铺关闭.x[0], 铺关闭.x[1]), random(铺关闭.y[0], 铺关闭.y[1]))
+            sleep(666);
+        },
+        取出雪霜: () => {
             var t = 0.85;
             var 取回数量 = 0;
             var 仓库p = config.zuobiao.存取范围[fbl].仓库;
@@ -1615,7 +1634,9 @@ var tools = {
                     if (r.status) {
                         取回数量++;
                         if (取回数量 > 6) {
-                            break;
+                            return {
+                                status: true
+                            };
                         }
                         var x1 = r.img.x + r.size.w / 2 + random(5, 10);
                         var y1 = r.img.y + r.size.h / 2 + random(5, 10);
@@ -1625,25 +1646,60 @@ var tools = {
                         tools.悬浮球描述("雪霜数量(" + 雪霜数量 + "),已取出(" + 取回数量 + ")");
                         sleep(random(666, 999));
                     }
-                    else{
-                        break;
+                    else {
+                        return {
+                            status: false,
+                            msg: "未获取到雪霜图片"
+                        };
                     }
                 }
-
-                // var arr = r.r;
-                // arr.r.sort((a, b) => b.point.y - a.point.y);
-                // for (var index = 0; index < arr.length; index++) {
-                //     var item = arr[index];
-                //     var x1 = item.point.x + random(5, 10);
-                //     var y1 = item.point.y + random(5, 10);
-                //     var x2 = 包袱p.中心.x + random(5, 10);
-                //     var y2 = 包袱p.中心.y + random(5, 10);
-                //     gesture(random(666, 999), [x1, y1], [x2, y2])
-                //     sleep(random(666, 999));
-                // }
             }
-            
-            return r
+            else {
+                return {
+                    status: false,
+                    msg: "雪霜数量(" + 雪霜数量 + ")"
+                };
+            }
+        },
+        捆雪霜: () => {
+            var r = tools.findImageAreaForWaitClick(补给枚举.捆药绳, 包袱p.x, 包袱p.y, 包袱p.x + 包袱p.w, 包袱p.y + 包袱p.h, {
+                maxTries: 10,
+                interval: 100,
+                threshold: 0.8
+            })
+            if (r.status) {
+                var r = tools.补给操作.获取操作按钮(["使用"], "捆雪霜", true, true, true);
+                if (r.status) {
+                    click(random(万年雪霜包p.x[0], 万年雪霜包p.x[1]), random(万年雪霜包p.y[0], 万年雪霜包p.y[1]))
+                    sleep(1200)
+                    return {
+                        status: true,
+                    }
+                }
+                else {
+                    return {
+                        status: false,
+                        msg: "未找到捆药绳使用按钮"
+                    }
+                }
+            }
+            else {
+                return {
+                    status: false,
+                    msg: "未找到捆药绳"
+                }
+            }
+        },
+        检查仓库雪霜: () => {
+            var r = tools.常用操作.取出雪霜();
+            if (r.status) {
+                tools.常用操作.购买捆药绳();
+
+
+            }
+            else {
+
+            }
         },
         检测是否在游戏画面: () => {
             var puBtn = tools.findImageForWait("puBtn.png", {
@@ -7880,7 +7936,7 @@ function showWinConfig() {
 //     sleep(100)
 //  }
 // sleep(2100)
-// tools.补给操作.替换装备()
+// tools.常用操作.捆雪霜();
 
 //启动程序
 threads.start(function () {
