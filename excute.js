@@ -66,6 +66,8 @@ var 发现其他玩家时间等待 = 1000 * 60 * 3;
 
 var 禁止拾取时间 = new Date().getTime() - 1000 * 60 * 24;// 减去 24小时;
 
+var 挂机跑图累计错误次数 = 0;
+
 
 
 var 石墓阵上一次跑图点 = -1;
@@ -140,14 +142,14 @@ var 挂机参数 = {
     替换道德: 0,
     替换黑色戒指: 0,
     替换斩马: 0,
-    替换修罗: 0,
+    替换凝霜: 0,
     替换男盔: 0,
     替换女盔: 0,
 
     备用男重盔: 0,
     备用女重盔: 0,
     备用斩马: 0,
-    备用修罗: 0,
+    备用凝霜: 0,
     攻击宝宝身边: 0,
     寻找宝宝数: 0,
     攻击检查武器衣服: 0,
@@ -155,6 +157,8 @@ var 挂机参数 = {
     认证自动识别: 0,
     云码认证: 0,
     捆雪霜包: 0,
+    召唤宝宝: 0,
+
     地图拖动: 0,
     替换黑色戒指: 0,
     隐身数量: 0,
@@ -185,6 +189,8 @@ var 装备枚举 = {
     重盔男: "zhuangbei_zhongkui_nan.png",
     斩马刀: "zhuangbei_zhanma.png",
     修罗: "zhuangbei_xiuluo.png",
+    凝霜: "zhuangbei_ningshuang.png",
+    凌风: "zhuangbei_lingfeng.png",
 
     死神手: "zhuangbei_sishenshou.png",
     坚固手: "zhuangbei_jianku.png",
@@ -197,6 +203,7 @@ var 装备枚举 = {
     黑色戒指: "zhuangbei_heisejiezhi.png",
     降妖戒指: "zhuangbei_xiangyao.png",
     道德戒指: "zhuangbei_daode.png",
+    珊瑚戒指: "zhuangbei_shanhu.png",
     道士头盔: "zhuangbei_daotou.png",
 };
 
@@ -221,6 +228,7 @@ var 文字图枚举 = {
     符: "wenzi_fu.png",
     盔: "wenzi_kui.png",
     修: "wenzi_xiu.png",
+    凝: "wenzi_ning.png",
     黄: "wenzi_huang.png",
     蝎: "wenzi_xieshe.png",
     猪: "wenzi_zhu.png",
@@ -245,8 +253,8 @@ var 精英怪枚举 = {
     牛魔法师: {
         name: "牛魔法师",
         pic: "wenzhi_zuomianban_fashi.png",
-        是否隐身: true,
-        是否施毒: true,
+        是否隐身: false,
+        是否施毒: false,
         是否打防: false,
         是否打魔: true,
         是否攻击: true,
@@ -499,7 +507,7 @@ var win = floaty.rawWindow(
                             <checkbox id="cbTiHuanZhanMa" text="替换斩马" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="right">
-                            <checkbox id="cbTiHuanXiuLuo" text="替换修罗" textSize="10sp" />
+                            <checkbox id="cbTiHuanXiuLuo" text="替换凝霜" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="right">
                             <checkbox id="cbTiHuanNanKui" text="替换男盔" textSize="10sp" />
@@ -586,6 +594,9 @@ var win = floaty.rawWindow(
                         <horizontal gravity="right">
                             <checkbox id="cbKunxueshuangBao" text="捆雪霜包" textSize="10sp" />
                         </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbzhaohuanBaoBao" text="召唤宝宝" textSize="10sp" />
+                        </horizontal>
                     </horizontal>
 
                     <horizontal>
@@ -599,7 +610,7 @@ var win = floaty.rawWindow(
                             <checkbox id="cbBeiYongZhanMa" text="备用斩马" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="right">
-                            <checkbox id="cbBeiYongXiuLuo" text="备用修罗" textSize="10sp" />
+                            <checkbox id="cbBeiYongXiuLuo" text="备用凝霜" textSize="10sp" />
                         </horizontal>
                         <horizontal gravity="right">
                             <checkbox id="cbYinShenZouDong" text="隐身不动" textSize="10sp" />
@@ -875,7 +886,7 @@ var tools = {
             }
 
 
-            if (挂机参数.替换修罗 == 1) {
+            if (挂机参数.替换凝霜 == 1) {
                 win.cbTiHuanXiuLuo.setChecked(true);
             }
             if (挂机参数.替换斩马 == 1) {
@@ -929,7 +940,7 @@ var tools = {
             if (挂机参数.备用斩马 == 1) {
                 win.cbBeiYongZhanMa.setChecked(true);
             }
-            if (挂机参数.备用修罗 == 1) {
+            if (挂机参数.备用凝霜 == 1) {
                 win.cbBeiYongXiuLuo.setChecked(true);
             }
 
@@ -955,8 +966,9 @@ var tools = {
             if (挂机参数.捆雪霜包 == 1) {
                 win.cbKunxueshuangBao.setChecked(true);
             }
-
-
+            if (挂机参数.召唤宝宝 == 1) {
+                win.cbzhaohuanBaoBao.setChecked(true);
+            }
 
             if (挂机参数.地图拖动 == 1) {
                 win.cbDiTuTuoDong.setChecked(true);
@@ -1156,8 +1168,8 @@ var tools = {
             if (挂机参数.武器持久0回程 == 1 && 武器.status && 武器.持久 && 武器.持久.剩持久 <= 2) {
                 var isSuccess = false;
                 if (!是否用过备用武器) {
-                    if (挂机参数.备用修罗 == 1) {
-                        isSuccess = tools.常用操作.使用备用装备(装备枚举.修罗);
+                    if (挂机参数.备用凝霜 == 1) {
+                        isSuccess = tools.常用操作.使用备用装备(装备枚举.凝霜);
                     }
                     else if (挂机参数.备用斩马 == 1) {
                         isSuccess = tools.常用操作.使用备用装备(装备枚举.斩马刀);
@@ -1465,7 +1477,7 @@ var tools = {
                 result = tools.常用操作.处理地图错别字(result[0].text);
                 if (上次所在地图 != result) {
                     var isok = tools.常用操作.检测是否在游戏画面();
-                    if (isok) {
+                    if (isok && result != "比奇城" && result != "土城" && result != "苍月岛渔村") {
                         上次所在地图 = result;
                         tools.执行时间戳.检测内挂(true);
                         tools.常用操作.初始化大地图面板(true);
@@ -1584,8 +1596,8 @@ var tools = {
                     if (picName == 装备枚举.斩马刀) {
                         文字图 = 文字图枚举.斩;
                     }
-                    else if (picName == 装备枚举.修罗) {
-                        文字图 = 文字图枚举.修;
+                    else if (picName == 装备枚举.凝霜) {
+                        文字图 = 文字图枚举.凝;
                     }
                     else if (picName == 装备枚举.重盔男 || picName == 装备枚举.重盔女) {
                         文字图 = 文字图枚举.盔;
@@ -1610,14 +1622,14 @@ var tools = {
         },
         检测是否在游戏画面: () => {
             var puBtn = tools.findImageForWait("puBtn.png", {
-                maxTries: 10,
+                maxTries: 5,
                 interval: 200
             });
             if (puBtn.status) {
                 return true;
             }
             var xiaotuiBtn = tools.findImageForWait("yijianxiaoTuiBtn.png", {
-                maxTries: 10,
+                maxTries: 5,
                 interval: 200
             });
             if (xiaotuiBtn.status) {
@@ -1730,10 +1742,10 @@ var tools = {
                     text = "石墓入口"
                 }
             }
-            else if (text.indexOf("地牢") >= 0 && (text.indexOf("一") >= 0 || text.indexOf("-") >= 0) && text.indexOf("东") >= 0) {
+            else if ((text.indexOf("地") >= 0 || text.indexOf("牢") >= 0) && (text.indexOf("一") >= 0 || text.indexOf("-") >= 0) && text.indexOf("东") >= 0) {
                 text = "地牢一层东"
             }
-            else if (text.indexOf("地牢") >= 0 && (text.indexOf("一") >= 0 || text.indexOf("-") >= 0) && text.indexOf("北") >= 0) {
+            else if ((text.indexOf("地") >= 0 || text.indexOf("牢") >= 0) && (text.indexOf("一") >= 0 || text.indexOf("-") >= 0) && text.indexOf("北") >= 0) {
                 text = "地牢一层北1"
             }
             else if ((text.indexOf("连") >= 0 || text.indexOf("接") >= 0) && (text.indexOf("通") >= 0 || text.indexOf("道") >= 0)) {
@@ -1794,6 +1806,9 @@ var tools = {
                 else if (text.indexOf("口") >= 0 || text.indexOf("入") >= 0) {
                     text = "牛魔寺庙入口"
                 }
+            }
+            else {
+                tools.常用方法.错误日志(result, -1);
             }
             return text;
         },
@@ -1914,7 +1929,7 @@ var tools = {
             home();
             sleep(5000);
         },
-        关闭所有窗口: (isClick, time) => {
+        关闭所有窗口: (isClick, time, isonlyOne) => {
             if (time == null) {
                 time = 500;
             }
@@ -1922,15 +1937,21 @@ var tools = {
                 tools.常用操作.点击人物();
             }
             var result = true;
-            var tyrCount = 0;
-            while (result) {
-                sleep(time)
-                if (tyrCount >= 10) {
-                    break;
-                }
-                result = tools.findImageClick("closeBtn2.png", 0.9);
-                tyrCount++;
+            if (isonlyOne) {
+                tools.findImageClick("closeBtn2.png", 0.9);
             }
+            else {
+                var tyrCount = 0;
+                while (result) {
+                    sleep(time)
+                    if (tyrCount >= 10) {
+                        break;
+                    }
+                    result = tools.findImageClick("closeBtn2.png", 0.9);
+                    tyrCount++;
+                }
+            }
+
         },
     },
     执行时间戳: {
@@ -1952,13 +1973,11 @@ var tools = {
             }
         },
         检测宝宝: (强制检测) => {
-            if (new Date().getTime() - 上次检查宝宝时间 > 检查宝宝时间戳 || 强制检测) {
-                if (挂机参数.挂机地图 != "比奇野外") {
-                    tools.悬浮球描述("检查宝宝开始");
-                    tools.挂机打怪.宝宝是否存在("攻击", true);
-                    上次检查宝宝时间 = new Date().getTime();
-                    tools.悬浮球描述("检查宝宝结束");
-                }
+            if ((new Date().getTime() - 上次检查宝宝时间 > 检查宝宝时间戳 || 强制检测) && 挂机参数.召唤宝宝 == 1) {
+                tools.悬浮球描述("检查宝宝开始");
+                tools.挂机打怪.宝宝是否存在("攻击", true);
+                上次检查宝宝时间 = new Date().getTime();
+                tools.悬浮球描述("检查宝宝结束");
             }
         },
         检测蓝药: () => {
@@ -2206,7 +2225,7 @@ var tools = {
             var isFind = false;
             if (挂机参数.挂机地图.indexOf("兽人古墓") >= 0) {
                 var p = config.zuobiao.左攻击面板[fbl].怪物集合;
-                var arr = tools.matchTemplateForArea(文字图枚举.髅左面板, 5, 0.8,
+                var arr = tools.matchTemplateForArea(文字图枚举.髅左面板, 5, 0.75,
                     [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]]
                 )
                 if (arr.count > 0) {
@@ -2220,10 +2239,19 @@ var tools = {
                             w: p.x[1] - p.x[0],
                             h: 35,
                         }
-                        var r = images.findMultiColors(img, p.找色[0].color, [[p.找色[1].x, p.找色[1].y, p.找色[1].color], [p.找色[2].x, p.找色[2].y, p.找色[2].color]], {
-                            region: [血条范围.x, 血条范围.y, 血条范围.w, 血条范围.h],
-                            threshold: 15
-                        });
+                        var r = null;
+                        if (挂机参数.只打满血怪 == 1) {
+                            r = images.findMultiColors(img, p.找色[0].color, [[p.找色[1].x, p.找色[1].y, p.找色[1].color], [p.找色[2].x, p.找色[2].y, p.找色[2].color]], {
+                                region: [血条范围.x, 血条范围.y, 血条范围.w, 血条范围.h],
+                                threshold: 15
+                            });
+                        }
+                        else {
+                            r = images.findMultiColors(img, p.找色非满血[0].color, [[p.找色非满血[1].x, p.找色非满血[1].y, p.找色非满血[1].color]], {
+                                region: [血条范围.x, 血条范围.y, 血条范围.w, 血条范围.h],
+                                threshold: 35
+                            });
+                        }
                         if (r && (r.x > 0 || r.y > 0)) {
                             click(r.x + random(12, 20), r.y + random(-3, 3))
                             isFind = true;
@@ -2294,7 +2322,7 @@ var tools = {
             上次打怪时间 = new Date().getTime();
             var timeout = 挂机参数.打怪等待 * 1000;
             var 人物是否移动 = false;
-            var 移动时间戳 = 1000 * 1.5;
+            var 移动时间戳 = 1000 * 1.3;
             var 上一次移动 = new Date().getTime();
 
             var 攻击时间戳 = 1000 * 5;
@@ -2391,9 +2419,20 @@ var tools = {
                             tools.挂机打怪.开始逃跑();
                         }
                     }
-                    if (挂机参数.只打满血怪 == 1 && 挂机参数.隐身走动 == 0 && !是否强制攻击 && isChange && 锁定的怪物.length <= 0) {
+
+                    if (!是否强制攻击 && (new Date().getTime() - 发现其他玩家时间) <= 发现其他玩家时间等待) { //二分钟内发现玩家需要强制攻击
+                        toastLog((new Date().getTime() - 发现其他玩家时间) / 1000 + "秒前发现玩家,强制攻击")
+                        是否强制攻击 = true;
+                    }
+
+                    if ((挂机参数.隐身走动 == 0 || 是否强制攻击) && isChange && 锁定的怪物.length <= 0) {
                         锁定的怪物 = tools.挂机打怪.身边锁定怪物();
                         if (锁定的怪物.length <= 0) {
+                            if (是否强制攻击 && 切换左面板人物) {
+                                切换左面板人物 = false;
+                                tools.常用操作.点击左面板怪物();
+                                sleep(100);
+                            }
                             click(random(726, 736), random(25, 35));
                             return true;
                         }
@@ -2412,10 +2451,6 @@ var tools = {
                         }
                     }
 
-                    if (!是否强制攻击 && (new Date().getTime() - 发现其他玩家时间) <= 发现其他玩家时间等待) { //二分钟内发现玩家需要强制攻击
-                        是否强制攻击 = true;
-                        toastLog((new Date().getTime() - 发现其他玩家时间) / 1000 + "秒前发现玩家,强制攻击")
-                    }
 
                     if (!是否隐身等待 && !是否强制攻击 && 挂机参数.隐身走动 == 1 && 锁定的怪物.length > 0) {
                         var r = 扫描宝宝;
@@ -2470,13 +2505,7 @@ var tools = {
                         var result = tools.挂机打怪.判断是否强制攻击();
                         if (result.status) {
                             toastLog(result.来源)
-                            锁定的怪物 = "";
                             是否强制攻击 = true;
-                            是否锁定危险怪 = false;
-                            上次坐标截图 = tools.常用操作.截图当前坐标();
-                            上一次移动 = new Date().getTime();
-                            上一次攻击 = new Date().getTime() - (60 * 1000);
-                            start = new Date().getTime();
                         }
                     }
 
@@ -2685,7 +2714,7 @@ var tools = {
             return tools.findImageAreaForWait("zhongjianguaiwuBtn.png", p.x[0], p.y[0], p.x[1], p.y[1], {
                 maxTries: tryCount,
                 interval: interval,
-                threshold: 0.5
+                threshold: 0.65
             })
 
             // 不能通过找色去做，因为有时会误点到人物
@@ -2781,6 +2810,11 @@ var tools = {
                             禁止拾取时间 = new Date().getTime() + (1000 * 15);
                             break;
                         }
+
+
+                        isFind = tools.findImageArea(文字图枚举.不能拾取, p.x1, p.y1, p.x2, p.y2, 0.85);
+
+
                         if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
                             人物是否移动 = tools.人物移动.跑图坐标是否变化();
                             if (人物是否移动) {
@@ -2790,6 +2824,10 @@ var tools = {
                                 累计未移动次数 = 0;
                             }
                             else {
+                                if (是否强制拾取 && isFind) {
+                                    sleep(200);
+                                    continue;
+                                }
                                 累计未移动次数++;
                                 if (累计未移动次数 >= 3) {
                                     if (是否激活状态) {
@@ -2802,13 +2840,13 @@ var tools = {
                             上一次移动 = new Date().getTime();
                         }
 
-                        isFind = tools.findImageArea(文字图枚举.不能拾取, p.x1, p.y1, p.x2, p.y2, 0.85);
                         if (是否强制拾取) {
                             if (isFind.status) {
                                 if (是否激活状态) {
                                     click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
-                                    sleep(1200);
+                                    sleep(3000);
                                     click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+                                    sleep(2000);
                                 }
                                 else {
                                     click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
@@ -2830,7 +2868,7 @@ var tools = {
                                     continue;
                                 }
                                 else {
-                                    toastLog("不能拾取")
+                                    //toastLog("不能拾取")
                                     if (是否激活状态) {
                                         click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
                                     }
@@ -2842,13 +2880,10 @@ var tools = {
                                 sleep(200);
                             }
                         }
-
-
                     }
                     else {
                         break;
                     }
-
                 }
                 //toastLog("取消拾取")
                 //tools.悬浮球临时描述("激活(" + 是否激活 + ")[" + ((new Date().getTime() - 激活时间) / 1000).toFixed(3) + "]");
@@ -2990,6 +3025,10 @@ var tools = {
             if (!是否跑图) {
                 return;
             }
+            if (挂机跑图累计错误次数 >= 2) {
+                tools.人物移动.随机走一步(random(2500, 3000));
+                sleep(666);
+            }
             tools.常用操作.打开大地图();
             var closeImg = null;
             var closeBtn = tools.findImageForWait("closeBtn.png", {
@@ -3004,9 +3043,10 @@ var tools = {
             }
             var start = new Date().getTime();
             while (true) {
-                if (new Date().getTime() - start > (1000 * 10)) {
-                    toastLog("点击挂机坐标超时");
-                    tools.常用操作.关闭所有窗口();
+                if (new Date().getTime() - start > (1000 * 6)) {
+                    toastLog("点击挂机坐标超过6秒");
+                    挂机跑图累计错误次数++;
+                    tools.常用操作.关闭所有窗口(false, 0, true);
                     return;
                 }
                 if (挂机参数.反跑地图 == 1) {
@@ -3042,22 +3082,23 @@ var tools = {
                 var result = null;
                 if (x1 < 0 || y1 < 0 || x2 > 1280 || y2 > 720) {
                     toastLog("参数异常x1=" + x1 + ",y1=" + y1 + ",x2=" + x2 + ",y2=" + y2 + "");
-                    tools.常用操作.关闭所有窗口();
+                    tools.常用操作.关闭所有窗口(false, 0, true);
                     return;
                 }
                 try {
                     result = tools.findAllColorAreaForWait("#00FFFF", x1, y1, x2, y2, {
-                        maxTries: 7,
-                        interval: 150
+                        maxTries: 10,
+                        interval: 100
                     })
                 } catch (error) {
                     toastLog("找色(线路)异常");
-                    tools.常用操作.关闭所有窗口();
+                    tools.常用操作.关闭所有窗口(false, 0, true);
                     return;
                 }
                 if (result.status && result.count >= 10) {
+                    挂机跑图累计错误次数 = 0;
                     toastLog("前往挂机点[" + (挂机点跑图顺序 + 1) + "]");
-                    tools.常用操作.关闭所有窗口();
+                    tools.常用操作.关闭所有窗口(false, 0, true);
                     return;
                 }
                 else {
@@ -4732,7 +4773,6 @@ var tools = {
                     var 小贩坐标 = tools.人物移动.获取小贩坐标();
                     人物坐标 = tools.常用操作.获取人物坐标();
                     if (人物坐标 != null && Math.abs(人物坐标.x - 小贩坐标.x) <= 1 && Math.abs(人物坐标.y - 小贩坐标.y) <= 1) {
-                        tools.常用方法.错误日志("到达小贩Loop", 2)
                         toastLog("到达小贩NPC");
                         break;
                     } else {
@@ -5127,10 +5167,24 @@ var tools = {
                 threshold: 15
             });
             utils.recycleNull(img);
+            var 是否等待 = false;
+            var msg = "";
             if (r && (r.x > 0 || r.y > 0)) {
-                tools.常用方法.错误日志(来源 + "发现BOSS提示文字", 3);
+                是否等待 = true;
+                msg = "发现BOSS提示文字"
+
+            }
+            else {
+                r = tools.findImage("xiaoxilaba.png");
+                if (r.status) {
+                    是否等待 = true;
+                    msg = "发现xiaoxilaba提示文字"
+                }
+            }
+            if (是否等待) {
+                tools.常用方法.错误日志(来源 + msg, 3);
                 if (等待时间 && 等待时间 > 0) {
-                    tools.悬浮球描述("发现BOSS提示文字 等待(" + 等待时间 / 1000 + ")")
+                    tools.悬浮球描述("[" + 来源 + "]" + msg + ",等待(" + 等待时间 / 1000 + ")秒");
                     sleep(等待时间);
                 }
             }
@@ -5299,7 +5353,7 @@ var tools = {
             var btn1Name = "";
             var tryCount = 0;
             while (true) {
-                if (tryCount >= 6) {
+                if (tryCount >= 3) {
                     break;
                 }
                 for (let index = 0; index < 按钮类型.length; index++) {
@@ -5348,8 +5402,8 @@ var tools = {
                     }
                 }
                 else {
-                    if (isBoss) {
-                        tools.补给操作.判断是否出现BOSS提示(1000 * 90, 来源);
+                    if (isBoss && tools.常用操作.检测是否在游戏画面()) {
+                        tools.补给操作.判断是否出现BOSS提示(1000 * 30, 来源);
                     }
                 }
                 sleep(200);
@@ -5431,12 +5485,16 @@ var tools = {
                     break;
                 }
                 tools.补给操作.判断是否出现BOSS提示(1000 * 90, "当放入 按钮找不到");
-                r = tools.findImageAreaClick(装备枚举.斩马刀, 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, 0.8, true);
-                if (!r) {
-                    r = tools.findImageAreaClick(装备枚举.重盔男, 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, 0.8, true);
-                }
+
+                r = tools.findImageAreaClick(装备枚举.重盔男, 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, 0.8, true);
                 if (!r) {
                     r = tools.findImageAreaClick(装备枚举.重盔女, 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, 0.8, true);
+                }
+                if (!r) {
+                    r = tools.findImageAreaClick(装备枚举.凝霜, 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, 0.8, true);
+                }
+                if (!r) {
+                    r = tools.findImageAreaClick(装备枚举.斩马刀, 背包面板P.x1, 背包面板P.y1, 背包面板P.x2, 背包面板P.y2, 0.8, true);
                 }
                 if (r) {
                     break;
@@ -5636,6 +5694,9 @@ var tools = {
             }, {
                 name: "修复油",
                 pic: 补给枚举.修复油_背包
+            }, {
+                name: "捆药绳",
+                pic: 补给枚举.捆药绳
             }];
             if (!是否排除装备) {
                 arr.push({
@@ -5655,10 +5716,10 @@ var tools = {
                     pic: 装备枚举.斩马刀
                 })
             }
-            if (挂机参数.备用修罗 == 1 && !是否排除装备) {
+            if (挂机参数.备用凝霜 == 1 && !是否排除装备) {
                 arr.push({
-                    name: "修罗",
-                    pic: 装备枚举.修罗
+                    name: "凝霜",
+                    pic: 装备枚举.凝霜
                 })
             }
 
@@ -5689,8 +5750,8 @@ var tools = {
                             }
                         }
                     }
-                    else if (item.pic == 装备枚举.修罗) {
-                        r = tools.补给操作.背包选中按钮中找字图(文字图枚举.修, btn)
+                    else if (item.pic == 装备枚举.凝霜) {
+                        r = tools.补给操作.背包选中按钮中找字图(文字图枚举.凝, btn)
                         if (r.status) {
                             return {
                                 status: true,
@@ -5820,7 +5881,20 @@ var tools = {
                 tools.人物移动.使用地牢();
                 tools.常用操作.关闭所有窗口();
             }
-            tools.人物移动.去小贩Loop();
+            if (当前总状态 == 总状态.已启动) {
+                while (true) {
+                    try {
+                        tools.人物移动.去小贩Loop();
+                        tools.常用方法.错误日志("去小贩Loop:成功", 2)
+                        break;
+                    } catch (e) {
+                        var msg = typeof e === "object" && e.stack ? e.stack + "\n" + e.toString() : e.toString()
+                        tools.常用方法.错误日志("去小贩Loop:异常\n" + msg, 2)
+                        toastLog("去小贩Loop: 异常\n" + msg);
+                        sleep(666);
+                    }
+                }
+            }
             if (当前总状态 == 总状态.已启动) {
                 tools.补给操作.替换装备();
                 tools.常用方法.错误日志("替换装备完成", 2)
@@ -5838,6 +5912,7 @@ var tools = {
                 tools.常用方法.错误日志("买物品Loops完成", 2)
             }
             if (当前总状态 == 总状态.已启动 && 挂机参数.捆雪霜包 == 1) {
+                sleep(888);
                 var msg = tools.补给操作.检查仓库雪霜();
                 tools.常用方法.错误日志("检查仓库雪霜:" + msg, 2);
             }
@@ -5850,6 +5925,9 @@ var tools = {
                 var 左上箭头 = config.zuobiao.按钮集合[fbl].左上箭头;
                 var 分身派遣 = config.zuobiao.按钮集合[fbl].分身派遣;
                 var 分身派遣2 = config.zuobiao.按钮集合[fbl].分身派遣2;
+                var 奖励p = config.zuobiao.按钮集合[fbl].分身领取奖励;
+                var 派遣p = config.zuobiao.按钮集合[fbl].分身派遣;
+                var 修炼p = config.zuobiao.按钮集合[fbl].分身确定修炼;
                 var r = tools.findImageForWaitClick("fenshenxiulianBtn.png", {
                     maxTries: 10,
                     interval: 333
@@ -5867,49 +5945,33 @@ var tools = {
                     toastLog("未找到分身修炼按钮");
                     return false;
                 }
-                r = tools.findImageForWaitClick("lingqujiangliBtn.png", {
+                r = tools.findImageAreaForWaitClick("fenshen_lingqujiangliBtn.png", 奖励p.x[0], 奖励p.y[0], 奖励p.x[1], 奖励p.y[1], {
                     maxTries: 10,
-                    interval: 333
+                    interval: 333,
+                    threshold: 0.9
                 })
                 sleep(random(666, 999));
 
-                var 模式 = -1;
-                r = tools.findImageForWait("fenshenxiulianbar.png", {
+                r = tools.findImageAreaForWaitClick("fenshen_paiqianBtn.png", 派遣p.x[0], 派遣p.y[0], 派遣p.x[1], 派遣p.y[1], {
                     maxTries: 10,
-                    interval: 333
+                    interval: 333,
+                    threshold: 0.9
                 })
-                if (r.status) {
-                    模式 = 1;
-                }
-                else {
-                    r = tools.findImageForWait("fenshenxiulianbar2.png", {
-                        maxTries: 10,
-                        interval: 333
-                    })
-                    if (r.status) {
-                        模式 = 2;
-                    }
-                }
-                if (模式 == 1) {
-                    click(random(分身派遣.x[0], 分身派遣.x[1]), random(分身派遣.y[0], 分身派遣.y[1]));
-                }
-                else if (模式 == 2) {
-                    click(random(分身派遣2.x[0], 分身派遣2.x[1]), random(分身派遣2.y[0], 分身派遣2.y[1]));
-                }
-                else {
-                    tools.悬浮球描述("未找到分身修炼Bar")
-                    toastLog("未找到分身修炼Bar");
+                if (!r.status) {
+                    toastLog("未找到分身（派遣）按钮");
+                    tools.常用操作.关闭所有窗口();
                     return false;
                 }
 
-
-                r = tools.findImageForWaitClick("quedingxiulianBtn.png", {
+                r = tools.findImageAreaForWaitClick("fenshenquedingxiulianBtn.png", 修炼p.x[0], 修炼p.y[0], 修炼p.x[1], 修炼p.y[1], {
                     maxTries: 10,
-                    interval: 333
+                    interval: 333,
+                    threshold: 0.9
                 })
+
                 if (!r.status) {
-                    tools.悬浮球描述("未找到分身修炼确定按钮")
-                    toastLog("未找到分身修炼确定按钮");
+                    toastLog("未找到分身修炼（确定）按钮");
+                    tools.常用操作.关闭所有窗口();
                     return false;
                 }
                 while (true) {
@@ -6001,7 +6063,7 @@ var tools = {
                     var info = tools.补给操作.判断选中格子动作(false, true, true, zhengliBtn, r.value, index, index1);
                     if (info.是否跳过) {
                         var 是否跳过 = false;
-                        if (info.物品名称 == "斩马" || info.物品名称 == "修罗") {
+                        if (info.物品名称 == "斩马" || info.物品名称 == "修罗" || info.物品名称 == "凝霜") {
                             if (!是否已跳过武器) {
                                 是否跳过 = true;
                                 是否已跳过武器 = true;
@@ -6140,14 +6202,14 @@ var tools = {
                         }
 
                     }
-                    else if (picName == 装备枚举.修罗) {
+                    else if (picName == 装备枚举.凝霜) {
                         if (r.status && (
-                            r.value.indexOf("修") >= 0
-                            || r.value.indexOf("罗") >= 0
-                            || r.value.indexOf("40") >= 0
+                            r.value.indexOf("凝") >= 0
+                            || r.value.indexOf("霜") >= 0
+                            || r.value.indexOf("20") >= 0
                             || r.value.indexOf("25") >= 0)) {
                             if (r.持久) {
-                                if (r.持久.满持久 == 25) {
+                                if (r.持久.满持久 == 20) {
                                     result.push({
                                         装备: "武器",
                                         名称: r.名称,
@@ -6155,11 +6217,11 @@ var tools = {
                                     })
                                 }
                                 else {
-                                    toastLog("修罗" + r.持久.满持久 + "持久未满25不达标")
+                                    toastLog("凝霜" + r.持久.满持久 + "持久未满20不达标")
                                 }
                             }
                             else {
-                                toastLog("修罗持久识别失败" + JSON.stringify(r))
+                                toastLog("凝霜持久识别失败" + JSON.stringify(r))
                             }
                             break;
                         }
@@ -6270,8 +6332,8 @@ var tools = {
             var 替换 = [];
             var result = []
 
-            if (挂机参数.替换修罗 == 1) {
-                result.push(装备枚举.修罗);
+            if (挂机参数.替换凝霜 == 1) {
+                result.push(装备枚举.凝霜);
             }
             if (挂机参数.替换斩马 == 1) {
                 result.push(装备枚举.斩马刀);
@@ -6748,21 +6810,60 @@ var tools = {
             gesture(时间戳, [x1, y1], [x2, y2]);
         },
         购买捆药绳: () => {
-            var 铺 = config.zuobiao.按钮集合[fbl].铺;
+            var 包袱p = config.zuobiao.存取范围[fbl].包袱;
             var 绳 = config.zuobiao.按钮集合[fbl].捆药绳;
             var 购 = config.zuobiao.按钮集合[fbl].购买物品;
             var 确定 = config.zuobiao.按钮集合[fbl].购买确定;
             var 铺关闭 = config.zuobiao.按钮集合[fbl].铺关闭;
-            click(random(铺.x[0], 铺.x[1]), random(铺.y[0], 铺.y[1]))
-            sleep(2000);
-            click(random(绳.x[0], 绳.x[1]), random(绳.y[0], 绳.y[1]))
-            sleep(1200);
-            click(random(购.x[0], 购.x[1]), random(购.y[0], 购.y[1]))
-            sleep(2000);
-            click(random(确定.x[0], 确定.x[1]), random(确定.y[0], 确定.y[1]))
-            sleep(1200);
-            click(random(铺关闭.x[0], 铺关闭.x[1]), random(铺关闭.y[0], 铺关闭.y[1]))
-            sleep(666);
+            var tryCount = 0;
+            while (true) {
+                if (tryCount >= 10) {
+                    return {
+                        status: false,
+                        msg: "尝试10次购买都失败了"
+                    }
+                }
+                var r = tools.findImageAreaForWait(补给枚举.捆药绳, 包袱p.x, 包袱p.y, 包袱p.x + 包袱p.w, 包袱p.y + 包袱p.h, {
+                    maxTries: 10,
+                    interval: 100,
+                    threshold: 0.7
+                })
+                if (r.status) {
+                    tools.常用方法.错误日志("发现捆药绳:" + JSON.stringify(r), 2);
+                    return {
+                        status: true
+                    }
+                }
+                else {
+                    tryCount++;
+                    var puBtn = tools.findImageForWaitClick("puBtn.png", {
+                        maxTries: 10,
+                        interval: 200
+                    });
+                    if (puBtn.status) {
+                        tools.常用方法.错误日志("获取铺图片成功:" + JSON.stringify(puBtn), 2);
+                        sleep(3000);
+                        click(random(绳.x[0], 绳.x[1]), random(绳.y[0], 绳.y[1]))
+                        tools.悬浮球描述("选择捆药绳");
+                        sleep(2000);
+                        click(random(购.x[0], 购.x[1]), random(购.y[0], 购.y[1]))
+                        tools.悬浮球描述("点击购买按钮");
+                        sleep(2500);
+                        click(random(确定.x[0], 确定.x[1]), random(确定.y[0], 确定.y[1]))
+                        tools.悬浮球描述("点击确定按钮");
+                        sleep(1500);
+                        click(random(铺关闭.x[0], 铺关闭.x[1]), random(铺关闭.y[0], 铺关闭.y[1]))
+                        tools.悬浮球描述("点击关闭按钮");
+                        sleep(1200);
+                    }
+                    else {
+                        tools.常用方法.错误日志("获取铺图片失败", 2);
+                    }
+                }
+            }
+
+
+
         },
         取出雪霜: () => {
             var t = 0.85;
@@ -6781,19 +6882,19 @@ var tools = {
                         threshold: t
                     })
                     if (r.status) {
-                        取回数量++;
-                        if (取回数量 > 6) {
-                            return {
-                                status: true
-                            };
-                        }
                         var x1 = r.img.x + r.size.w / 2 + random(5, 10);
                         var y1 = r.img.y + r.size.h / 2 + random(5, 10);
                         var x2 = 包袱p.中心.x + random(5, 10);
                         var y2 = 包袱p.中心.y + random(5, 10);
                         gesture(random(666, 999), [x1, y1], [x2, y2])
-                        tools.悬浮球描述("雪霜数量(" + 雪霜数量 + "),已取出(" + 取回数量 + ")");
+                        tools.悬浮球描述("雪霜数量(" + 雪霜数量 + "),已取出(" + (取回数量 + 1) + ")");
                         sleep(random(666, 999));
+                        取回数量++;
+                        if (取回数量 >= 6) {
+                            return {
+                                status: true
+                            };
+                        }
                     }
                     else {
                         return {
@@ -6806,33 +6907,49 @@ var tools = {
             else {
                 return {
                     status: false,
-                    msg: "雪霜数量小于(" + 雪霜数量 + ")"
+                    msg: "雪霜数量(" + 雪霜数量 + ")不用捆"
                 };
             }
         },
         捆雪霜: () => {
             var 包袱p = config.zuobiao.存取范围[fbl].包袱;
             var 万年雪霜包p = config.zuobiao.按钮集合[fbl].万年雪霜包;
-            var r = tools.findImageAreaForWaitClick(补给枚举.捆药绳, 包袱p.x, 包袱p.y, 包袱p.x + 包袱p.w, 包袱p.y + 包袱p.h, {
+            var r = tools.findImageAreaForWait(补给枚举.捆药绳, 包袱p.x, 包袱p.y, 包袱p.x + 包袱p.w, 包袱p.y + 包袱p.h, {
                 maxTries: 10,
                 interval: 100,
-                threshold: 0.8
+                threshold: 0.7
             })
-            if (r.status) {
-                var r = tools.补给操作.获取操作按钮(["使用"], "捆雪霜", true, true, true);
-                if (r.status) {
-                    click(random(万年雪霜包p.x[0], 万年雪霜包p.x[1]), random(万年雪霜包p.y[0], 万年雪霜包p.y[1]))
-                    sleep(1200)
-                    return {
-                        status: true,
-                    }
+            tools.常用方法.错误日志("捆药绳位置:" + JSON.stringify(r), 2);
+            tools.悬浮球描述("捆药绳位置:" + JSON.stringify(r))
+            if (r.status && (r.img.x > 0 || r.img.y > 0)) {
+                var x = r.img.x + r.size.w / 2 + random(5, 10);
+                var y = r.img.y + r.size.h / 2 + random(5, 10);
+                click(x, y)
+                sleep(120);
+                click(x, y)
+                sleep(2000)
+                click(random(万年雪霜包p.x[0], 万年雪霜包p.x[1]), random(万年雪霜包p.y[0], 万年雪霜包p.y[1]))
+                sleep(2000)
+                return {
+                    status: true,
                 }
-                else {
-                    return {
-                        status: false,
-                        msg: "未找到捆药绳使用按钮"
-                    }
-                }
+                // r = tools.补给操作.获取操作按钮(["使用"], "捆雪霜", true, true, true);
+                // tools.悬浮球描述("捆药绳使用按钮:" + JSON.stringify(r))
+                // tools.常用方法.错误日志("捆药绳使用按钮:" + JSON.stringify(r), 2);
+                // if (r.status) {
+                //     sleep(2000)
+                //     click(random(万年雪霜包p.x[0], 万年雪霜包p.x[1]), random(万年雪霜包p.y[0], 万年雪霜包p.y[1]))
+                //     sleep(2000)
+                //     return {
+                //         status: true,
+                //     }
+                // }
+                // else {
+                //     return {
+                //         status: false,
+                //         msg: "未找到捆药绳使用按钮"
+                //     }
+                // }
             }
             else {
                 return {
@@ -6842,11 +6959,15 @@ var tools = {
             }
         },
         存雪霜包: () => {
+            tools.常用操作.关闭所有窗口();
+            sleep(666);
+            tools.补给操作.点击小贩按钮("保存", false);
+            sleep(1288);
             var 包袱p = config.zuobiao.存取范围[fbl].包袱;
             var 仓库p = config.zuobiao.存取范围[fbl].仓库;
             var r = tools.findImageAreaForWait(补给枚举.万年雪霜包, 包袱p.x, 包袱p.y, 包袱p.x + 包袱p.w, 包袱p.y + 包袱p.h, {
                 maxTries: 10,
-                interval: 100,
+                interval: 200,
                 threshold: 0.8
             })
             if (r.status) {
@@ -6857,7 +6978,8 @@ var tools = {
                 gesture(random(666, 999), [x1, y1], [x2, y2])
                 sleep(random(666, 999));
                 return {
-                    status: true
+                    status: true,
+                    msg: "成功存入"
                 };
             }
             else {
@@ -6871,23 +6993,19 @@ var tools = {
             tools.补给操作.点击小贩按钮("保存", false);
             sleep(2000);
             var r = tools.补给操作.取出雪霜();
-            if (!r.status) {
-            }
-            sleep(1200);
-            tools.补给操作.购买捆药绳();
-            sleep(1200);
-            r = tools.补给操作.捆雪霜();
-            if (!r.status) {
-                return r.msg;
-            }
-            sleep(1200);
-            r = tools.补给操作.存雪霜包();
             if (r.status) {
-                return "捆雪霜成功";
+                sleep(2200);
+                r = tools.补给操作.购买捆药绳();
+                if (r.status) {
+                    sleep(1200);
+                    r = tools.补给操作.捆雪霜();
+                    if (r.status) {
+                        r = tools.补给操作.存雪霜包();
+                    }
+                }
             }
-            else {
-                return r.msg;
-            }
+            tools.常用操作.关闭所有窗口();
+            return r.msg;
         },
     },
     验证码认证: {
@@ -7764,7 +7882,7 @@ ui.run(() => {
             替换道头: win.cbTiHuanDaoTou.isChecked() ? 1 : 0,
 
             替换斩马: win.cbTiHuanZhanMa.isChecked() ? 1 : 0,
-            替换修罗: win.cbTiHuanXiuLuo.isChecked() ? 1 : 0,
+            替换凝霜: win.cbTiHuanXiuLuo.isChecked() ? 1 : 0,
 
             替换男盔: win.cbTiHuanNanKui.isChecked() ? 1 : 0,
             替换女盔: win.cbTiHuanNvKui.isChecked() ? 1 : 0,
@@ -7772,7 +7890,7 @@ ui.run(() => {
             备用男重盔: win.cbBeiYongNanZhongKui.isChecked() ? 1 : 0,
             备用女重盔: win.cbBeiYongNvZhongKui.isChecked() ? 1 : 0,
             备用斩马: win.cbBeiYongZhanMa.isChecked() ? 1 : 0,
-            备用修罗: win.cbBeiYongXiuLuo.isChecked() ? 1 : 0,
+            备用凝霜: win.cbBeiYongXiuLuo.isChecked() ? 1 : 0,
 
             无蓝回城: win.cbIsWuLanHuiCheng.isChecked() ? 1 : 0,
             无飞回城: win.cbIsWuFeiHuiCheng.isChecked() ? 1 : 0,
@@ -7785,7 +7903,7 @@ ui.run(() => {
             认证自动识别: win.cbRenzhengShiBie.isChecked() ? 1 : 0,
             云码认证: win.cbRenzhengYunMa.isChecked() ? 1 : 0,
             捆雪霜包: win.cbKunxueshuangBao.isChecked() ? 1 : 0,
-
+            召唤宝宝: win.cbzhaohuanBaoBao.isChecked() ? 1 : 0,
 
             地图拖动: win.cbDiTuTuoDong.isChecked() ? 1 : 0,
             跟随宝宝: win.cbIsGenSuiBaoBao.isChecked() ? 1 : 0,
@@ -7982,7 +8100,7 @@ function showWinConfig() {
 //     sleep(100)
 //  }
 // sleep(2100)
-// tools.常用操作.检查仓库雪霜();
+// tools.补给操作.检查仓库雪霜();
 
 //启动程序
 threads.start(function () {
