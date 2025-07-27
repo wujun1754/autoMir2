@@ -1808,7 +1808,7 @@ var tools = {
                 }
             }
             else {
-                tools.常用方法.错误日志(result, -1);
+                tools.常用方法.错误日志(text, -1);
             }
             return text;
         },
@@ -2824,12 +2824,12 @@ var tools = {
                                 累计未移动次数 = 0;
                             }
                             else {
-                                if (是否强制拾取 && isFind) {
-                                    sleep(200);
-                                    continue;
-                                }
+                                // if (是否强制拾取 && isFind) {
+                                //     sleep(200);
+                                //     continue;
+                                // }
                                 累计未移动次数++;
-                                if (累计未移动次数 >= 3) {
+                                if (累计未移动次数 >= 5) {
                                     if (是否激活状态) {
                                         click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
                                     }
@@ -2844,9 +2844,8 @@ var tools = {
                             if (isFind.status) {
                                 if (是否激活状态) {
                                     click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
-                                    sleep(3000);
+                                    sleep(1500);
                                     click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
-                                    sleep(2000);
                                 }
                                 else {
                                     click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
@@ -4680,7 +4679,7 @@ var tools = {
                 routesGroup = [];
             }
             if (routesGroup == null || routesGroup.length <= 0) {
-                toastLog(回老兵 + "Loop[routesGroup=null]")
+                toastLog("Loop[routesGroup=null]")
                 routesGroup = [];
             }
             return routesGroup;
@@ -5896,6 +5895,10 @@ var tools = {
                 }
             }
             if (当前总状态 == 总状态.已启动) {
+                tools.补给操作.点击分身();
+                tools.常用方法.错误日志("点击分身完成", 2)
+            }
+            if (当前总状态 == 总状态.已启动) {
                 tools.补给操作.替换装备();
                 tools.常用方法.错误日志("替换装备完成", 2)
             }
@@ -5921,13 +5924,14 @@ var tools = {
         },
         点击分身: () => {
             if (挂机参数.补给时点分身 == 1) {
+                tools.悬浮球描述("");
                 tools.常用操作.关闭所有窗口();
                 var 左上箭头 = config.zuobiao.按钮集合[fbl].左上箭头;
-                var 分身派遣 = config.zuobiao.按钮集合[fbl].分身派遣;
-                var 分身派遣2 = config.zuobiao.按钮集合[fbl].分身派遣2;
                 var 奖励p = config.zuobiao.按钮集合[fbl].分身领取奖励;
                 var 派遣p = config.zuobiao.按钮集合[fbl].分身派遣;
                 var 修炼p = config.zuobiao.按钮集合[fbl].分身确定修炼;
+                var 加时p = config.zuobiao.按钮集合[fbl].分身加时按钮;
+
                 var r = tools.findImageForWaitClick("fenshenxiulianBtn.png", {
                     maxTries: 10,
                     interval: 333
@@ -5941,8 +5945,8 @@ var tools = {
                     })
                 }
                 if (!r.status) {
-                    tools.悬浮球描述("未找到分身修炼按钮")
-                    toastLog("未找到分身修炼按钮");
+                    toastLog("未找到分身修炼小图标");
+                    sleep(1000)
                     return false;
                 }
                 r = tools.findImageAreaForWaitClick("fenshen_lingqujiangliBtn.png", 奖励p.x[0], 奖励p.y[0], 奖励p.x[1], 奖励p.y[1], {
@@ -5950,7 +5954,7 @@ var tools = {
                     interval: 333,
                     threshold: 0.9
                 })
-                sleep(random(666, 999));
+                sleep(random(1000, 1500));
 
                 r = tools.findImageAreaForWaitClick("fenshen_paiqianBtn.png", 派遣p.x[0], 派遣p.y[0], 派遣p.x[1], 派遣p.y[1], {
                     maxTries: 10,
@@ -5959,6 +5963,7 @@ var tools = {
                 })
                 if (!r.status) {
                     toastLog("未找到分身（派遣）按钮");
+                    click(random(左上箭头.x[0], 左上箭头.x[1]), random(左上箭头.y[0], 左上箭头.y[1]));
                     tools.常用操作.关闭所有窗口();
                     return false;
                 }
@@ -5971,19 +5976,24 @@ var tools = {
 
                 if (!r.status) {
                     toastLog("未找到分身修炼（确定）按钮");
+                    click(random(左上箭头.x[0], 左上箭头.x[1]), random(左上箭头.y[0], 左上箭头.y[1]));
                     tools.常用操作.关闭所有窗口();
                     return false;
                 }
-                while (true) {
-                    r = tools.findImageForWaitClick("fenshenjiashiBtn.png", {
-                        maxTries: 10,
-                        interval: 333
-                    })
 
+                while (true) {
+                    sleep(random(1500, 2000));
+                    r = tools.findImageAreaForWaitClick("fenshenjiashiBtn.png", 加时p.x[0], 加时p.y[0], 加时p.x[1], 加时p.y[1], {
+                        maxTries: 10,
+                        interval: 333,
+                        threshold: 0.9
+                    })
                     if (r.status) {
-                        r = tools.findImageForWaitClick("fenshenquedingjiashiBtn.png", {
+                        sleep(random(1500, 2000));
+                        r = tools.findImageAreaForWaitClick("fenshenquedingxiulianBtn.png", 修炼p.x[0], 修炼p.y[0], 修炼p.x[1], 修炼p.y[1], {
                             maxTries: 10,
-                            interval: 333
+                            interval: 333,
+                            threshold: 0.9
                         })
                         if (!r.status) {
                             break;
@@ -5993,6 +6003,8 @@ var tools = {
                         break;
                     }
                 }
+                click(random(左上箭头.x[0], 左上箭头.x[1]), random(左上箭头.y[0], 左上箭头.y[1]));
+                tools.常用操作.关闭所有窗口();
                 return true;
             }
         },
