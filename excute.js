@@ -69,7 +69,7 @@ var 禁止拾取时间 = new Date().getTime() - 1000 * 60 * 24;// 减去 24小�
 var 挂机跑图累计错误次数 = 0;
 
 
-
+var 当前跑图顺序 = 0;//0是正向跑，1是反向跑
 var 石墓阵上一次跑图点 = -1;
 var 上次所在地图 = "";
 var 上次坐标截图 = null;
@@ -145,6 +145,8 @@ var 挂机参数 = {
     替换凝霜: 0,
     替换男盔: 0,
     替换女盔: 0,
+    地图轮询: 0,
+
 
     备用男重盔: 0,
     备用女重盔: 0,
@@ -168,7 +170,9 @@ var 挂机参数 = {
     随机血量: 0,
     拾取延时: 200,
     挂机地图: "",
+    轮询切换地图: "",
     挂机城市: "",
+    挂机地图大: "",
     机器标识: "",
     版本号: "",
     组队: "",
@@ -243,6 +247,7 @@ var 文字图枚举 = {
     跳: "wenzi_wugongdong_tiao.png",
     蠕: "wenzi_wugongdong_lu.png",
     黑: "wenzi_wugongdong_hei.png",
+    祈祷: "wenzi_qidao.png",
     髅左面板: "wenzhi_zuomianban_rou.png",
     骷左面板: "wenzhi_zuomianban_ku.png",
     骷髅: "wenzi_kurou.png",
@@ -535,6 +540,9 @@ var win = floaty.rawWindow(
                         </horizontal>
                         <horizontal gravity="right">
                             <checkbox id="cbTiHuanNvKui" text="替换女盔" textSize="10sp" />
+                        </horizontal>
+                        <horizontal gravity="right">
+                            <checkbox id="cbDiTuLunXun" text="地图轮询" textSize="10sp" />
                         </horizontal>
                     </horizontal>
                     <horizontal>
@@ -921,6 +929,9 @@ var tools = {
                 win.cbTiHuanNvKui.setChecked(true);
             }
 
+            if (挂机参数.地图轮询 == 1) {
+                win.cbDiTuLunXun.setChecked(true);
+            }
 
             if (挂机参数.替换明珠 == 1) {
                 win.cbTiHuanMingZhu.setChecked(true);
@@ -1051,6 +1062,7 @@ var tools = {
             var p = config.zuobiao.人物坐标范围精确[fbl];
             return tools.截屏裁剪(null, p.x1, p.y1, p.x2, p.y2);
         },
+
         截图被攻击怪物血量: () => {
             var p = config.zuobiao.被攻击怪物血量[fbl];
             return tools.截屏裁剪(null, p.x1, p.y1, p.x2, p.y2);
@@ -1523,14 +1535,13 @@ var tools = {
         检查背包是否已满: () => {
             var zhengliBtn = tools.补给操作.整理背包(true);
             if (zhengliBtn.status) {
-                sleep(666);
                 var p = tools.补给操作.获取背包面板位置(zhengliBtn);
                 r = tools.findImageAreaForWait("beibao5_7null.png", p.x1, p.y1, p.x2, p.y2, {
                     maxTries: 5,
                     interval: 100,
                     threshold: 0.8
                 })
-                tools.常用操作.关闭所有窗口();
+                tools.常用操作.关闭所有窗口(false, 0, true);
                 if (r.status) {
                     return false;
                 }
@@ -2396,7 +2407,7 @@ var tools = {
                 }
             }
             else {
-                if (new Date().getTime() >= 禁止拾取时间) {
+                if (new Date().getTime() >= 禁止拾取时间 && !是否激活拾取) {
                     var 拾取明细 = tools.挂机打怪.需要拾取明细()
                     if (拾取明细 && 拾取明细.count > 0) {
                         tools.挂机打怪.开始拾取();
@@ -2620,6 +2631,7 @@ var tools = {
 
                     tools.悬浮球描述("(" + parseInt((timeout - (时间戳)) / 1000) + "),(" + 锁定的怪物 + ")");
                 } else {
+                    var t1 = new Date().getTime();
                     if (isChange) {
                         锁定失败次数 = 0;
                     }
@@ -2627,7 +2639,7 @@ var tools = {
                         锁定失败次数++;
                         toastLog("锁定失败(" + 锁定失败次数 + ")")
                     }
-
+                    tools.挂机打怪.开始拾取();
                     if (挂机参数.攻击宝宝身边 > 0) {
                         r = tools.挂机打怪.获取宝宝身边怪物数据(1);
                         if (r.status && r.value && r.value.length > 0) {
@@ -2652,7 +2664,6 @@ var tools = {
                                 上一次移动 = new Date().getTime();
                                 上一次攻击 = new Date().getTime() - (60 * 1000);
                                 start = new Date().getTime();
-                                tools.挂机打怪.开始拾取();
                                 continue;
                             }
                         }
@@ -2666,7 +2677,7 @@ var tools = {
                         sleep(100);
                         tools.常用操作.点击左面板怪物();
                     }
-                    tools.挂机打怪.开始拾取();
+                    //tools.悬浮球临时描述("拾取[" + ((new Date().getTime() - t1) / 1000).toFixed(3) + "]");
                     break;
                 }
             }
@@ -2782,8 +2793,9 @@ var tools = {
                     tools.悬浮球描述("金令坐标,取消攻击")
                     return false;
                 }
+                tools.挂机打怪.拾取延时();
                 click(item.x, item.y);
-                var r1 = tools.挂机打怪.找正上锁定怪物(5, 100);
+                var r1 = tools.挂机打怪.找正上锁定怪物(3, 100);
                 if (r1.status) {
                     if (是否攻击) {
                         toastLog("攻击宝宝身边怪")
@@ -5011,13 +5023,6 @@ var tools = {
                         tools.人物移动.回老兵(当前地图, routes, 大地图偏移);
                     }
                 }
-                // if (new Date().getTime() >= 禁止拾取时间) {
-                //     var 拾取明细 = tools.挂机打怪.需要拾取明细()
-                //     if (拾取明细 && 拾取明细.count > 0) {
-                //         tools.挂机打怪.开始拾取();
-                //     }
-                //     tools.悬浮球描述(JSON.stringify(拾取明细));
-                // }
                 sleep(1000 * 1.5);
             }
         },
@@ -5098,7 +5103,17 @@ var tools = {
                     }
                     click(x, y)
                     if (i < (routes.length - 1)) {
-                        sleep(random(1200, 1600));
+                        while (true) {
+                            var img = tools.截屏裁剪(null, x - 60, y - 15, x + 60, y + 15);
+                            var r = tools.findImageAreaForWait("dilao_gezi.png", 格子P.x1, 格子P.y1, 格子P.x2, 格子P.y2, {
+                                maxTries: 5,
+                                interval: 200,
+                                threshold: 0.6
+                            });
+                            tools.findImageAreaForWait()
+                            sleep(random(1200, 1600));
+                        }
+                       
                     }
                 }
                 //sleep(random(1200, 1666));
@@ -5111,7 +5126,7 @@ var tools = {
         },
         去挂机地图Loop: () => {
             var 是否跑图 = false;
-            tools.常用操作.关闭所有窗口();
+            //tools.常用操作.关闭所有窗口();
             var 当前地图 = tools.常用操作.获取人物地图();
             tools.悬浮球描述("开始去挂机地图(" + 当前地图 + ")");
             if (当前地图 == 挂机参数.挂机地图) { //说明到目的地
@@ -5701,7 +5716,7 @@ var tools = {
             }
             var r = tools.findImageForWaitClick("beibaozhengliBtn.png", {
                 maxTries: 10,
-                interval: 200
+                interval: 100
             });
             if (!r.status) {
                 toastLog("未找到背包整理按钮")
@@ -5815,7 +5830,7 @@ var tools = {
             }
 
             if (是否判断存) {
-                r = tools.补给操作.判断选中格子是否存仓库(zhengliBtn, index1, index2);
+                r = tools.补给操作.判断选中格子是否存仓库(zhengliBtn, btn, index1, index2);
                 if (r.status) {
                     是否存仓库 = true;
                     物品名称 = r.物品名称
@@ -5968,18 +5983,22 @@ var tools = {
             }
             return false;
         },
-        判断选中格子是否存仓库: (zhengliBtn, index1, index2) => {
+        判断选中格子是否存仓库: (zhengliBtn, btn, index1, index2) => {
             var arr = [{
                 name: "组队卷",
-                pic: 补给枚举.组队卷
+                pic: 补给枚举.组队卷,
+                验证文字: false,
             },
             {
                 name: "祈祷之刃",
-                pic: 存仓库枚举.祈祷之刃
+                pic: 存仓库枚举.祈祷之刃,
+                验证文字: false,
+                wenPic: 文字图枚举.祈祷
             },
             {
                 name: "祝福油",
-                pic: 存仓库枚举.祝福油
+                pic: 存仓库枚举.祝福油,
+                验证文字: false,
             }];
             if (挂机参数.存万年 == 1) {
                 arr.push({
@@ -5991,10 +6010,19 @@ var tools = {
                 var item = arr[index];
                 var result = tools.补给操作.背包选中格子中找图(item.pic, zhengliBtn, index1, index2)
                 if (result.status) {
-                    return {
-                        status: true,
-                        pic: item.pic,
-                        物品名称: item.name
+                    var 是否存 = true;
+                    if (item.验证文字) {
+                        r = tools.补给操作.背包选中按钮中找字图(item.wenPic, btn)
+                        if (!r.status) {
+                            是否存 = false;
+                        }
+                    }
+                    if (是否存) {
+                        return {
+                            status: true,
+                            pic: item.pic,
+                            物品名称: item.name
+                        }
                     }
                 }
             }
@@ -6497,111 +6525,6 @@ var tools = {
                 }
             }
             return result;
-        },
-        检查存仓库: () => {
-            var r = tools.补给操作.点击小贩按钮("保存", false);
-            if (!r) {
-                return {
-                    status: false,
-                    err: "未获取保存物品按钮"
-                }
-            }
-            sleep(1288);
-            var 包袱p = config.zuobiao.存取范围[fbl].包袱;
-            var 仓库p = config.zuobiao.存取范围[fbl].仓库;
-            var arr = [{
-                name: "组队卷",
-                pic: 补给枚举.组队卷
-            },
-            {
-                name: "祈祷之刃",
-                pic: 存仓库枚举.祈祷之刃
-            },
-            {
-                name: "祝福油",
-                pic: 存仓库枚举.祝福油
-            }];
-            if (挂机参数.存万年 == 1) {
-                arr.push({
-                    name: "万年雪霜",
-                    pic: 补给枚举.万年雪霜
-                })
-            }
-
-           
-            for (let index = 0; index < arr.length; index++) {
-                var item = arr[index];
-                var r = tools.matchTemplateForArea(item.pic, 12, 0.8,
-                    [包袱p.x, 包袱p.y, 包袱p.w, 包袱p.h]
-                )
-                if (r.status && r.count >= 0) {
-                    while (true) {
-                        var r = tools.findImageAreaForWait(补给枚举.万年雪霜, 仓库p.x, 仓库p.y, 仓库p.x + 仓库p.w, 仓库p.y + 仓库p.h, {
-                            maxTries: 10,
-                            interval: 100,
-                            threshold: t
-                        })
-                        if (r.status) {
-                            var x1 = r.img.x + r.size.w / 2 + random(5, 10);
-                            var y1 = r.img.y + r.size.h / 2 + random(5, 10);
-                            var x2 = 包袱p.中心.x + random(5, 10);
-                            var y2 = 包袱p.中心.y + random(5, 10);
-                            gesture(random(666, 999), [x1, y1], [x2, y2])
-                            tools.悬浮球描述("雪霜数量(" + 雪霜数量 + "),已取出(" + (取回数量 + 1) + ")");
-                            sleep(random(666, 999));
-                            取回数量++;
-                            if (取回数量 >= 6) {
-                                return {
-                                    status: true
-                                };
-                            }
-                        }
-                        else {
-                            return {
-                                status: false,
-                                msg: "未获取到雪霜图片"
-                            };
-                        }
-                    }
-                }
-                // var result = tools.补给操作.背包选中格子中找图(item.pic, zhengliBtn, index1, index2)
-                // if (result.status) {
-                //     return {
-                //         status: true,
-                //         pic: item.pic,
-                //         物品名称: item.name
-                //     }
-                // }
-            }
-            return {
-                status: false
-            }
-
-            
-            var r = tools.findImageAreaForWait(补给枚举.万年雪霜包, 包袱p.x, 包袱p.y, 包袱p.x + 包袱p.w, 包袱p.y + 包袱p.h, {
-                maxTries: 10,
-                interval: 200,
-                threshold: 0.8
-            })
-            if (r.status) {
-                var x1 = r.img.x + r.size.w / 2 + random(5, 10);
-                var y1 = r.img.y + r.size.h / 2 + random(5, 10);
-                var x2 = 仓库p.中心.x + random(5, 10);
-                var y2 = 仓库p.中心.y + random(5, 10);
-                gesture(random(666, 999), [x1, y1], [x2, y2])
-                sleep(random(666, 999));
-                return {
-                    status: true,
-                    msg: "成功存入"
-                };
-            }
-            else {
-                return {
-                    status: false,
-                    msg: "未获取到雪霜包图片"
-                };
-            }
-
         },
         替换装备: () => {
             var zhengliBtn = tools.补给操作.整理背包(true)
@@ -7654,6 +7577,79 @@ var tools = {
             tryCount++;
         }
     },
+    findImageAreaForWaitByImg: (img, x1, y1, x2, y2, options) => {
+        var w = device.width;
+        var h = device.height;
+        let timeout, interval, maxTries, log, threshold;
+        if (options) {
+            timeout = options.timeout !== undefined ? options.timeout : 1000 * 60;
+            interval = options.interval !== undefined ? options.interval : 500;
+            maxTries = options.maxTries !== undefined ? options.maxTries : 6;
+            threshold = options.threshold !== undefined ? options.threshold : 0.7;
+            log = options.log !== undefined ? options.log : false;
+        } else {
+            timeout = 1000 * 60;
+            interval = 500;
+            maxTries = 6;
+            threshold = 0.7;
+            log = false;
+        }
+        let start = new Date().getTime();
+        let tryCount = 0;
+        while (true) {
+            if (interval > 0) {
+                sleep(interval);
+            }
+            var msg = "";
+            if (maxTries && tryCount >= maxTries) {
+                msg = "超过最大尝试次数，未找到图像";
+                return {
+                    status: false,
+                    img: null,
+                    err: msg
+                }
+            }
+            if (new Date().getTime() - start > timeout) {
+                msg = "超时未找到图像：" + fileName;
+                return {
+                    status: false,
+                    img: null,
+                    err: msg
+                }
+            }
+            var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${fileName}`;
+            var targetImg = images.read(targetImgPath);
+            if (targetImg) {
+                var imgSize = {
+                    w: targetImg.width,
+                    h: targetImg.height
+                }
+                var img = captureScreen();
+                var r = utils.regionalFindImg2(img, targetImg, x1, y1, x2, y2, 60, 255, threshold, false, false, "");
+                utils.recycleNull(img);
+                utils.recycleNull(targetImg);
+                if (r != null && (r.x > 0 || r.y > 0)) {
+                    return {
+                        status: true,
+                        img: r,
+                        size: imgSize
+                    };
+                } else {
+                    if (fileName != "closeBtn.png" && fileName != "closeBtn2.png" && fileName != "zuoguaiwuBtn.png" && fileName != "zuoguaiwumanxueBtn.png") {
+                        tools.悬浮球描述('找图失败' + fileName);
+                    }
+                }
+            }
+            else {
+                return {
+                    status: false,
+                    img: null,
+                    err: "本地无" + fileName
+                }
+            }
+            tryCount++;
+        }
+    },
     findImageAreaForWaitClick: (fileName, x1, y1, x2, y2, options) => {
         var result = tools.findImageAreaForWait(fileName, x1, y1, x2, y2, options);
         if (result.status && (result.img.x > 0 || result.img.y > 0)) {
@@ -8025,6 +8021,7 @@ ui.run(() => {
         var ditu1_1 = "";
         var 挂机地图 = "";
         var 挂机城市 = ""
+        var 挂机地图大 = "";
         switch (r) {
             case "骷髅洞":
                 checkedId = win.group1_1.getCheckedRadioButtonId();
@@ -8036,6 +8033,7 @@ ui.run(() => {
                 radioButton = win.group1_1.findViewById(checkedId);
                 ditu1_1 = radioButton.attr("id").split("/")[1];
                 挂机地图 = radioButton.getText();
+                挂机地图大 = "骷髅洞";
                 挂机城市 = "比奇"
                 break;
             case "石墓阵":
@@ -8048,6 +8046,7 @@ ui.run(() => {
                 radioButton = win.group1_2.findViewById(checkedId);
                 ditu1_1 = radioButton.attr("id").split("/")[1];
                 挂机地图 = radioButton.getText();
+                挂机地图大 = "石墓阵";
                 挂机城市 = "盟重"
                 break;
             case "蜈蚣洞":
@@ -8060,6 +8059,7 @@ ui.run(() => {
                 radioButton = win.group1_3.findViewById(checkedId);
                 ditu1_1 = radioButton.attr("id").split("/")[1];
                 挂机地图 = radioButton.getText();
+                挂机地图大 = "蜈蚣洞";
                 挂机城市 = "盟重"
                 break;
             case "苍月":
@@ -8072,6 +8072,12 @@ ui.run(() => {
                 radioButton = win.group1_4.findViewById(checkedId);
                 ditu1_1 = radioButton.attr("id").split("/")[1];
                 挂机地图 = radioButton.getText();
+                if (挂机地图.indexOf("牛魔") >= 0) {
+                    挂机地图大 = "牛魔";
+                }
+                else if (挂机地图.indexOf("骨魔") >= 0) {
+                    挂机地图大 = "骨魔";
+                }
                 挂机城市 = "苍月"
                 break;
             case "其他":
@@ -8163,6 +8169,10 @@ ui.run(() => {
             替换男盔: win.cbTiHuanNanKui.isChecked() ? 1 : 0,
             替换女盔: win.cbTiHuanNvKui.isChecked() ? 1 : 0,
 
+            地图轮询: win.cbDiTuLunXun.isChecked() ? 1 : 0,
+
+
+
             备用男重盔: win.cbBeiYongNanZhongKui.isChecked() ? 1 : 0,
             备用女重盔: win.cbBeiYongNvZhongKui.isChecked() ? 1 : 0,
             备用斩马: win.cbBeiYongZhanMa.isChecked() ? 1 : 0,
@@ -8185,6 +8195,7 @@ ui.run(() => {
             跟随宝宝: win.cbIsGenSuiBaoBao.isChecked() ? 1 : 0,
             挂机地图: 挂机地图,
             挂机城市: 挂机城市,
+            挂机地图大: 挂机地图大,
             拾取时长: parseInt(win.t_shiQuShiChang.getText()),
 
             拾取延时: parseInt(win.t_shiquyanshi.getText()),
@@ -8424,12 +8435,25 @@ threads.start(function () {
                 }
             }
 
+
+            if (挂机参数.地图轮询 == 1 && 当前地图 == 挂机参数.挂机地图) {
+                if (挂机参数.挂机地图大 == "蜈蚣洞") {
+                    if (挂机参数.挂机地图.indexOf("地牢一层东") >= 0) {
+                        挂机参数.挂机地图 = 挂机参数.轮询切换地图;
+                    }
+                    else {
+                        挂机参数.轮询切换地图 = 当前地图;
+                        挂机参数.挂机地图 = "地牢一层东";
+                    }
+                }
+            }
+
             if (new Date().getTime() - 上次跑图时间 > 跑图时间戳) {
                 开启寻怪 = true;
                 if (当前地图 == "石墓阵") {
                     tools.挂机打怪.石墓阵跑图();
                 }
-                else if (当前地图 == 挂机参数.挂机地图 || 挂机参数.挂机地图 == "比奇野外") {
+                else if ((当前地图 == 挂机参数.挂机地图 || 挂机参数.挂机地图 == "比奇野外")) {
                     try {
                         tools.挂机打怪.点击挂机坐标(打怪次数 > 0 ? true : false);
                     } catch (e) {
