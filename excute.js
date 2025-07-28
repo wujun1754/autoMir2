@@ -41,7 +41,7 @@ var 上次检查蓝药时间 = new Date().getTime(); // 减去 20 分钟;
 // var 检查武器衣服时间戳 = 1000 * 60 * 6;
 var 上次检查武器衣服时间 = new Date().getTime(); // 减去 20 分钟; 
 
-var 检查背包是否已满时间戳 = 1000 * 60 * 10;
+var 检查背包是否已满时间戳 = 1000 * 60 * 30;
 var 上次检查背包是否已满时间 = new Date().getTime();
 
 var 检查宝宝时间戳 = 1000 * 60 * 2;
@@ -210,7 +210,6 @@ var 装备枚举 = {
 var 补给枚举 = {
     护身符: "buji_fushenfu.png",
     红毒: "buji_hongdu.png",
-    祝福油: "buji_zhufuyou.png",
     万年雪霜: "buji_wannianxueshuang.png",
     万年雪霜包: "buji_wannianxueshuangbao.png",
     组队卷: "buji_zuduijuan.png",
@@ -220,6 +219,10 @@ var 补给枚举 = {
     中蓝个_格子: "buji_lanyaoge_gezi.png",
     中蓝包: "buji_lanyaobao.png",
     捆药绳: "buji_kunyaoshen.png",
+}
+var 存仓库枚举 = {
+    祈祷之刃: "cangku_qidaozhiren.png",
+    祝福油: "buji_zhufuyou.png",
 }
 var 文字图枚举 = {
     斩: "wenzi_zhan.png",
@@ -235,9 +238,15 @@ var 文字图枚举 = {
     蛾: "wenzi_e.png",
     魔: "wenzi_mo.png",
     髅: "wenzi_rou.png",
+    钳: "wenzi_wugongdong_qian.png",
+    蜈: "wenzi_wugongdong_wu.png",
+    跳: "wenzi_wugongdong_tiao.png",
+    蠕: "wenzi_wugongdong_lu.png",
+    黑: "wenzi_wugongdong_hei.png",
     髅左面板: "wenzhi_zuomianban_rou.png",
     骷左面板: "wenzhi_zuomianban_ku.png",
     骷髅: "wenzi_kurou.png",
+    邪恶: "wenzhi_zuomianban_xiee.png",
     休息: "wenzhi_xiuxi.png",
     攻击: "wenzhi_gongji.png",
     跟随: "wenzhi_gensui.png",
@@ -262,6 +271,15 @@ var 精英怪枚举 = {
     牛魔将军: {
         name: "牛魔将军",
         pic: "wenzhi_zuomianban_jiangjun.png",
+        是否隐身: true,
+        是否施毒: true,
+        是否打防: true,
+        是否打魔: false,
+        是否攻击: false,
+    },
+    邪恶蚶虫: {
+        name: "邪恶蚶虫",
+        pic: "wenzhi_zuomianban_xiee.png",
         是否隐身: true,
         是否施毒: true,
         是否打防: true,
@@ -310,7 +328,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="6.9.87" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="6.9.9" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -372,10 +390,13 @@ var win = floaty.rawWindow(
                     <horizontal id="ditu1_3" visibility="gone">
                         <radiogroup id="group1_3" orientation="vertical" >
                             <radio textSize="10sp" id="radio3_1" text="地牢一层东" />
+                            <radio textSize="10sp" id="radio3_3" text="地牢一层西1" />
                             <radio textSize="10sp" id="radio3_2" text="地牢一层北1" />
-                            <radio textSize="10sp" id="radio3_3" text="连接通道九" />
-                            <radio textSize="10sp" id="radio3_4" text="连接通道八" />
-                            <radio textSize="10sp" id="radio3_5" text="连接通道六" />
+                            <radio textSize="10sp" id="radio3_4" text="地牢一层北2" />
+                            <radio textSize="10sp" id="radio3_5" text="黑暗地带" />
+                            <radio textSize="10sp" id="radio3_6" text="传奇部落" />
+                            <radio textSize="10sp" id="radio3_7" text="邪恶势力" />
+                            <radio textSize="10sp" id="radio3_8" text="一线天" />
                         </radiogroup>
                     </horizontal>
                     <horizontal id="ditu1_4" visibility="gone">
@@ -1657,96 +1678,155 @@ var tools = {
             return text;
         },
         处理地图错别字: (text) => {
+            var isok = false;
             if (!text) return text;
             if ((text.indexOf("人") >= 0 || text.indexOf("兽") >= 0) && (text.indexOf("古") >= 0 || text.indexOf("吉") >= 0 || text.indexOf("墓") >= 0)) {
                 if (text.indexOf("一") >= 0 || text.indexOf("-") >= 0) {
                     text = "兽人古墓一层"
+                    isok = true;
                 }
                 else if (text.indexOf("二") >= 0) {
                     text = "兽人古墓二层"
+                    isok = true;
                 }
                 else if (text.indexOf("三") >= 0) {
                     text = "兽人古墓三层"
+                    isok = true;
                 }
             }
             else if (text.indexOf("苍") >= 0 || text.indexOf("月") >= 0) {
                 if (text.indexOf("渔") >= 0 || text.indexOf("村") >= 0) {
                     text = "苍月岛渔村"
+                    isok = true;
                 }
                 else {
                     text = "苍月岛"
+                    isok = true;
                 }
             }
             else if (text.indexOf("比奇城") >= 0) {
                 text = "比奇城"
+                isok = true;
             }
             else if (text.indexOf("比奇省") >= 0) {
                 text = "比奇省"
+                isok = true;
             }
             else if (text.indexOf("边界村") >= 0) {
                 text = "边界村"
+                isok = true;
             }
             else if (text.indexOf("银杏") >= 0 && text.indexOf("山") >= 0) {
                 text = "银杏山谷"
+                isok = true;
             }
             else if ((text.indexOf("沃") >= 0 || text.indexOf("玛") >= 0) && (text.indexOf("森") >= 0 || text.indexOf("林") >= 0)) {
                 text = "沃玛森林"
+                isok = true;
             }
             else if (text.indexOf("土城") >= 0) {
                 text = "土城"
+                isok = true;
             }
             else if (text.indexOf("盟重省") >= 0) {
                 text = "盟重省"
+                isok = true;
             }
             else if (text.indexOf("红名村") >= 0) {
                 text = "红名村"
+                isok = true;
             }
             else if (text.indexOf("沙巴克") >= 0) {
                 text = "沙巴克"
+                isok = true;
             }
             else if (text.indexOf("祖玛寺庙") >= 0) {
                 text = "祖玛寺庙"
+                isok = true;
             }
             else if ((text.indexOf("铁") >= 0 || text.indexOf("灯") >= 0 || text.indexOf("笼") >= 0) && (text.indexOf("屋") >= 0)) {
                 text = "铁灯笼屋"
+                isok = true;
             }
             else if ((text.indexOf("阴") >= 0 || text.indexOf("森") >= 0) && (text.indexOf("屋") >= 0)) {
                 text = "阴森石屋"
+                isok = true;
             }
             else if ((text.indexOf("阴") >= 0 || text.indexOf("森") >= 0) && (text.indexOf("路") >= 0)) {
                 text = "阴森石路"
+                isok = true;
             }
             else if ((text.indexOf("紫") >= 0 || text.indexOf("水") >= 0) && (text.indexOf("晶") >= 0 || text.indexOf("屋") >= 0)) {
                 text = "紫水晶屋"
+                isok = true;
             }
             else if (text.indexOf("石") >= 0 || text.indexOf("墓") >= 0) {
-                if (text.indexOf("一") >= 0 || text.indexOf("-") >= 0) {
+                if (text.indexOf("小") >= 0 || text.indexOf("溪") >= 0) {
+                    text = "石墓小溪"
+                    isok = true;
+                }
+                else if (text.indexOf("一") >= 0 || text.indexOf("-") >= 0) {
                     text = "石墓一层"
+                    isok = true;
                 }
                 else if (text.indexOf("二") >= 0) {
                     text = "石墓二层"
+                    isok = true;
                 }
                 else if (text.indexOf("三") >= 0) {
                     text = "石墓三层"
+                    isok = true;
                 }
                 else if (text.indexOf("四") >= 0) {
                     text = "石墓四层"
+                    isok = true;
                 }
                 else if (text.indexOf("五") >= 0) {
                     text = "石墓五层"
+                    isok = true;
                 }
                 else if (text.indexOf("阵") >= 0) {
                     text = "石墓阵"
+                    isok = true;
                 }
                 else if (text.indexOf("入") >= 0 || text.indexOf("人") >= 0 || text.indexOf("口") >= 0) {
                     text = "石墓入口"
+                    isok = true;
                 }
             }
-            else if ((text.indexOf("地") >= 0 || text.indexOf("牢") >= 0) && (text.indexOf("一") >= 0 || text.indexOf("-") >= 0) && text.indexOf("东") >= 0) {
+            else if ((text.indexOf("地") >= 0 || text.indexOf("牢") >= 0) && text.indexOf("东") >= 0) {
                 text = "地牢一层东"
+                isok = true;
             }
-            else if ((text.indexOf("地") >= 0 || text.indexOf("牢") >= 0) && (text.indexOf("一") >= 0 || text.indexOf("-") >= 0) && text.indexOf("北") >= 0) {
-                text = "地牢一层北1"
+            else if ((text.indexOf("地") >= 0 || text.indexOf("牢") >= 0) && text.indexOf("北") >= 0) {
+                tools.常用方法.错误日志("记录地牢北(" + text + ")", -1);
+                if (text.indexOf("2") >= 0) {
+                    text = "地牢一层北2"
+                }
+                else {
+                    text = "地牢一层北1"
+                }
+                isok = true;
+            }
+            else if ((text.indexOf("地") >= 0 || text.indexOf("牢") >= 0) && text.indexOf("西") >= 0) {
+                text = "地牢一层西1"
+                isok = true;
+            }
+            else if ((text.indexOf("黑") >= 0 || text.indexOf("暗") >= 0) && (text.indexOf("地") >= 0 || text.indexOf("带") >= 0)) {
+                text = "黑暗地带"
+                isok = true;
+            }
+            else if ((text.indexOf("传") >= 0 || text.indexOf("奇") >= 0) && (text.indexOf("部") >= 0 || text.indexOf("落") >= 0)) {
+                text = "传奇部落"
+                isok = true;
+            }
+            else if ((text.indexOf("邪") >= 0 || text.indexOf("恶") >= 0) && (text.indexOf("势") >= 0 || text.indexOf("力") >= 0)) {
+                text = "邪恶势力"
+                isok = true;
+            }
+            else if (text.indexOf("线") >= 0 || text.indexOf("天") >= 0) {
+                text = "一线天"
+                isok = true;
             }
             else if ((text.indexOf("连") >= 0 || text.indexOf("接") >= 0) && (text.indexOf("通") >= 0 || text.indexOf("道") >= 0)) {
                 if (text.indexOf("九") >= 0) {
@@ -1765,49 +1845,63 @@ var tools = {
             else if ((text.indexOf("沃") >= 0 || text.indexOf("玛") >= 0) && (text.indexOf("寺") >= 0 || text.indexOf("庙") >= 0)) {
                 if (text.indexOf("一") >= 0 || text.indexOf("-") >= 0) {
                     text = "沃玛寺庙一层"
+                    isok = true;
                 }
                 else if (text.indexOf("二") >= 0) {
                     text = "沃玛寺庙二层"
+                    isok = true;
                 }
                 else if (text.indexOf("三") >= 0) {
                     text = "沃玛寺庙三层"
+                    isok = true;
                 }
                 else if (text.indexOf("口") >= 0 || text.indexOf("入") >= 0) {
                     text = "沃玛寺庙入口"
+                    isok = true;
                 }
             }
             else if ((text.indexOf("骨") >= 0) && (text.indexOf("洞") >= 0 || text.indexOf("层") >= 0)) {
                 if (text.indexOf("一") >= 0 || text.indexOf("-") >= 0) {
                     text = "骨魔洞一层"
+                    isok = true;
                 }
                 else if (text.indexOf("二") >= 0) {
                     text = "骨魔洞二层"
+                    isok = true;
                 }
                 else if (text.indexOf("三") >= 0) {
                     text = "骨魔洞三层"
+                    isok = true;
                 }
             }
             else if ((text.indexOf("牛") >= 0 || text.indexOf("魔") >= 0) && (text.indexOf("寺") >= 0 || text.indexOf("庙") >= 0)) {
                 if (text.indexOf("一") >= 0 || text.indexOf("-") >= 0) {
                     text = "牛魔寺庙一层"
+                    isok = true;
                 }
                 else if (text.indexOf("二") >= 0) {
                     text = "牛魔寺庙二层"
+                    isok = true;
                 }
                 else if (text.indexOf("三") >= 0) {
                     text = "牛魔寺庙三层"
+                    isok = true;
                 }
                 else if (text.indexOf("四") >= 0) {
                     text = "牛魔寺庙四层"
+                    isok = true;
                 }
                 else if (text.indexOf("五") >= 0) {
                     text = "牛魔寺庙五层"
+                    isok = true;
                 }
                 else if (text.indexOf("口") >= 0 || text.indexOf("入") >= 0) {
                     text = "牛魔寺庙入口"
+                    isok = true;
                 }
             }
-            else {
+
+            if (!isok) {
                 tools.常用方法.错误日志(text, -1);
             }
             return text;
@@ -2351,11 +2445,11 @@ var tools = {
                     sleep(1000 * 15);
                     return false;
                 }
-                if (锁定失败次数 >= 3) {
+                if (锁定失败次数 >= 5) {
                     tools.挂机打怪.点击挂机坐标(true);
                     toastLog("锁定失败次数" + 锁定失败次数 + ",强制跑图")
                     锁定失败次数 = 0;
-                    sleep(1000 * 15);
+                    sleep(1000 * 10);
                     return false;
                 }
                 r = tools.挂机打怪.找正上锁定怪物(2, 100);
@@ -2388,6 +2482,9 @@ var tools = {
                         }
                         else if (锁定的怪物.indexOf("牛魔法师") >= 0) {
                             危险怪物 = 精英怪枚举.牛魔法师;
+                        }
+                        else if (锁定的怪物.indexOf("邪恶蚶虫") >= 0) {
+                            危险怪物 = 精英怪枚举.邪恶蚶虫;
                         }
                         if (危险怪物 != null) {
                             if (危险怪物.是否施毒) {
@@ -3271,12 +3368,18 @@ var tools = {
                 r = config.zuobiao.盟重大地图偏移[fbl].地牢一层东.打怪点;
             } else if (挂机参数.挂机地图 == "地牢一层北1") {
                 r = config.zuobiao.盟重大地图偏移[fbl].地牢一层北1.打怪点;
-            } else if (挂机参数.挂机地图 == "连接通道九") {
-                r = config.zuobiao.盟重大地图偏移[fbl].连接通道九.打怪点;
-            } else if (挂机参数.挂机地图 == "连接通道八") {
-                r = config.zuobiao.盟重大地图偏移[fbl].连接通道八.打怪点;
-            } else if (挂机参数.挂机地图 == "连接通道六") {
-                r = config.zuobiao.盟重大地图偏移[fbl].连接通道六.打怪点;
+            } else if (挂机参数.挂机地图 == "地牢一层北2") {
+                r = config.zuobiao.盟重大地图偏移[fbl].地牢一层北2.打怪点;
+            } else if (挂机参数.挂机地图 == "地牢一层西1") {
+                r = config.zuobiao.盟重大地图偏移[fbl].地牢一层西1.打怪点;
+            } else if (挂机参数.挂机地图 == "黑暗地带") {
+                r = config.zuobiao.盟重大地图偏移[fbl].黑暗地带.打怪点;
+            } else if (挂机参数.挂机地图 == "传奇部落") {
+                r = config.zuobiao.盟重大地图偏移[fbl].传奇部落.打怪点;
+            } else if (挂机参数.挂机地图 == "邪恶势力") {
+                r = config.zuobiao.盟重大地图偏移[fbl].邪恶势力.打怪点;
+            } else if (挂机参数.挂机地图 == "一线天") {
+                r = config.zuobiao.盟重大地图偏移[fbl].一线天.打怪点;
             } else if (挂机参数.挂机地图 == "沃玛寺庙一层") {
                 r = config.zuobiao.比奇大地图偏移[fbl].沃玛寺庙一层.打怪点;
             } else if (挂机参数.挂机地图 == "沃玛寺庙二层") {
@@ -4071,12 +4174,31 @@ var tools = {
                     }
                 }
             }
+            else if (挂机参数.挂机地图.indexOf("地牢") >= 0
+                || 挂机参数.挂机地图.indexOf("黑暗地带") >= 0
+                || 挂机参数.挂机地图.indexOf("传奇部落") >= 0
+                || 挂机参数.挂机地图.indexOf("邪恶势力") >= 0
+                || 挂机参数.挂机地图.indexOf("一线天") >= 0) {
+                var result = tools.findImageArea(文字图枚举.邪恶, p.x1, p.y1, p.x2, p.y2, t);
+                if (result.status) {
+                    return "邪恶蚶虫(找图发现)"
+                }
+            }
             var imgSmall = tools.截屏裁剪(null, p.x1, p.y1, p.x2, p.y2);
             var huiduImg = images.grayscale(imgSmall);//灰度化
             let r = utils.ocrGetContentStr(huiduImg);
             if (r) {
                 //r = r.replace(/[0-9\/]/g, '');
-                r = r.replace(/[0-9\/a-zA-Z]/g, '').replace(/\./g, "").replace(/,/g, "").replace(/-/g, "").replace(/:/g, "").replace(/\|/g, '').replace(/\\/g, '');
+                r = r.replace(/[0-9\/a-zA-Z]/g, '')
+                    .replace(/\./g, "")
+                    .replace(/,/g, "")
+                    .replace(/!/g, "")
+                    .replace(/-/g, "")
+                    .replace(/:/g, "")
+                    .replace(/\|/g, '')
+                    .replace(/\\/g, '')
+                    .replace(/金币/g, "")
+                    .replace(/金市/g, "");
             }
             utils.recycleNull(imgSmall);
             utils.recycleNull(huiduImg);
@@ -4115,6 +4237,32 @@ var tools = {
                 arr.push({
                     pic: 文字图枚举.蛾,
                     text: "契蛾"
+                })
+            }
+            else if (挂机参数.挂机地图.indexOf("地牢") >= 0
+                || 挂机参数.挂机地图.indexOf("黑暗地带") >= 0
+                || 挂机参数.挂机地图.indexOf("传奇部落") >= 0
+                || 挂机参数.挂机地图.indexOf("邪恶势力") >= 0
+                || 挂机参数.挂机地图.indexOf("一线天") >= 0) {
+                arr.push({
+                    pic: 文字图枚举.钳,
+                    text: "钳虫"
+                })
+                arr.push({
+                    pic: 文字图枚举.蜈,
+                    text: "蜈蚣"
+                })
+                arr.push({
+                    pic: 文字图枚举.跳,
+                    text: "跳跳蜂"
+                })
+                arr.push({
+                    pic: 文字图枚举.蠕,
+                    text: "巨型蠕虫"
+                })
+                arr.push({
+                    pic: 文字图枚举.黑,
+                    text: "黑色恶蛆"
                 })
             }
             if (arr.length > 0) {
@@ -4875,7 +5023,7 @@ var tools = {
         },
         去挂机地图: (目的地, 当前地图) => {
             var isCheck = false;
-            if (当前地图 == "阴森石屋" || 当前地图 == "阴森石路" || 当前地图 == "紫水晶屋") {
+            if (当前地图 == "阴森石屋" || 当前地图 == "阴森石路" || 当前地图 == "紫水晶屋" || 当前地图 == "石墓小溪") {
                 isCheck = true;
             }
             if (isCheck) {
@@ -4894,6 +5042,7 @@ var tools = {
                 case "阴森石路":
                     tools.人物移动.下走一步(random(1200, 1500));
                     break;
+                case "石墓小溪":
                 case "紫水晶屋":
                 case "石墓入口":
                     tools.人物移动.右上走(random(1200, 1500));
@@ -4908,7 +5057,7 @@ var tools = {
             tools.常用操作.打开大地图();
             var closeBtn = tools.findImageForWait("closeBtn.png", {
                 maxTries: 10,
-                interval: 200
+                interval: 100
             });
             if (closeBtn.status) {
                 var closeImg = closeBtn.img;
@@ -4948,39 +5097,17 @@ var tools = {
                         }
                     }
                     click(x, y)
-                    sleep(random(1200, 1600));
+                    if (i < (routes.length - 1)) {
+                        sleep(random(1200, 1600));
+                    }
                 }
                 //sleep(random(1200, 1666));
-                if (挂机参数.地图拖动 == 1) {
-                    tools.人物移动.拖动大地图到边缘();
-                }
-                else {
-                    tools.常用操作.关闭所有窗口();
-                }
+                tools.常用操作.关闭所有窗口(false, 0, true);
             } else {
                 toastLog("去挂机地图,未找到closeBtn");
                 return;
             }
             return;
-        },
-        进入石墓阵: () => {
-            while (当前总状态 == 总状态.已启动) {
-                var r = tools.findImageClick("shimuzhengrukou.png", 0.8);
-                if (r) {
-                    tools.悬浮球描述("点击入口")
-                    sleep(random(333, 555))
-                } else {
-                    var 当前地图 = tools.常用操作.获取人物地图();
-                    if (当前地图 == "石墓阵") {
-                        toastLog("到达石墓阵")
-                        return true;
-                    }
-                    else {
-                        toastLog("未知错误")
-                        return false;
-                    }
-                }
-            }
         },
         去挂机地图Loop: () => {
             var 是否跑图 = false;
@@ -5003,11 +5130,16 @@ var tools = {
                 return;
             }
             let 上次跑图时间 = new Date().getTime();
-            let 跑图时间戳 = 1.8 * 1000;
+            let 跑图时间戳 = 1.5 * 1000;
             for (let index = 0; index < routesGroup.length; index++) {
                 var routes = routesGroup[index];
                 var last = routes[routes.length - 1];
-                var 目的地 = (index == routesGroup.length - 1 ? last[0] : last[1]);
+                toastLog(JSON.stringify(routes))
+                var 目的地 = last[1];
+                if (last[last.length - 1] == 0) {
+                    目的地 = last[0];
+                }
+                // var 目的地 = (index == routesGroup.length - 1 ? last[0] : last[1]);
                 if (挂机参数.挂机地图 == "石墓阵" && 当前地图 == "石墓五层") {
                     目的地 = "石墓阵"
                 }
@@ -5086,9 +5218,28 @@ var tools = {
                 }
             }
             tools.常用操作.点击人物();
-            sleep(random(666, 999));
+            //sleep(random(666, 999));
             toastLog("到达目的地挂机地图Loop");
             return;
+        },
+        进入石墓阵: () => {
+            while (当前总状态 == 总状态.已启动) {
+                var r = tools.findImageClick("shimuzhengrukou.png", 0.8);
+                if (r) {
+                    tools.悬浮球描述("点击入口")
+                    sleep(random(333, 555))
+                } else {
+                    var 当前地图 = tools.常用操作.获取人物地图();
+                    if (当前地图 == "石墓阵") {
+                        toastLog("到达石墓阵")
+                        return true;
+                    }
+                    else {
+                        toastLog("未知错误")
+                        return false;
+                    }
+                }
+            }
         },
         拖动大地图到边缘: () => {
             tools.悬浮球描述("拖动大地图到边缘");
@@ -5823,8 +5974,12 @@ var tools = {
                 pic: 补给枚举.组队卷
             },
             {
+                name: "祈祷之刃",
+                pic: 存仓库枚举.祈祷之刃
+            },
+            {
                 name: "祝福油",
-                pic: 补给枚举.祝福油
+                pic: 存仓库枚举.祝福油
             }];
             if (挂机参数.存万年 == 1) {
                 arr.push({
@@ -5954,7 +6109,7 @@ var tools = {
                     interval: 333,
                     threshold: 0.9
                 })
-                sleep(random(1000, 1500));
+                sleep(random(1500, 2000));
 
                 r = tools.findImageAreaForWaitClick("fenshen_paiqianBtn.png", 派遣p.x[0], 派遣p.y[0], 派遣p.x[1], 派遣p.y[1], {
                     maxTries: 10,
@@ -5968,6 +6123,8 @@ var tools = {
                     return false;
                 }
 
+                sleep(random(1500, 2000));
+
                 r = tools.findImageAreaForWaitClick("fenshenquedingxiulianBtn.png", 修炼p.x[0], 修炼p.y[0], 修炼p.x[1], 修炼p.y[1], {
                     maxTries: 10,
                     interval: 333,
@@ -5980,6 +6137,8 @@ var tools = {
                     tools.常用操作.关闭所有窗口();
                     return false;
                 }
+
+                sleep(random(1500, 2000));
 
                 while (true) {
                     sleep(random(1500, 2000));
@@ -6338,6 +6497,79 @@ var tools = {
                 }
             }
             return result;
+        },
+        检查存仓库: () => {
+            var r = tools.补给操作.点击小贩按钮("保存", false);
+            if (!r) {
+                return {
+                    status: false,
+                    err: "未获取保存物品按钮"
+                }
+            }
+            sleep(1288);
+            var 包袱p = config.zuobiao.存取范围[fbl].包袱;
+            var 仓库p = config.zuobiao.存取范围[fbl].仓库;
+            var arr = [{
+                name: "组队卷",
+                pic: 补给枚举.组队卷
+            },
+            {
+                name: "祈祷之刃",
+                pic: 存仓库枚举.祈祷之刃
+            },
+            {
+                name: "祝福油",
+                pic: 存仓库枚举.祝福油
+            }];
+            if (挂机参数.存万年 == 1) {
+                arr.push({
+                    name: "万年雪霜",
+                    pic: 补给枚举.万年雪霜
+                })
+            }
+
+           
+            for (let index = 0; index < arr.length; index++) {
+                var item = arr[index];
+                
+                // var result = tools.补给操作.背包选中格子中找图(item.pic, zhengliBtn, index1, index2)
+                // if (result.status) {
+                //     return {
+                //         status: true,
+                //         pic: item.pic,
+                //         物品名称: item.name
+                //     }
+                // }
+            }
+            return {
+                status: false
+            }
+
+            
+            var r = tools.findImageAreaForWait(补给枚举.万年雪霜包, 包袱p.x, 包袱p.y, 包袱p.x + 包袱p.w, 包袱p.y + 包袱p.h, {
+                maxTries: 10,
+                interval: 200,
+                threshold: 0.8
+            })
+            if (r.status) {
+                var x1 = r.img.x + r.size.w / 2 + random(5, 10);
+                var y1 = r.img.y + r.size.h / 2 + random(5, 10);
+                var x2 = 仓库p.中心.x + random(5, 10);
+                var y2 = 仓库p.中心.y + random(5, 10);
+                gesture(random(666, 999), [x1, y1], [x2, y2])
+                sleep(random(666, 999));
+                return {
+                    status: true,
+                    msg: "成功存入"
+                };
+            }
+            else {
+                return {
+                    status: false,
+                    msg: "未获取到雪霜包图片"
+                };
+            }
+
         },
         替换装备: () => {
             var zhengliBtn = tools.补给操作.整理背包(true)
