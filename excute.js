@@ -6531,7 +6531,39 @@ var tools = {
            
             for (let index = 0; index < arr.length; index++) {
                 var item = arr[index];
-                
+                var r = tools.matchTemplateForArea(item.pic, 12, 0.8,
+                    [包袱p.x, 包袱p.y, 包袱p.w, 包袱p.h]
+                )
+                if (r.status && r.count >= 0) {
+                    while (true) {
+                        var r = tools.findImageAreaForWait(补给枚举.万年雪霜, 仓库p.x, 仓库p.y, 仓库p.x + 仓库p.w, 仓库p.y + 仓库p.h, {
+                            maxTries: 10,
+                            interval: 100,
+                            threshold: t
+                        })
+                        if (r.status) {
+                            var x1 = r.img.x + r.size.w / 2 + random(5, 10);
+                            var y1 = r.img.y + r.size.h / 2 + random(5, 10);
+                            var x2 = 包袱p.中心.x + random(5, 10);
+                            var y2 = 包袱p.中心.y + random(5, 10);
+                            gesture(random(666, 999), [x1, y1], [x2, y2])
+                            tools.悬浮球描述("雪霜数量(" + 雪霜数量 + "),已取出(" + (取回数量 + 1) + ")");
+                            sleep(random(666, 999));
+                            取回数量++;
+                            if (取回数量 >= 6) {
+                                return {
+                                    status: true
+                                };
+                            }
+                        }
+                        else {
+                            return {
+                                status: false,
+                                msg: "未获取到雪霜图片"
+                            };
+                        }
+                    }
+                }
                 // var result = tools.补给操作.背包选中格子中找图(item.pic, zhengliBtn, index1, index2)
                 // if (result.status) {
                 //     return {
