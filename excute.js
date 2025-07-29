@@ -66,7 +66,6 @@ var 发现其他玩家时间等待 = 1000 * 60 * 3;
 
 var 禁止拾取时间 = new Date().getTime() - 1000 * 60 * 24;// 减去 24小时;
 
-var 挂机跑图累计错误次数 = 0;
 
 
 var 当前跑图顺序 = 0;//0是正向跑，1是反向跑
@@ -312,11 +311,10 @@ let tabCount = 3;
 let tabW = 0;
 var 是否启动初始化过 = false;
 var 是否激活拾取 = false;
-var 激活时间 = new Date().getTime();
 var isStart = false
 var isShowConfig = false;
 var 是否有组队任务 = false;
-
+var 跑图错误次数 = 0;
 var 锁定失败次数 = 0;
 var 宝宝最后位置信息 = {
     p: null,
@@ -1055,14 +1053,13 @@ var tools = {
 
             // —— 5. 其他长度：无法解析 ——  
             return null;
-        }
+        },
     },
     常用操作: {
         截图当前坐标: () => {
             var p = config.zuobiao.人物坐标范围精确[fbl];
             return tools.截屏裁剪(null, p.x1, p.y1, p.x2, p.y2);
         },
-
         截图被攻击怪物血量: () => {
             var p = config.zuobiao.被攻击怪物血量[fbl];
             return tools.截屏裁剪(null, p.x1, p.y1, p.x2, p.y2);
@@ -1287,7 +1284,7 @@ var tools = {
             //sleep(555)
             var r = tools.findImageForWaitClick("setting.png", {
                 maxTries: 10,
-                interval: 200
+                interval: 100
             })
             if (!r.status) {
                 return;
@@ -1341,8 +1338,8 @@ var tools = {
                 var y = 随机保护.y[0] + ((随机保护.y[1] - 随机保护.y[0]) / 2) + random(-3, 3);
                 sleep(random(1200, 1500))
                 click(x, y)
-                sleep(random(999, 1200))
             }
+            sleep(random(999, 1200))
             tools.常用操作.关闭所有窗口();
         },
         初始化攻击面板loops: () => {
@@ -1513,9 +1510,9 @@ var tools = {
                     if (isok && result != "比奇城" && result != "土城" && result != "苍月岛渔村") {
                         上次所在地图 = result;
                         tools.执行时间戳.检测内挂(true);
-                        tools.常用操作.初始化大地图面板(true);
-                        tools.常用操作.初始化攻击面板loops();
-                        tools.执行时间戳.检测组队模式(true);
+                        //tools.常用操作.初始化大地图面板(true);
+                        //tools.常用操作.初始化攻击面板loops();
+                        //tools.执行时间戳.检测组队模式(true);
                         //tools.执行时间戳.检测无地牢补给(true);
                     }
 
@@ -2131,7 +2128,6 @@ var tools = {
                 tools.悬浮球描述("设置内挂参数开始");
                 tools.常用操作.设置内挂();
                 上次设置内挂时间 = new Date().getTime();
-                tools.常用操作.关闭所有窗口();
                 tools.悬浮球描述("设置内挂参数结束");
             }
         },
@@ -2793,7 +2789,7 @@ var tools = {
                     tools.悬浮球描述("金令坐标,取消攻击")
                     return false;
                 }
-                tools.挂机打怪.拾取延时();
+                //tools.挂机打怪.拾取延时();
                 click(item.x, item.y);
                 var r1 = tools.挂机打怪.找正上锁定怪物(3, 100);
                 if (r1.status) {
@@ -2856,30 +2852,53 @@ var tools = {
                 tools.人物移动.去挂机地图Loop();
             }
         },
-        // 强制拾取: () => {
-        //     激活时间 = new Date().getTime();
+        // 开始拾取: () => {
         //     是否激活拾取 = true;
-        //     var 拾取 = config.zuobiao.按钮集合[fbl].拾取;
-        //     click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
         // },
-        开始拾取: () => {
-            激活时间 = new Date().getTime();
-            是否激活拾取 = true;
-            var 拾取 = config.zuobiao.按钮集合[fbl].拾取;
-            click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+        拾取: {
+            状态: () => {
+                var img = captureScreen();
+                var r = images.findMultiColors(img, 拾取.激活.c1, [[拾取.激活.x2, 拾取.激活.y2, 拾取.激活.c2], [拾取.激活.x3, 拾取.激活.y3, 拾取.激活.c3]], {
+                    region: [拾取.x[0] - 10, 拾取.y[0] - 10, 拾取.x[1] - 拾取.x[0] + 20, 拾取.y[1] - 拾取.y[0] + 20],
+                    threshold: 4
+                });
+                utils.recycleNull(img);
+                if ((r && (r.x > 0 || r.y > 0))) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            },
+            点击: (type) => {//1是为了激活，0是为了取消激活
+                var 拾取 = config.zuobiao.按钮集合[fbl].拾取;
+                var 是否激活状态 = tools.挂机打怪.拾取.状态();
+                if (type == 1) {
+                    if (是否激活状态) {
+                        toastLog("已处于激活状态");
+                        return;
+                    }
+                } else {
+                    if (!是否激活状态) {
+                        toastLog("已处于未激活状态");
+                        return;
+                    }
+                }
+                tools.点击鼠标(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]))
+            },
+            延时: () => { //避免click太频繁导致 拾取失败  拾取延时
+                var 拾取延时 = 0;
+                if (挂机参数.拾取延时 != null && 挂机参数.拾取延时 > 0) {
+                    拾取延时 = 挂机参数.拾取延时;
+                }
+                if (拾取延时 > 0) {
+                    sleep(拾取延时);
+                }
+            },
         },
-        拾取延时: () => { //避免click太频繁导致 拾取失败
-            var 拾取延时 = 0;
-            if (挂机参数.拾取延时 != null && 挂机参数.拾取延时 > 0) {
-                拾取延时 = 挂机参数.拾取延时;
-            }
-            // if (延时增加 != null && 延时增加 > 0) {
-            //     拾取延时 += 延时增加;
-            // }
-            if (拾取延时 > 0) {
-                sleep(拾取延时);
-            }
-        },
+
+
+        
         激活拾取后操作: () => {
             if (是否激活拾取) {
                 tools.挂机打怪.拾取延时();
@@ -2920,10 +2939,6 @@ var tools = {
                             break;
                         }
 
-
-                        isFind = tools.findImageArea(文字图枚举.不能拾取, p.x1, p.y1, p.x2, p.y2, 0.85);
-
-
                         if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
                             人物是否移动 = tools.人物移动.跑图坐标是否变化();
                             if (人物是否移动) {
@@ -2933,10 +2948,6 @@ var tools = {
                                 累计未移动次数 = 0;
                             }
                             else {
-                                // if (是否强制拾取 && isFind) {
-                                //     sleep(200);
-                                //     continue;
-                                // }
                                 累计未移动次数++;
                                 if (累计未移动次数 >= 5) {
                                     if (是否激活状态) {
@@ -2948,6 +2959,9 @@ var tools = {
                             }
                             上一次移动 = new Date().getTime();
                         }
+
+
+                        isFind = tools.findImageArea(文字图枚举.不能拾取, p.x1, p.y1, p.x2, p.y2, 0.85);
 
                         if (是否强制拾取) {
                             if (isFind.status) {
@@ -3008,6 +3022,13 @@ var tools = {
             tools.执行时间戳.检测无地牢补给(true);
 
             tools.执行时间戳.检测操作模式(true);
+
+            //tools.常用操作.初始化大地图面板(true);
+
+            tools.常用操作.初始化攻击面板loops();
+
+            tools.执行时间戳.检测组队模式(true);
+            //tools.执行时间戳.检测无地牢补给(true);
 
             //tools.执行时间戳.检测内挂(true);
 
@@ -3117,12 +3138,14 @@ var tools = {
             else {
                 var r = tools.人物移动.跑图坐标是否变化();
                 if (r) {
+                    跑图错误次数 = 0;
                     var 当前坐标截图 = tools.常用操作.截图当前坐标();
                     utils.recycleNull(上次坐标截图);
                     上次坐标截图 = 当前坐标截图;
                     是否跑图 = false;
                 }
                 else {
+                    跑图错误次数++;
                     是否跑图 = true;
                 }
             }
@@ -3132,10 +3155,6 @@ var tools = {
             }
             if (!是否跑图) {
                 return;
-            }
-            if (挂机跑图累计错误次数 >= 2) {
-                tools.人物移动.随机走一步(random(2500, 3000));
-                sleep(666);
             }
             tools.常用操作.打开大地图();
             var closeImg = null;
@@ -3153,7 +3172,6 @@ var tools = {
             while (true) {
                 if (new Date().getTime() - start > (1000 * 6)) {
                     toastLog("点击挂机坐标超过6秒");
-                    挂机跑图累计错误次数++;
                     tools.常用操作.关闭所有窗口(false, 0, true);
                     return;
                 }
@@ -4818,6 +4836,7 @@ var tools = {
             else {
                 var r = tools.人物移动.跑图坐标是否变化()
                 if (r) {
+                    跑图错误次数 = 0;
                     var 当前坐标截图 = tools.常用操作.截图当前坐标();
                     utils.recycleNull(上次坐标截图);
                     上次坐标截图 = 当前坐标截图;
@@ -4825,6 +4844,7 @@ var tools = {
                     tools.悬浮球描述("人物跑动中")
                 }
                 else {
+                    跑图错误次数++;
                     是否跑图 = true;
                     tools.悬浮球描述("人物未移动")
                 }
@@ -5101,20 +5121,22 @@ var tools = {
                             y = closeImg.y + (r.y - 偏移.y) + random(-5, 5);
                         }
                     }
+                    //var targetImg = tools.截屏裁剪(null, x - 60, y - 15, x + 60, y + 15);
                     click(x, y)
                     if (i < (routes.length - 1)) {
-                        while (true) {
-                            var img = tools.截屏裁剪(null, x - 60, y - 15, x + 60, y + 15);
-                            var r = tools.findImageAreaForWait("dilao_gezi.png", 格子P.x1, 格子P.y1, 格子P.x2, 格子P.y2, {
-                                maxTries: 5,
-                                interval: 200,
-                                threshold: 0.6
-                            });
-                            tools.findImageAreaForWait()
-                            sleep(random(1200, 1600));
-                        }
-                       
+                        sleep(random(1000, 1200));
+                        // while (true) {
+                        //     r = tools.findImageAreaForWaitByImg(targetImg, x - 100, y - 30, x + 100, y + 30, {
+                        //         maxTries: 3,
+                        //         interval: 50,
+                        //         threshold: 0.75
+                        //     });
+                        //     if (!r.status) {
+                        //         break;
+                        //     }
+                        // }
                     }
+                    //utils.recycleNull(targetImg);
                 }
                 //sleep(random(1200, 1666));
                 tools.常用操作.关闭所有窗口(false, 0, true);
@@ -5188,6 +5210,7 @@ var tools = {
                         else {
                             var r = tools.人物移动.跑图坐标是否变化()
                             if (r) {
+                                跑图错误次数 = 0;
                                 var 当前坐标截图 = tools.常用操作.截图当前坐标();
                                 utils.recycleNull(上次坐标截图);
                                 上次坐标截图 = 当前坐标截图;
@@ -5195,8 +5218,9 @@ var tools = {
                                 tools.悬浮球描述("人物跑动中")
                             }
                             else {
+                                跑图错误次数++;
                                 是否跑图 = true;
-                                tools.悬浮球描述("人物未移动")
+                                tools.悬浮球描述("跑图错误次数(" + 跑图错误次数 + ")")
                             }
                         }
                         if (是否跑图) {
@@ -6743,6 +6767,7 @@ var tools = {
                 tools.findImageClick("buygoumaiBtn.png");
                 sleep(random(888, 1288))
             }
+            tools.常用操作.关闭所有窗口();
         },
         存仓库: (index1, index2) => {
             tools.常用操作.关闭所有窗口();
@@ -7577,7 +7602,7 @@ var tools = {
             tryCount++;
         }
     },
-    findImageAreaForWaitByImg: (img, x1, y1, x2, y2, options) => {
+    findImageAreaForWaitByImg: (targetImg, x1, y1, x2, y2, options) => {
         var w = device.width;
         var h = device.height;
         let timeout, interval, maxTries, log, threshold;
@@ -7610,15 +7635,13 @@ var tools = {
                 }
             }
             if (new Date().getTime() - start > timeout) {
-                msg = "超时未找到图像：" + fileName;
+                msg = "超时未找到图像";
                 return {
                     status: false,
                     img: null,
                     err: msg
                 }
             }
-            var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${fileName}`;
-            var targetImg = images.read(targetImgPath);
             if (targetImg) {
                 var imgSize = {
                     w: targetImg.width,
@@ -7627,24 +7650,19 @@ var tools = {
                 var img = captureScreen();
                 var r = utils.regionalFindImg2(img, targetImg, x1, y1, x2, y2, 60, 255, threshold, false, false, "");
                 utils.recycleNull(img);
-                utils.recycleNull(targetImg);
                 if (r != null && (r.x > 0 || r.y > 0)) {
                     return {
                         status: true,
                         img: r,
                         size: imgSize
                     };
-                } else {
-                    if (fileName != "closeBtn.png" && fileName != "closeBtn2.png" && fileName != "zuoguaiwuBtn.png" && fileName != "zuoguaiwumanxueBtn.png") {
-                        tools.悬浮球描述('找图失败' + fileName);
-                    }
                 }
             }
             else {
                 return {
                     status: false,
                     img: null,
-                    err: "本地无" + fileName
+                    err: "targetImg不能为空"
                 }
             }
             tryCount++;
@@ -7928,6 +7946,16 @@ var tools = {
         //     w,
         //     h
         // };
+    },
+    点击鼠标: (x, y) => {
+        while (true) {
+            if (isShowConfig) {
+                sleep(150);
+                continue;
+            }
+            break;
+        }
+        click(x, y);
     }
 }
 
@@ -8446,6 +8474,12 @@ threads.start(function () {
                         挂机参数.挂机地图 = "地牢一层东";
                     }
                 }
+            }
+
+            if (跑图错误次数 >= 6) {
+                tools.人物移动.左上走(random(2300, 3600));
+                tools.人物移动.右下走(random(1200, 1500));
+                tools.常用操作.初始化大地图面板(true);
             }
 
             if (new Date().getTime() - 上次跑图时间 > 跑图时间戳) {
