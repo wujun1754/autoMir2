@@ -4376,6 +4376,7 @@ var tools = {
                     toastLog("处于激活");
                     return;
                 }
+                上次坐标截图 = tools.常用操作.截图当前坐标();
             } else {
                 if (!是否激活状态) {
                     toastLog("处于未激活");
@@ -4383,7 +4384,6 @@ var tools = {
                 }
             }
             tools.click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]))
-
             上一次拾取时间 = new Date().getTime();
             // setTimeout(() => {
             //     tools.click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]))
@@ -4928,7 +4928,7 @@ var tools = {
                 return true;
             }
         },
-        是否跑图并截图坐标: () => {
+        是否跑图并截图坐标: (是否累计错误次数) => {
             var 是否跑图 = false;
             if (上次坐标截图 == null) {
                 是否跑图 = true;
@@ -4937,7 +4937,9 @@ var tools = {
             else {
                 var r = tools.人物移动.跑图坐标是否变化()
                 if (r) {
-                    跑图错误次数 = 0;
+                    if (是否累计错误次数) {
+                        跑图错误次数 = 0;
+                    }
                     var 当前坐标截图 = tools.常用操作.截图当前坐标();
                     utils.recycleNull(上次坐标截图);
                     上次坐标截图 = 当前坐标截图;
@@ -4945,7 +4947,9 @@ var tools = {
                     tools.悬浮球描述("人物跑动中")
                 }
                 else {
-                    跑图错误次数++;
+                    if (是否累计错误次数) {
+                        跑图错误次数++;
+                    }
                     是否跑图 = true;
                     tools.悬浮球描述("人物未移动")
                 }
