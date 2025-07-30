@@ -2401,7 +2401,6 @@ var tools = {
             var r = null;
             上次打怪时间 = new Date().getTime();
             var timeout = 挂机参数.打怪等待 * 1000;
-            var 人物是否移动 = false;
             var 移动时间戳 = 1000 * 1.3;
             var 上一次移动 = new Date().getTime();
 
@@ -2428,13 +2427,13 @@ var tools = {
                 var 时间戳 = new Date().getTime() - start;
                 if (时间戳 > timeout) {
                     tools.挂机打怪.点击挂机坐标(true);
-                    toastLog("打怪时间超过" + timeout + "秒,强制跑图")
+                    toastLog("打怪时间超过" + timeout + "秒")
                     sleep(1000 * 15);
                     return false;
                 }
                 if (锁定失败次数 >= 3) {
                     tools.挂机打怪.点击挂机坐标(true);
-                    toastLog("锁定失败次数" + 锁定失败次数 + ",强制跑图")
+                    toastLog("锁定失败次数" + 锁定失败次数 + "")
                     锁定失败次数 = 0;
                     sleep(1000 * 10);
                     return false;
@@ -2558,11 +2557,8 @@ var tools = {
                     }
 
                     if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
-                        人物是否移动 = tools.人物移动.跑图坐标是否变化();
-                        if (人物是否移动) {
-                            var 当前坐标截图 = tools.常用操作.截图当前坐标();
-                            utils.recycleNull(上次坐标截图);
-                            上次坐标截图 = 当前坐标截图;
+                        var 是否跑图 = tools.人物移动.是否跑图并截图坐标();
+                        if (!是否跑图) {
                             上一次隐身 = new Date().getTime() - (60 * 1000);
                         }
                         else {
@@ -2586,7 +2582,6 @@ var tools = {
                         }
                         上一次移动 = new Date().getTime();
                     }
-
                     if (是否隐身等待 && !是否强制攻击) {
                         var result = tools.挂机打怪.判断是否强制攻击();
                         if (result.status) {
@@ -2941,29 +2936,13 @@ var tools = {
                 }
             }
         },
-        点击挂机坐标: (是否强制跑图) => {
+        点击挂机坐标: (强制跑图) => {
             var 是否跑图 = false;
-            if (是否强制跑图) {
-                //toastLog("强制跑图")
+            if (强制跑图) {
                 是否跑图 = true;
-            }
-            else if (上次坐标截图 == null) {
-                是否跑图 = true;
-                上次坐标截图 = tools.常用操作.截图当前坐标();
             }
             else {
-                var r = tools.人物移动.跑图坐标是否变化();
-                if (r) {
-                    跑图错误次数 = 0;
-                    var 当前坐标截图 = tools.常用操作.截图当前坐标();
-                    utils.recycleNull(上次坐标截图);
-                    上次坐标截图 = 当前坐标截图;
-                    是否跑图 = false;
-                }
-                else {
-                    跑图错误次数++;
-                    是否跑图 = true;
-                }
+                是否跑图 = tools.人物移动.是否跑图并截图坐标();
             }
             var 挂机坐标s = tools.挂机打怪.获取挂机坐标();
             if (!挂机坐标s.status) {
@@ -2981,13 +2960,14 @@ var tools = {
             if (closeBtn.status) {
                 closeImg = closeBtn.img;
             } else {
+                跑图错误次数++;
                 toastLog("找不到地图关闭按钮")
                 return;
             }
             var start = new Date().getTime();
             while (true) {
                 if (new Date().getTime() - start > (1000 * 6)) {
-                    toastLog("点击挂机坐标超过6秒");
+                    toastLog("点击坐标超过6秒");
                     tools.常用操作.关闭所有窗口(false, 0, true);
                     return;
                 }
@@ -3038,7 +3018,8 @@ var tools = {
                     return;
                 }
                 if (result.status && result.count >= 10) {
-                    挂机跑图累计错误次数 = 0;
+                    是否强制跑图 = false;
+                    跑图错误次数 = 0;
                     toastLog("前往挂机点[" + (挂机点跑图顺序 + 1) + "]");
                     tools.常用操作.关闭所有窗口(false, 0, true);
                     return;
@@ -3050,6 +3031,7 @@ var tools = {
                     else {
                         挂机点跑图顺序++;
                     }
+                    跑图错误次数++;
                     tools.悬浮球描述("可能到达挂机点[" + (挂机点跑图顺序 + 1) + "]");
                 }
             }
@@ -4408,7 +4390,6 @@ var tools = {
             // }, now - 上一次拾取时间);
         },
         激活后操作: () => {
-            var 人物是否移动 = false;
             var 累计未移动次数 = 0;
             var 移动时间戳 = 1000 * 1.5;
             var 上一次移动 = new Date().getTime();
@@ -4440,11 +4421,9 @@ var tools = {
                     }
 
                     if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
-                        人物是否移动 = tools.人物移动.跑图坐标是否变化();
-                        if (人物是否移动) {
-                            var 当前坐标截图 = tools.常用操作.截图当前坐标();
-                            utils.recycleNull(上次坐标截图);
-                            上次坐标截图 = 当前坐标截图;
+                        //人物是否移动 = tools.人物移动.跑图坐标是否变化();
+                        var 是否跑图 = tools.人物移动.是否跑图并截图坐标();
+                        if (!是否跑图) {
                             累计未移动次数 = 0;
                         }
                         else {
@@ -5208,7 +5187,7 @@ var tools = {
             });
             if (closeBtn.status) {
                 var closeImg = closeBtn.img;
-                tools.悬浮球描述(当前地图 + "-->" + 目的地)
+                tools.悬浮球描述(当前地图 + " --- " + 目的地)
                 var routes = config.地图路由[当前地图][目的地][0];
                 var 大地图坐标 = null;
                 if (挂机参数.挂机城市 == "比奇") {
@@ -5260,6 +5239,7 @@ var tools = {
                     }
                     //utils.recycleNull(targetImg);
                 }
+                是否强制跑图 = false;
                 //sleep(random(1200, 1666));
                 tools.常用操作.关闭所有窗口(false, 0, true);
             } else {
@@ -5327,30 +5307,11 @@ var tools = {
                         if (当前地图 == 目的地) { //说明到目的地
                             break;
                         }
-                        if (上次坐标截图 == null) {
+                        if (强制跑图) {
                             是否跑图 = true;
-                            上次坐标截图 = tools.常用操作.截图当前坐标();
                         }
                         else {
-                            if (强制跑图) {
-                                是否跑图 = true;
-                            }
-                            else {
-                                var r = tools.人物移动.跑图坐标是否变化()
-                                if (r) {
-                                    跑图错误次数 = 0;
-                                    var 当前坐标截图 = tools.常用操作.截图当前坐标();
-                                    utils.recycleNull(上次坐标截图);
-                                    上次坐标截图 = 当前坐标截图;
-                                    是否跑图 = false;
-                                    tools.悬浮球描述("人物跑动中")
-                                }
-                                else {
-                                    跑图错误次数++;
-                                    是否跑图 = true;
-                                    tools.悬浮球描述("跑图错误次数(" + 跑图错误次数 + ")")
-                                }
-                            }
+                            是否跑图 = tools.人物移动.是否跑图并截图坐标();
                         }
                         if (是否跑图) {
                             try {
@@ -5376,7 +5337,7 @@ var tools = {
                                 tools.悬浮球描述("继续攻击")
                                 continue;
                             } else {
-                                强制跑图 = 打怪次数 > 0 ? true : false;
+                                强制跑图 = 打怪次数 > 0 || 是否强制跑图 ? true : false;
                                 break;
                             }
                         }
@@ -8631,15 +8592,9 @@ threads.start(function () {
             }
 
             if (跑图错误次数 >= 6) {
+                tools.常用操作.关闭所有窗口();
                 tools.人物移动.左上走(random(2300, 3600));
                 tools.人物移动.右下走(random(1200, 1500));
-                var r = tools.findImageForWaitClick("fenshenquedingjiashiBtn.png", {
-                    maxTries: 5,
-                    interval: 100
-                })
-                if (r.status) {
-                    tools.常用操作.关闭所有窗口();
-                }
                 tools.常用操作.初始化大地图面板(true);
             }
 
@@ -8650,10 +8605,10 @@ threads.start(function () {
                 }
                 else if ((当前地图 == 挂机参数.挂机地图 || 挂机参数.挂机地图 == "比奇野外")) {
                     try {
-                        tools.挂机打怪.点击挂机坐标(打怪次数 > 0 ? true : false);
+                        tools.挂机打怪.点击挂机坐标(打怪次数 > 0 || 是否强制跑图 ? true : false);
                     } catch (e) {
-                        tools.常用方法.错误日志("点击挂机坐标异常", 6)
-                        toastLog('点击挂机坐标异常' + e);
+                        tools.常用方法.错误日志("挂机坐标异常", 6)
+                        toastLog('挂机坐标异常' + e);
                     }
                     var 扫描宝宝 = tools.挂机打怪.扫描宝宝();
                     if (扫描宝宝.status) {
