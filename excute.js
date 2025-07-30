@@ -27,6 +27,7 @@ let ocrPladderOCR = $ocr.create({
 });
 let 存入仓库数量 = 0;
 var 挂机点跑图顺序 = 0;
+var 是否强制跑图 = false;
 
 let 认证自检时间 = new Date().getTime();
 let 认证自检时间戳 = 30 * 1000;
@@ -66,6 +67,7 @@ var 发现其他玩家时间等待 = 1000 * 60 * 3;
 
 var 禁止拾取时间 = new Date().getTime() - 1000 * 60 * 24;// 减去 24小时;
 
+var 上一次拾取时间 = new Date().getTime() - 1000 * 60 * 24;// 减去 24小时;
 
 
 var 当前跑图顺序 = 0;//0是正向跑，1是反向跑
@@ -395,15 +397,18 @@ var win = floaty.rawWindow(
                         </radiogroup>
                     </horizontal>
                     <horizontal id="ditu1_3" visibility="gone">
-                        <radiogroup id="group1_3" orientation="vertical" >
+                        <radiogroup id="group1_3" orientation="vertical"  >
                             <radio textSize="10sp" id="radio3_1" text="地牢一层东" />
-                            <radio textSize="10sp" id="radio3_3" text="地牢一层西1" />
                             <radio textSize="10sp" id="radio3_2" text="地牢一层北1" />
-                            <radio textSize="10sp" id="radio3_4" text="地牢一层北2" />
+                            <radio textSize="10sp" id="radio3_3" text="地牢一层西1" />
+                            <radio padding="2dp" id="radio3_4" text="地牢一层北2" />
                             <radio textSize="10sp" id="radio3_5" text="黑暗地带" />
                             <radio textSize="10sp" id="radio3_6" text="传奇部落" />
                             <radio textSize="10sp" id="radio3_7" text="邪恶势力" />
                             <radio textSize="10sp" id="radio3_8" text="一线天" />
+                            <radio textSize="10sp" id="radio3_9" text="死亡棺材" />
+                            <radio textSize="10sp" id="radio3_10" text="恐怖空间" />
+                            <radio textSize="10sp" id="radio3_11" text="生死之间" />
                         </radiogroup>
                     </horizontal>
                     <horizontal id="ditu1_4" visibility="gone">
@@ -1796,6 +1801,18 @@ var tools = {
                 text = "一线天"
                 isok = true;
             }
+            else if ((text.indexOf("死") >= 0 || text.indexOf("亡") >= 0) && (text.indexOf("棺") >= 0 || text.indexOf("材") >= 0)) {
+                text = "死亡棺材"
+                isok = true;
+            }
+            else if ((text.indexOf("死") >= 0 || text.indexOf("生") >= 0) && (text.indexOf("之") >= 0 || text.indexOf("间") >= 0)) {
+                text = "生死之间"
+                isok = true;
+            }
+            else if ((text.indexOf("恐") >= 0 || text.indexOf("怖") >= 0) && (text.indexOf("空") >= 0 || text.indexOf("间") >= 0)) {
+                text = "恐怖空间"
+                isok = true;
+            }
             else if ((text.indexOf("连") >= 0 || text.indexOf("接") >= 0) && (text.indexOf("通") >= 0 || text.indexOf("道") >= 0)) {
                 if (text.indexOf("九") >= 0) {
                     text = "连接通道九"
@@ -2115,7 +2132,7 @@ var tools = {
                 tools.悬浮球描述("检查背包是否已满开始");
                 var r = tools.常用操作.检查背包是否已满();
                 if (r) {
-                    tools.挂机打怪.回城补给在挂机("拾取发现装备已满");
+                    tools.挂机打怪.回城补给在挂机("时间戳装备已满");
                 }
                 上次检查背包是否已满时间 = new Date().getTime();
                 tools.悬浮球描述("检查背包是否已满结束");
@@ -2344,10 +2361,12 @@ var tools = {
             }
             if (isFind) {
                 tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                sleep(222)
+                tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
             }
-            else {
-                tools.悬浮球描述("未发现怪物");
-            }
+            // else {
+            //     tools.悬浮球描述("未发现怪物");
+            // }
             tools.拾取.激活后操作();
             if (isFind) {
                 var r = tools.挂机打怪.找正上锁定怪物(3, 100);
@@ -2362,7 +2381,8 @@ var tools = {
                 }
             }
             else {
-                if (new Date().getTime() >= 禁止拾取时间) {
+                var now = new Date().getTime();
+                if (now >= 禁止拾取时间) {
                     var 拾取明细 = tools.挂机打怪.需要拾取明细()
                     if (拾取明细 && 拾取明细.count > 0) {
                         tools.拾取.点击(1);
@@ -2400,6 +2420,7 @@ var tools = {
             var 是否锁定危险怪 = false;
             var 是否强制攻击 = false;
             var 切换左面板人物 = false;
+            var 是否正在攻击宝宝身边怪 = false;
             var 扫描宝宝 = {
                 status: false
             };
@@ -2488,7 +2509,7 @@ var tools = {
                         是否强制攻击 = true;
                     }
 
-                    if ((挂机参数.隐身走动 == 0 || 是否强制攻击) && isChange && 锁定的怪物.length <= 0) {
+                    if ((挂机参数.隐身走动 == 0 || 是否强制攻击) && !是否正在攻击宝宝身边怪 && isChange && 锁定的怪物.length <= 0) {
                         锁定的怪物 = tools.挂机打怪.身边锁定怪物();
                         if (锁定的怪物.length <= 0) {
                             if (是否强制攻击 && 切换左面板人物) {
@@ -2496,6 +2517,7 @@ var tools = {
                                 tools.常用操作.点击左面板怪物();
                                 sleep(100);
                             }
+                            toastLog("血量变化未获取到怪物,强制关闭")
                             tools.click(random(726, 736), random(25, 35));
                             return true;
                         }
@@ -2557,6 +2579,7 @@ var tools = {
                                         切换左面板人物 = false;
                                         tools.常用操作.点击左面板怪物();
                                     }
+                                    toastLog("向怪物移动失败,强制关闭");
                                     return false;
                                 }
                             }
@@ -2609,6 +2632,7 @@ var tools = {
                             if (r1) {
                                 if (是否攻击宝宝身边) {
                                     是否强制攻击 = true;
+                                    是否正在攻击宝宝身边怪 = true;
                                 }
                                 else {
                                     是否强制攻击 = false;
@@ -2742,13 +2766,6 @@ var tools = {
             if (宝宝身边怪物.status && 宝宝身边怪物.value && 宝宝身边怪物.value.length > 0) {
                 var 普攻 = config.zuobiao.按钮集合[fbl].普攻;
                 var item = 宝宝身边怪物.value[0];
-                var x = item.x + 20;
-                var y = item.y;
-                if (x >= 820 && x <= 895 && y >= 470 && y <= 540) { //避免点到金令
-                    tools.悬浮球描述("金令坐标,取消攻击")
-                    return false;
-                }
-                //tools.挂机打怪.拾取延时();
                 tools.click(item.x, item.y);
                 var r1 = tools.挂机打怪.找正上锁定怪物(3, 100);
                 if (r1.status) {
@@ -3209,6 +3226,12 @@ var tools = {
                 r = config.zuobiao.盟重大地图偏移[fbl].邪恶势力.打怪点;
             } else if (挂机参数.挂机地图 == "一线天") {
                 r = config.zuobiao.盟重大地图偏移[fbl].一线天.打怪点;
+            } else if (挂机参数.挂机地图 == "死亡棺材") {
+                r = config.zuobiao.盟重大地图偏移[fbl].死亡棺材.打怪点;
+            } else if (挂机参数.挂机地图 == "生死之间") {
+                r = config.zuobiao.盟重大地图偏移[fbl].生死之间.打怪点;
+            } else if (挂机参数.挂机地图 == "恐怖空间") {
+                r = config.zuobiao.盟重大地图偏移[fbl].恐怖空间.打怪点;
             } else if (挂机参数.挂机地图 == "沃玛寺庙一层") {
                 r = config.zuobiao.比奇大地图偏移[fbl].沃玛寺庙一层.打怪点;
             } else if (挂机参数.挂机地图 == "沃玛寺庙二层") {
@@ -3826,7 +3849,7 @@ var tools = {
                 tools.click(r.click.x, r.click.y);
                 sleep(333);
                 tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                tools.悬浮球临时描述("向" + r.方向 + "空位移动")
+                tools.悬浮球描述("向" + r.方向 + "空位移动")
                 // if (r && r.x > 0 && r.y > 0) {
                 //     // 扫描怪物空位
                 //     // var x = r.x;
@@ -4111,7 +4134,14 @@ var tools = {
                 || 挂机参数.挂机地图.indexOf("黑暗地带") >= 0
                 || 挂机参数.挂机地图.indexOf("传奇部落") >= 0
                 || 挂机参数.挂机地图.indexOf("邪恶势力") >= 0
-                || 挂机参数.挂机地图.indexOf("一线天") >= 0) {
+                || 挂机参数.挂机地图.indexOf("一线天") >= 0
+                || 挂机参数.挂机地图.indexOf("恐怖空间") >= 0
+                || 挂机参数.挂机地图.indexOf("死亡棺材") >= 0
+                || 挂机参数.挂机地图.indexOf("生死之间") >= 0) {
+
+
+
+
                 var result = tools.findImageArea(文字图枚举.钳, p.x1, p.y1, p.x2, p.y2, t);
                 if (result.status) {
                     return "蚶虫(找图发现)"
@@ -4152,6 +4182,8 @@ var tools = {
                     .replace(/\\/g, '')
                     .replace(/金币/g, "")
                     .replace(/金市/g, "")
+                    .replace(/全市/g, "")
+                    .replace(/全币/g, "")
                     .replace(/时间/g, "")
                     .replace(/不能/g, "");
             }
@@ -4198,7 +4230,12 @@ var tools = {
                 || 挂机参数.挂机地图.indexOf("黑暗地带") >= 0
                 || 挂机参数.挂机地图.indexOf("传奇部落") >= 0
                 || 挂机参数.挂机地图.indexOf("邪恶势力") >= 0
-                || 挂机参数.挂机地图.indexOf("一线天") >= 0) {
+                || 挂机参数.挂机地图.indexOf("一线天") >= 0
+                || 挂机参数.挂机地图.indexOf("死亡棺材") >= 0
+                || 挂机参数.挂机地图.indexOf("生死之间") >= 0
+                || 挂机参数.挂机地图.indexOf("恐怖空间") >= 0
+
+            ) {
                 arr.push({
                     pic: 文字图枚举.钳,
                     text: "钳虫"
@@ -4354,26 +4391,22 @@ var tools = {
             var 是否激活状态 = tools.拾取.状态();
             if (type == 1) {
                 if (是否激活状态) {
-                    toastLog("已处于激活状态");
+                    toastLog("处于激活");
                     return;
                 }
             } else {
                 if (!是否激活状态) {
-                    toastLog("已处于未激活状态");
+                    toastLog("处于未激活");
                     return;
                 }
             }
             tools.click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]))
+
+            上一次拾取时间 = new Date().getTime();
+            // setTimeout(() => {
+            //     tools.click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]))
+            // }, now - 上一次拾取时间);
         },
-        // 延时: () => { //避免click太频繁导致 拾取失败  拾取延时
-        //     var 拾取延时 = 0;
-        //     if (挂机参数.拾取延时 != null && 挂机参数.拾取延时 > 0) {
-        //         拾取延时 = 挂机参数.拾取延时;
-        //     }
-        //     if (拾取延时 > 0) {
-        //         sleep(拾取延时);
-        //     }
-        // },
         激活后操作: () => {
             var 人物是否移动 = false;
             var 累计未移动次数 = 0;
@@ -4381,23 +4414,26 @@ var tools = {
             var 上一次移动 = new Date().getTime();
             var 拾取 = config.zuobiao.按钮集合[fbl].拾取;
             var p = config.zuobiao.聊天框最后一行[fbl];
+            var p1 = config.zuobiao.聊天框面板[fbl];
+            var 不能拾取次数 = 0;
             let start = new Date().getTime();
             var 是否强制拾取 = false;
             var 拾取时长 = 150 * 1000;
             while (当前总状态 == 总状态.已启动) {
-                var isFind = tools.findImageArea(文字图枚举.已满, p.x1, p.y1, p.x2, p.y2, 0.85);
+                var isFind = tools.findImageArea(文字图枚举.已满, p1.x1, p1.y1, p1.x2, p1.y2, 0.85);
                 if (isFind.status) {
-                    toastLog("包袱已满")
-                    tools.挂机打怪.回城补给在挂机("包袱已满");
+                    toastLog("文字识别装备已满")
+                    tools.挂机打怪.回城补给在挂机("文字识别装备已满");
                     return;
                 }
                 var 是否激活状态 = tools.拾取.状态();
                 if (是否激活状态 || 是否强制拾取) {
+                    是否强制跑图 = true;
                     tools.悬浮球描述("拾取(" + parseInt((拾取时长 - (new Date().getTime() - start)) / 1000) + ")");
                     if (new Date().getTime() - start > 拾取时长) {
                         toastLog("拾取超时")
                         if (是否激活状态) {
-                            tools.click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+                            tools.拾取.点击(0);
                         }
                         禁止拾取时间 = new Date().getTime() + (1000 * 15);
                         break;
@@ -4415,7 +4451,7 @@ var tools = {
                             累计未移动次数++;
                             if (累计未移动次数 >= 5) {
                                 if (是否激活状态) {
-                                    tools.click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+                                    tools.拾取.点击(0);
                                 }
                                 禁止拾取时间 = new Date().getTime() + (1000 * 15);
                                 break;
@@ -4430,14 +4466,14 @@ var tools = {
                     if (是否强制拾取) {
                         if (isFind.status) {
                             if (是否激活状态) {
-                                tools.click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
-                                sleep(1500);
-                                tools.click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+                                tools.拾取.点击(0);
+                                sleep(1000);
+                                tools.拾取.点击(1);
                             }
                             else {
-                                tools.click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+                                tools.拾取.点击(1);
                             }
-                            sleep(1200);
+                            sleep(1500);
                         }
                         else {
                             sleep(200);
@@ -4446,6 +4482,7 @@ var tools = {
                     }
                     else {
                         if (isFind.status) {
+                            不能拾取次数++;
                             var 拾取明细 = tools.挂机打怪.需要拾取明细()
                             if (拾取明细 && 拾取明细.count >= 3) {
                                 累计未移动次数 = 0;
@@ -4453,9 +4490,30 @@ var tools = {
                                 toastLog("拾取数（" + 拾取明细.count + "）强制拾取")
                                 continue;
                             }
+                            else if (拾取明细 && 拾取明细.count > 0) {
+                                if (不能拾取次数 > 3) {
+                                    if (是否激活状态) {
+                                        tools.拾取.点击(0);
+                                    }
+                                    禁止拾取时间 = new Date().getTime() + (1000 * 15);
+                                    break;
+                                }
+                                else {
+                                    if (是否激活状态) {
+                                        tools.拾取.点击(0);
+                                        sleep(1000);
+                                        tools.拾取.点击(1);
+                                    }
+                                    else {
+                                        tools.拾取.点击(1);
+                                    }
+                                    sleep(1500);
+                                    continue;
+                                }
+                            }
                             else {
                                 if (是否激活状态) {
-                                    tools.click(random(拾取.x[0], 拾取.x[1]), random(拾取.y[0], 拾取.y[1]));
+                                    tools.拾取.点击(0);
                                 }
                                 禁止拾取时间 = new Date().getTime() + (1000 * 15);
                                 break;
@@ -4518,7 +4576,6 @@ var tools = {
                     return true;
                 }
             }
-
         },
         点击左边空位: (强制跑动) => {
             var img = captureScreen();
@@ -5112,38 +5169,38 @@ var tools = {
             }
         },
         去挂机地图: (目的地, 当前地图) => {
-            var isCheck = false;
-            if (当前地图 == "阴森石屋" || 当前地图 == "阴森石路" || 当前地图 == "紫水晶屋" || 当前地图 == "石墓小溪") {
-                isCheck = true;
-            }
-            if (isCheck) {
-                var r = tools.findImageForWaitClick("fenshenquedingjiashiBtn.png", {
-                    maxTries: 6,
-                    interval: 200
-                })
-                if (r.status) {
-                    tools.常用操作.关闭所有窗口();
-                }
-            }
-            switch (当前地图) { //这里走动是为了防止有时点地图点不动，走一步就可以了
-                case "阴森石屋":
-                    tools.人物移动.左走一步(random(1200, 1500));
-                    break;
-                case "阴森石路":
-                    tools.人物移动.下走一步(random(1200, 1500));
-                    break;
-                case "石墓小溪":
-                case "紫水晶屋":
-                case "石墓入口":
-                    tools.人物移动.右上走(random(1200, 1500));
-                    break;
-                case "牛魔寺庙入口":
-                    tools.人物移动.上走一步(random(1200, 1500));
-                    break;
-                default:
-                    //tools.人物移动.随机走一步(random(1200, 1500))
-                    break;
-            }
+            // var isCheck = false;
+            // if (当前地图 == "阴森石屋" || 当前地图 == "阴森石路" || 当前地图 == "紫水晶屋" || 当前地图 == "石墓小溪") {
+            //     isCheck = true;
+            // }
+            // if (isCheck) {
+            //     var r = tools.findImageForWaitClick("fenshenquedingjiashiBtn.png", {
+            //         maxTries: 5,
+            //         interval: 100
+            //     })
+            //     if (r.status) {
+            //         tools.常用操作.关闭所有窗口();
+            //     }
+            // }
+            // switch (当前地图) { //这里走动是为了防止有时点地图点不动，走一步就可以了
+            //     case "阴森石屋":
+            //         tools.人物移动.左走一步(random(1200, 1500));
+            //         break;
+            //     case "阴森石路":
+            //         tools.人物移动.下走一步(random(1200, 1500));
+            //         break;
+            //     case "石墓小溪":
+            //     case "紫水晶屋":
+            //     case "石墓入口":
+            //         tools.人物移动.右上走(random(1200, 1500));
+            //         break;
+            //     case "牛魔寺庙入口":
+            //         tools.人物移动.上走一步(random(1200, 1500));
+            //         break;
+            //     default:
+            //         //tools.人物移动.随机走一步(random(1200, 1500))
+            //         break;
+            // }
             tools.常用操作.打开大地图();
             var closeBtn = tools.findImageForWait("closeBtn.png", {
                 maxTries: 10,
@@ -5151,7 +5208,7 @@ var tools = {
             });
             if (closeBtn.status) {
                 var closeImg = closeBtn.img;
-                toastLog(当前地图 + "-->" + 目的地)
+                tools.悬浮球描述(当前地图 + "-->" + 目的地)
                 var routes = config.地图路由[当前地图][目的地][0];
                 var 大地图坐标 = null;
                 if (挂机参数.挂机城市 == "比奇") {
@@ -5206,6 +5263,7 @@ var tools = {
                 //sleep(random(1200, 1666));
                 tools.常用操作.关闭所有窗口(false, 0, true);
             } else {
+                跑图错误次数++;
                 toastLog("去挂机地图,未找到closeBtn");
                 return;
             }
@@ -8015,13 +8073,21 @@ var tools = {
         // };
     },
     click: (x, y) => {
-        while (true) {
-            if (isShowConfig) {
-                tools.悬浮球描述("设置启动中,禁止点击");
-                sleep(150);
-                continue;
+        while (isShowConfig) {
+            tools.悬浮球描述("设置启动中,禁止点击");
+            sleep(100);
+        }
+        var p = config.zuobiao.按钮集合[fbl].金令范围;
+        if (x >= p.x1 && x <= p.x2 && y >= p.y1 && y <= p.y2) { //避免点到金令
+            var r = tools.findImageArea("jinlingtubiao.png", p.x1, p.y1, p.x2, p.y2, 0.8);
+            if (r.status) {
+                tools.悬浮球描述("金令坐标,取消点击")
+                return false;
             }
-            break;
+        }
+        var 时间差 = new Date().getTime() - 上一次拾取时间;
+        if (时间差 < 888) {
+            sleep(888 - 时间差);
         }
         click(x, y);
     }
@@ -8346,6 +8412,25 @@ ui.run(() => {
 
     // windowCommon.xuanFuCommon.setBackgroundDrawable(gd);
     windowCommon.setPosition(3, -5)
+
+
+    for (let i = 0; i < win.group1_3.getChildCount(); i++) {
+        // let rb = win.group1_3.getChildAt(i);
+        // rb.setTextSize(10);           // 缩小文字
+        // rb.setPadding(5, 0, 5, 0);    // 缩小内边距
+        // rb.setMinHeight(0);           // 取消最小高度
+        // rb.setIncludeFontPadding(false); // 去掉文字额外上下边距
+
+        let rb = win.group1_3.getChildAt(i);
+        rb.setTextSize(9);
+        rb.setPadding(0, 10, 0, 10);
+        rb.setMinHeight(0);
+        rb.setIncludeFontPadding(false);
+
+        // 整体缩小
+        // rb.setScaleX(0.7);  // 宽度缩小70%
+        // rb.setScaleY(0.7);  // 高度缩小70%
+    }
 });
 
 function switchTab(index) {
@@ -8386,7 +8471,7 @@ function updateWindowPosition(x) {
     } else {
         偏移量 = 100;
     }
-    ui.run(() => window.setPosition(555, h - 偏移量));
+    ui.run(() => window.setPosition(515, h - 偏移量));
     // 如果悬浮窗靠近左边边缘，则吸附到左边
     // if (windowX < edgeMargin) {
     //     ui.run(() => window.setPosition(-24, h-50)); // 只露出一半图标
@@ -8548,6 +8633,13 @@ threads.start(function () {
             if (跑图错误次数 >= 6) {
                 tools.人物移动.左上走(random(2300, 3600));
                 tools.人物移动.右下走(random(1200, 1500));
+                var r = tools.findImageForWaitClick("fenshenquedingjiashiBtn.png", {
+                    maxTries: 5,
+                    interval: 100
+                })
+                if (r.status) {
+                    tools.常用操作.关闭所有窗口();
+                }
                 tools.常用操作.初始化大地图面板(true);
             }
 
