@@ -5271,7 +5271,7 @@ var tools = {
                 sleep(1000 * 1.5);
             }
         },
-        去下一层地图: (当前地图) => {
+        去下一层地图: (当前地图, 目的地) => {
             tools.常用操作.打开大地图();
             var closeBtn = tools.findImageForWait("closeBtn.png", {
                 maxTries: 10,
@@ -5282,34 +5282,29 @@ var tools = {
                 toastLog("去下一层地图,未找到closeBtn");
                 return;
             }
+            var closeImg = closeBtn.img;
             var 偏移 = config.zuobiao.打怪点偏移[fbl];
             var 箭头P = tools.挂机打怪.大地图箭头(closeBtn);
             var 下一层 = config.地图路由[当前地图]["下一层"];
             var 偏移 = config.zuobiao.打怪点偏移[fbl];
-            if (下一层 && 下一层.入口 && 下一层.进门) {
-                var 入口 = 下一层.入口;
-                var 进门 = 下一层.进门;
-                if (箭头P.status && Math.abs(箭头P.r.x - 入口.x) > 60 && Math.abs(箭头P.r.y - 入口.y) > 60) {
-                    var x = closeImg.x + (入口.x - 偏移.x) + random(-5, 5);
-                    var y = closeImg.y + (入口.y - 偏移.y) + random(-5, 5);
-                    tools.click(x, y);
-                    tools.常用操作.关闭所有窗口(false, 0, true);
-                    是否强制跑图 = false;
-                    return;
-                }
+            var 大地图坐标 = tools.人物移动.获取大地图偏移();
+            var routes = null; 
+            if (下一层 && 下一层.入口 && 箭头P.status && Math.abs(箭头P.r.x - 下一层.入口.x) > 35 && Math.abs(箭头P.r.y - 下一层.入口.y) > 35) {
+                var x = closeImg.x + (下一层.入口.x - 偏移.x) + random(-5, 5);
+                var y = closeImg.y + (下一层.入口.y - 偏移.y) + random(-5, 5);
+                tools.click(x, y);
+                tools.常用操作.关闭所有窗口(false, 0, true);
+                是否强制跑图 = false;
+                return;
             }
-
-            var 大地图坐标 = null;
-            if (挂机参数.挂机城市 == "比奇") {
-                大地图坐标 = config.zuobiao.比奇大地图偏移[fbl];
-            } else if (挂机参数.挂机城市 == "盟重") {
-                大地图坐标 = config.zuobiao.盟重大地图偏移[fbl];
+            if (下一层 && 下一层.进门) {
+                routes = 下一层.进门;
             }
-            else if (挂机参数.挂机城市 == "苍月") {
-                大地图坐标 = config.zuobiao.苍月大地图偏移[fbl];
+            else {
+                routes = config.地图路由[当前地图][目的地][0];
             }
-            for (var i = 0; i < 进门.length; i++) {
-                var 路由 = 进门[i];
+            for (var i = 0; i < routes.length; i++) {
+                var 路由 = routes[i];
                 var r = null;
                 路由.forEach((item) => {
                     r = (r == null ? 大地图坐标[item] : r[item]);
@@ -5321,12 +5316,20 @@ var tools = {
                     y = closeImg.y + random(r.y[0], r.y[1]);
                 }
                 else {
-                    x = closeImg.x + (r.x - 偏移.x) + random(-5, 5);
-                    y = closeImg.y + (r.y - 偏移.y) + random(-5, 5);
+                    var 偏移 = config.zuobiao.打怪点偏移[fbl];
+                    if (目的地 == "石墓阵") {
+                        x = closeImg.x + (r.x - 偏移.x);
+                        y = closeImg.y + (r.y - 偏移.y);
+                    }
+                    else {
+                        x = closeImg.x + (r.x - 偏移.x) + random(-5, 5);
+                        y = closeImg.y + (r.y - 偏移.y) + random(-5, 5);
+                    }
                 }
                 tools.click(x, y)
                 sleep(random(1500, 2500));
             }
+            是否强制跑图 = false;
             tools.常用操作.关闭所有窗口(false, 0, true);
         },
         去挂机地图: (目的地, 当前地图) => {
@@ -5463,9 +5466,6 @@ var tools = {
         去挂机地图Loop: () => {
             var 是否跑图 = false;
             var 当前地图 = tools.常用操作.获取人物地图();
-            if (当前地图 == 挂机参数.挂机地图) {
-                return;
-            }
             if (当前地图 == "比奇城" || 当前地图 == "土城") { //多走动几步，以免自动跑图出不去
                 tools.人物移动.左走一步(random(8888, 9999));
             }
@@ -5488,22 +5488,12 @@ var tools = {
                 if (last[last.length - 1] == 0) {
                     目的地 = last[0];
                 }
-                if (挂机参数.挂机地图 == "石墓阵" && 当前地图 == "石墓五层") {
-                    目的地 = "石墓阵"
-                }
                 while (当前总状态 == 总状态.已启动) {
                     tools.执行时间戳.检测认证();
                     tools.常用操作.跑图累计错误执行();
                     var 是否沿途打怪 = config.沿途打怪点.some(item => item === 当前地图)
                     if (new Date().getTime() - 上次跑图时间 > 跑图时间戳) {
                         var 当前地图 = tools.常用操作.获取人物地图();
-                        if (挂机参数.挂机地图 == "石墓阵" && 当前地图 == "石墓五层") {
-                            r = tools.findImage("shimuzhengrukou.png", 0.85);
-                            if (r.status) {
-                                toastLog("找到附近")
-                                break;
-                            }
-                        }
                         if (当前地图 == 挂机参数.挂机地图 || 挂机参数.挂机地图 == "比奇野外") {
                             tools.常用操作.点击人物();
                             tools.挂机打怪.启动隐身();
@@ -5553,8 +5543,7 @@ var tools = {
                     }
                 }
             }
-            toastLog("到达目的地挂机地图Loop");
-            return;
+            toastLog("到达目的地");
         },
         进入石墓阵: () => {
             while (当前总状态 == 总状态.已启动) {
