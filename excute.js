@@ -2355,9 +2355,9 @@ var tools = {
                 if (挂机参数.只打满血怪 == 1 || 其他玩家) {
                     var r = tools.挂机打怪.找满血怪();
                     if (r && (r.x > 0 || r.y > 0)) {
-                        if (其他玩家) {
-                            toastLog("发现其他玩家,强制找满血怪")
-                        }
+                        // if (其他玩家) {
+                        //     toastLog("发现其他玩家,强制找满血怪")
+                        // }
                         tools.click(r.x + random(12, 20), r.y + random(-3, 3))
                         isFind = true;
                     }
@@ -2615,9 +2615,7 @@ var tools = {
 
 
                     var t2 = new Date().getTime();
-                    //tools.悬浮球临时描述("宠[" + ((t2 - t1) / 1000).toFixed(3) + "]");
-
-                    tools.悬浮球描述("(" + parseInt((timeout - (时间戳)) / 1000) + "),(" + 锁定的怪物 + ")[" + ((t2 - t1) / 1000).toFixed(3) + "]");
+                    tools.悬浮球描述("(" + parseInt((timeout - (时间戳)) / 1000) + ")(" + 锁定的怪物 + ")[" + ((t2 - t1) / 1000).toFixed(3) + "]");
                 } else {
                     tools.拾取.点击(1);
                     if (isChange) {
@@ -3485,22 +3483,11 @@ var tools = {
             utils.recycleNull(img);
             return r;
         },
-        大地图箭头: () => {
-            var closeImg = null;
+        大地图箭头: (closeBtn) => {
+            var closeImg = closeBtn.img;;
             var result = {
                 status: false
             };
-            var closeBtn = tools.findImageForWait("closeBtn.png", {
-                maxTries: 10,
-                interval: 100
-            })
-            if (closeBtn.status) {
-                closeImg = closeBtn.img;
-            }
-            else {
-                toastLog("未找到关闭按钮")
-                return result
-            }
             var arr = [
                 {
                     方向: "正上",
@@ -4095,123 +4082,10 @@ var tools = {
                 .replace(/全市/g, "")
                 .replace(/全币/g, "")
 
-            if (text.indexOf("时间") >= 0 || text.indexOf("不能") >= 0 || text.indexOf("范围") >= 0) {
+            if (text.indexOf("时间") >= 0 || text.indexOf("不能") >= 0 || text.indexOf("范围") >= 0 || text.indexOf("内") >= 0) {
                 text = "";
             }
             return text;
-        },
-        锁定怪物位置: () => {
-            var p = config.zuobiao.身边怪物范围[fbl];
-            var t = 0.55;
-            var r = {
-                是否身边: false,
-                status: false,
-                text: ""
-            }
-            if (挂机参数.挂机地图.indexOf("兽人古墓") >= 0) {
-                var result = tools.findImageArea(文字图枚举.髅, p.x1, p.y1, p.x2, p.y2, t);
-                if (result.status) {
-                    r = {
-                        status: true,
-                        x: result.img.x,
-                        y: result.img.y,
-                        text: "髅(找图发现)"
-                    }
-                }
-            }
-            else if (挂机参数.挂机地图.indexOf("石墓") >= 0) {
-                var result = tools.findImageArea(文字图枚举.猪, p.x1, p.y1, p.x2, p.y2, t);
-                if (result.status) {
-                    r = {
-                        status: true,
-                        x: result.img.x,
-                        y: result.img.y,
-                        text: "猪(找图发现)"
-                    }
-                }
-                else {
-                    result = tools.findImageArea(文字图枚举.蝎, p.x1, p.y1, p.x2, p.y2, t);
-                    if (result.status) {
-                        r = {
-                            status: true,
-                            x: result.img.x,
-                            y: result.img.y,
-                            text: "蝎(找图发现)"
-                        }
-                    }
-                    else {
-                        result = tools.findImageArea(文字图枚举.蛾, p.x1, p.y1, p.x2, p.y2, t);
-                        if (result.status) {
-                            r = {
-                                status: true,
-                                x: result.img.x,
-                                y: result.img.y,
-                                text: "蛾(找图发现)"
-                            }
-                        }
-                    }
-                }
-            }
-            else if (挂机参数.挂机地图.indexOf("牛魔") >= 0) {
-                var result = tools.findImageArea(文字图枚举.怪物名将军, p.x1, p.y1, p.x2, p.y2, t);
-                if (result.status) {
-                    return "牛魔将军(找图发现)"
-                }
-                else {
-                    result = tools.findImageArea(文字图枚举.怪物名法师, p.x1, p.y1, p.x2, p.y2, t);
-                    if (result.status) {
-                        return "牛魔法师(找图发现)"
-                    }
-                    else {
-                        result = tools.findImageArea(文字图枚举.魔, p.x1, p.y1, p.x2, p.y2, t);
-                        if (result.status) {
-                            return "魔(找图发现)"
-                        }
-                    }
-                }
-            }
-            else if (挂机参数.挂机地图.indexOf("地牢") >= 0
-                || 挂机参数.挂机地图.indexOf("黑暗地带") >= 0
-                || 挂机参数.挂机地图.indexOf("传奇部落") >= 0
-                || 挂机参数.挂机地图.indexOf("邪恶势力") >= 0
-                || 挂机参数.挂机地图.indexOf("一线天") >= 0
-                || 挂机参数.挂机地图.indexOf("恐怖空间") >= 0
-                || 挂机参数.挂机地图.indexOf("死亡棺材") >= 0
-                || 挂机参数.挂机地图.indexOf("生死之间") >= 0) {
-                var result = tools.findImageArea(文字图枚举.邪恶, p.x1, p.y1, p.x2, p.y2, t);
-                if (result.status) {
-                    return "邪恶蚶虫(找图发现)"
-                }
-                result = tools.findImageArea(文字图枚举.钳, p.x1, p.y1, p.x2, p.y2, t);
-                if (result.status) {
-                    return "蚶虫(找图发现)"
-                }
-                result = tools.findImageArea(文字图枚举.蜈, p.x1, p.y1, p.x2, p.y2, t);
-                if (result.status) {
-                    return "蜈蚣(找图发现)"
-                }
-                result = tools.findImageArea(文字图枚举.恶蛆, p.x1, p.y1, p.x2, p.y2, t);
-                if (result.status) {
-                    return "黑色恶蛆(找图发现)"
-                }
-                result = tools.findImageArea(文字图枚举.蠕, p.x1, p.y1, p.x2, p.y2, t);
-                if (result.status) {
-                    return "巨型蠕虫(找图发现)"
-                }
-                result = tools.findImageArea(文字图枚举.跳, p.x1, p.y1, p.x2, p.y2, t);
-                if (result.status) {
-                    return "跳跳蜂(找图发现)"
-                }
-            }
-            var imgSmall = tools.截屏裁剪(null, p.x1, p.y1, p.x2, p.y2);
-            var huiduImg = images.grayscale(imgSmall);//灰度化
-            let r = utils.ocrGetContentStr(huiduImg);
-            if (r) {
-                r = tools.挂机打怪.身边怪物错别字(r);
-            }
-            utils.recycleNull(imgSmall);
-            utils.recycleNull(huiduImg);
-            return r;
         },
         身边锁定怪物: () => {
             var p = config.zuobiao.身边怪物范围[fbl];
@@ -4303,6 +4177,7 @@ var tools = {
             return r;
         },
         大范围扫描锁定怪物: () => {//找到后返回怪物血量最左边坐标
+            var 身边p = config.zuobiao.身边怪物范围[fbl];
             var p = {
                 x1: 222,
                 y1: 50,
@@ -4311,6 +4186,7 @@ var tools = {
             }
             var t = 0.55;
             var arr = [];
+
             if (挂机参数.挂机地图.indexOf("兽人古墓") >= 0) {
                 arr.push({
                     pic: 文字图枚举.髅,
@@ -4319,8 +4195,16 @@ var tools = {
             }
             else if (挂机参数.挂机地图.indexOf("牛魔") >= 0) {
                 arr.push({
+                    pic: 文字图枚举.怪物名法师,
+                    text: "牛魔法师"
+                })
+                arr.push({
+                    pic: 文字图枚举.怪物名将军,
+                    text: "牛魔将军"
+                })
+                arr.push({
                     pic: 文字图枚举.魔,
-                    text: "牛魔"
+                    text: "魔"
                 })
             }
             else if (挂机参数.挂机地图.indexOf("石墓") >= 0) {
@@ -4348,6 +4232,10 @@ var tools = {
 
             ) {
                 arr.push({
+                    pic: 文字图枚举.邪恶,
+                    text: "邪恶蚶虫"
+                })
+                arr.push({
                     pic: 文字图枚举.钳,
                     text: "钳虫"
                 })
@@ -4356,31 +4244,39 @@ var tools = {
                     text: "蜈蚣"
                 })
                 arr.push({
-                    pic: 文字图枚举.跳,
-                    text: "跳跳蜂"
+                    pic: 文字图枚举.恶蛆,
+                    text: "黑色恶蛆"
                 })
                 arr.push({
                     pic: 文字图枚举.蠕,
                     text: "巨型蠕虫"
                 })
                 arr.push({
-                    pic: 文字图枚举.恶蛆,
-                    text: "黑色恶蛆"
+                    pic: 文字图枚举.跳,
+                    text: "跳跳蜂"
                 })
             }
             if (arr.length > 0) {
                 for (var index = 0; index < arr.length; index++) {
                     var item = arr[index];
-                    var result = tools.findImageArea(item.pic, p.x1, p.y1, p.x2, p.y2, t);
-                    if (result.status) {
-                        var r = result.img;
+                    var r = tools.findImageArea(item.pic, p.x1, p.y1, p.x2, p.y2, t);
+                    if (r.status) {
+                        var r = r.img;
                         r = tools.挂机打怪.通过文字计算血条位置(r.x, r.y, false);
                         if (r.status) {
+                            r.text = item.text;
+                            r.是否身边 = false;
+                            if (r.x > 身边p.x1 && r.x < 身边p.x2 && r.y > 身边p.y1 && r.y < 身边p.y2) {
+                                r.是否身边 = true;
+                            }
                             return r;
                         }
                     }
                 }
             }
+
+
+
             var r = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
             if (r && r.length > 0) {
                 for (var index = 0; index < r.length; index++) {
@@ -4389,6 +4285,11 @@ var tools = {
                     if (t && t.length > 0) {
                         r = tools.挂机打怪.通过文字计算血条位置(info.x + p.x1, info.y + p.y1, true);
                         if (r.status) {
+                            r.text = t;
+                            r.是否身边 = false;
+                            if (r.x > 身边p.x1 && r.x < 身边p.x2 && r.y > 身边p.y1 && r.y < 身边p.y2) {
+                                r.是否身边 = true;
+                            }
                             return r;
                         }
                     }
@@ -5071,7 +4972,7 @@ var tools = {
                     utils.recycleNull(上次坐标截图);
                     上次坐标截图 = 当前坐标截图;
                     是否跑图 = false;
-                    tools.悬浮球描述("人物跑动中")
+                    //tools.悬浮球描述("人物跑动中")
                 }
                 else {
                     if (是否累计错误次数) {
@@ -8220,7 +8121,7 @@ var tools = {
         }
         var 时间差 = new Date().getTime() - 上一次拾取时间;
         if (时间差 < 222) {
-            toastLog("距离上次拾取(" + 时间差 + ")");
+            tools.悬浮球描述("距离上次拾取(" + 时间差 + ")");
             sleep(222 - 时间差);
         }
         click(x, y);
