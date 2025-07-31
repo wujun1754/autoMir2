@@ -2777,10 +2777,10 @@ var tools = {
                     if (是否攻击) {
                         sleep(random(200, 222));
                         tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                        toastLog("攻宠身边怪")
+                        //toastLog("攻宠身边怪")
                     }
                     else {
-                        toastLog("锁宠身边怪")
+                        //toastLog("锁宠身边怪")
                     }
                     return true;
                 }
@@ -2973,26 +2973,43 @@ var tools = {
                 toastLog("找不到地图关闭按钮")
                 return;
             }
+            var 箭头P = tools.挂机打怪.大地图箭头(closeBtn);
             var start = new Date().getTime();
-            while (true) {
-                if (new Date().getTime() - start > (1000 * 6)) {
-                    toastLog("点击坐标超过6秒");
-                    tools.常用操作.关闭所有窗口(false, 0, true);
-                    return;
+
+            if (挂机参数.反跑地图 == 1) {
+                if (挂机点跑图顺序 <= 0) {
+                    挂机点跑图顺序 = 挂机坐标s.result.length - 1;
                 }
+            }
+            else {
+                if (挂机点跑图顺序 >= 挂机坐标s.result.length) {
+                    挂机点跑图顺序 = 0;
+                }
+            }
+
+            var r = 挂机坐标s.result[挂机点跑图顺序];
+            var x = 0;
+            var y = 0;
+            if (Array.isArray(r.x)) {
+                x = closeImg.x + random(r.x[0], r.x[1]);
+                y = closeImg.y + random(r.y[0], r.y[1]);
+            }
+            else {
+                var 偏移 = config.zuobiao.打怪点偏移[fbl];
+                x = closeImg.x + (r.x - 偏移.x) + random(-5, 5);
+                y = closeImg.y + (r.y - 偏移.y) + random(-5, 5);
+            }
+            //toastLog("x:" + (箭头P.r.x - x) + ",y:" + (箭头P.r.y - y) + "");
+            if (箭头P.status && Math.abs(箭头P.r.x - x) <= 60 && Math.abs(箭头P.r.y - y) <= 60) {
+
+                toastLog("到达挂点[" + (挂机点跑图顺序 + 1) + "]");
                 if (挂机参数.反跑地图 == 1) {
-                    if (挂机点跑图顺序 <= 0) {
-                        挂机点跑图顺序 = 挂机坐标s.result.length - 1;
-                    }
+                    挂机点跑图顺序--;
                 }
                 else {
-                    if (挂机点跑图顺序 >= 挂机坐标s.result.length) {
-                        挂机点跑图顺序 = 0;
-                    }
+                    挂机点跑图顺序++;
                 }
-                var r = 挂机坐标s.result[挂机点跑图顺序];
-                var x = 0;
-                var y = 0;
+                r = 挂机坐标s.result[挂机点跑图顺序];
                 if (Array.isArray(r.x)) {
                     x = closeImg.x + random(r.x[0], r.x[1]);
                     y = closeImg.y + random(r.y[0], r.y[1]);
@@ -3002,49 +3019,114 @@ var tools = {
                     x = closeImg.x + (r.x - 偏移.x) + random(-5, 5);
                     y = closeImg.y + (r.y - 偏移.y) + random(-5, 5);
                 }
-
-                tools.click(x, y)
-
-                var x1 = closeImg.x - 1033;
-                var x2 = x1 + 817;
-                var y1 = closeImg.y + 39;
-                var y2 = y1 + 524;
-
-                var result = null;
-                if (x1 < 0 || y1 < 0 || x2 > 1280 || y2 > 720) {
-                    toastLog("参数异常x1=" + x1 + ",y1=" + y1 + ",x2=" + x2 + ",y2=" + y2 + "");
-                    tools.常用操作.关闭所有窗口(false, 0, true);
-                    return;
-                }
-                try {
-                    result = tools.findAllColorAreaForWait("#00FFFF", x1, y1, x2, y2, {
-                        maxTries: 10,
-                        interval: 200
-                    })
-                } catch (error) {
-                    toastLog("找色(线路)异常");
-                    tools.常用操作.关闭所有窗口(false, 0, true);
-                    return;
-                }
-                if (result.status && result.count >= 10) {
-                    是否强制跑图 = false;
-                    跑图错误次数 = 0;
-                    toastLog("前往挂机点[" + (挂机点跑图顺序 + 1) + "]");
-                    tools.常用操作.关闭所有窗口(false, 0, true);
-                    return;
-                }
-                else {
-                    if (挂机参数.反跑地图 == 1) {
-                        挂机点跑图顺序--;
-                    }
-                    else {
-                        挂机点跑图顺序++;
-                    }
-                    跑图错误次数++;
-                    tools.悬浮球描述("可能到达挂机点[" + (挂机点跑图顺序 + 1) + "]");
-                }
             }
+            tools.click(x, y)
+            是否强制跑图 = false;
+            tools.常用操作.关闭所有窗口(false, 0, true);
+            return;
         },
+        // 点击挂机坐标: (强制跑图) => {
+        //     var 是否跑图 = false;
+        //     if (强制跑图) {
+        //         是否跑图 = true;
+        //     }
+        //     else {
+        //         是否跑图 = tools.人物移动.是否跑图并截图坐标(true);
+        //     }
+        //     var 挂机坐标s = tools.挂机打怪.获取挂机坐标();
+        //     if (!挂机坐标s.status) {
+        //         return
+        //     }
+        //     if (!是否跑图) {
+        //         return;
+        //     }
+        //     tools.常用操作.跑图累计错误执行();
+        //     tools.常用操作.打开大地图();
+        //     var closeImg = null;
+        //     var closeBtn = tools.findImageForWait("closeBtn.png", {
+        //         maxTries: 10,
+        //         interval: 100
+        //     })
+        //     if (closeBtn.status) {
+        //         closeImg = closeBtn.img;
+        //     } else {
+        //         跑图错误次数++;
+        //         toastLog("找不到地图关闭按钮")
+        //         return;
+        //     }
+        //     var start = new Date().getTime();
+        //     while (true) {
+        //         if (new Date().getTime() - start > (1000 * 6)) {
+        //             toastLog("点击坐标超过6秒");
+        //             tools.常用操作.关闭所有窗口(false, 0, true);
+        //             return;
+        //         }
+        //         if (挂机参数.反跑地图 == 1) {
+        //             if (挂机点跑图顺序 <= 0) {
+        //                 挂机点跑图顺序 = 挂机坐标s.result.length - 1;
+        //             }
+        //         }
+        //         else {
+        //             if (挂机点跑图顺序 >= 挂机坐标s.result.length) {
+        //                 挂机点跑图顺序 = 0;
+        //             }
+        //         }
+        //         var r = 挂机坐标s.result[挂机点跑图顺序];
+        //         var x = 0;
+        //         var y = 0;
+        //         if (Array.isArray(r.x)) {
+        //             x = closeImg.x + random(r.x[0], r.x[1]);
+        //             y = closeImg.y + random(r.y[0], r.y[1]);
+        //         }
+        //         else {
+        //             var 偏移 = config.zuobiao.打怪点偏移[fbl];
+        //             x = closeImg.x + (r.x - 偏移.x) + random(-5, 5);
+        //             y = closeImg.y + (r.y - 偏移.y) + random(-5, 5);
+        //         }
+
+
+        //         tools.click(x, y)
+
+        //         var x1 = closeImg.x - 1033;
+        //         var x2 = x1 + 817;
+        //         var y1 = closeImg.y + 39;
+        //         var y2 = y1 + 524;
+
+        //         var result = null;
+        //         if (x1 < 0 || y1 < 0 || x2 > 1280 || y2 > 720) {
+        //             toastLog("参数异常x1=" + x1 + ",y1=" + y1 + ",x2=" + x2 + ",y2=" + y2 + "");
+        //             tools.常用操作.关闭所有窗口(false, 0, true);
+        //             return;
+        //         }
+        //         try {
+        //             result = tools.findAllColorAreaForWait("#00FFFF", x1, y1, x2, y2, {
+        //                 maxTries: 10,
+        //                 interval: 200
+        //             })
+        //         } catch (error) {
+        //             toastLog("找色(线路)异常");
+        //             tools.常用操作.关闭所有窗口(false, 0, true);
+        //             return;
+        //         }
+        //         if (result.status && result.count >= 10) {
+        //             是否强制跑图 = false;
+        //             跑图错误次数 = 0;
+        //             toastLog("前往挂机点[" + (挂机点跑图顺序 + 1) + "]");
+        //             tools.常用操作.关闭所有窗口(false, 0, true);
+        //             return;
+        //         }
+        //         else {
+        //             if (挂机参数.反跑地图 == 1) {
+        //                 挂机点跑图顺序--;
+        //             }
+        //             else {
+        //                 挂机点跑图顺序++;
+        //             }
+        //             跑图错误次数++;
+        //             tools.悬浮球描述("可能到达挂机点[" + (挂机点跑图顺序 + 1) + "]");
+        //         }
+        //     }
+        // },
         是否血量低于百分之40: () => {
             var result = false;
             var img = captureScreen();
@@ -4964,6 +5046,7 @@ var tools = {
             }
             else {
                 var r = tools.人物移动.跑图坐标是否变化()
+                //toastLog("坐标是否变化" + r)
                 if (r) {
                     if (是否累计错误次数) {
                         跑图错误次数 = 0;
@@ -4979,7 +5062,7 @@ var tools = {
                         跑图错误次数++;
                     }
                     是否跑图 = true;
-                    tools.悬浮球描述("人物未移动(" + 跑图错误次数 + ")")
+                    tools.悬浮球临时描述("人物未移动(" + 跑图错误次数 + ")")
                 }
             }
             return 是否跑图;
@@ -5150,6 +5233,7 @@ var tools = {
                 var 当前地图 = tools.常用操作.获取人物地图();
                 var routesGroup = tools.人物移动.获取路由组(当前地图, "回老兵");
                 var routes = routesGroup[0];
+                //if (false) {
                 if (当前地图 == "苍月岛渔村" || 当前地图 == "比奇城" || 当前地图 == "土城") {
                     var 人物坐标 = tools.常用操作.获取人物坐标();
                     tools.悬浮球描述("坐标:" + JSON.stringify(人物坐标));
@@ -5163,8 +5247,14 @@ var tools = {
                     }
                     else {
                         if (历史坐标 == null || (人物坐标.x == 历史坐标.x && 人物坐标.y == 历史坐标.y)) {
-                            tools.人物移动.回老兵(当前地图, routes, 大地图偏移);
-                            tryCount = 0;
+                            tools.常用操作.跑图累计错误执行();
+                            var 是否跑图 = tools.人物移动.是否跑图并截图坐标(true);
+                            if (是否跑图) {
+                                tools.人物移动.回老兵(当前地图, routes, 大地图偏移);
+                                tryCount = 0;
+                            }
+                            // tools.人物移动.回老兵(当前地图, routes, 大地图偏移);
+                            // 
                         }
                         if (人物坐标 != null) {
                             历史坐标 = 人物坐标;
@@ -5179,6 +5269,52 @@ var tools = {
                     }
                 }
                 sleep(1000 * 1.5);
+            }
+        },
+        去下一层地图: (当前地图, closeBtn) => {
+            var 偏移 = config.zuobiao.打怪点偏移[fbl];
+            var 箭头P = tools.挂机打怪.大地图箭头(closeBtn);
+            var 入口 = config.地图路由[当前地图]["下一层"].入口;
+            var 进门 = config.地图路由[当前地图]["下一层"].进门;
+            var 偏移 = config.zuobiao.打怪点偏移[fbl];
+            if (箭头P.status && Math.abs(箭头P.r.x - 入口.x) > 60 && Math.abs(箭头P.r.y - 入口.y) > 60) {
+                var x = closeImg.x + (入口.x - 偏移.x) + random(-5, 5);
+                var y = closeImg.y + (入口.y - 偏移.y) + random(-5, 5);
+                tools.click(x, y);
+                tools.常用操作.关闭所有窗口(false, 0, true);
+                return;
+            }
+            else {
+                var 大地图坐标 = null;
+                if (挂机参数.挂机城市 == "比奇") {
+                    大地图坐标 = config.zuobiao.比奇大地图偏移[fbl];
+                } else if (挂机参数.挂机城市 == "盟重") {
+                    大地图坐标 = config.zuobiao.盟重大地图偏移[fbl];
+                }
+                else if (挂机参数.挂机城市 == "苍月") {
+                    大地图坐标 = config.zuobiao.苍月大地图偏移[fbl];
+                }
+                for (var i = 0; i < 进门.length; i++) {
+                    var 路由 = 进门[i];
+                    var r = null;
+                    路由.forEach((item) => {
+                        r = (r == null ? 大地图坐标[item] : r[item]);
+                    });
+                    var x = 0;
+                    var y = 0;
+                    if (Array.isArray(r.x)) {
+                        x = closeImg.x + random(r.x[0], r.x[1]);
+                        y = closeImg.y + random(r.y[0], r.y[1]);
+                    }
+                    else {
+                        x = closeImg.x + (r.x - 偏移.x) + random(-5, 5);
+                        y = closeImg.y + (r.y - 偏移.y) + random(-5, 5);
+                    }
+                    tools.click(x, y)
+                    sleep(random(1500, 2500));
+                }
+                是否强制跑图 = false;
+                tools.常用操作.关闭所有窗口(false, 0, true);
             }
         },
         去挂机地图: (目的地, 当前地图) => {
@@ -5221,7 +5357,7 @@ var tools = {
             });
             if (closeBtn.status) {
                 var closeImg = closeBtn.img;
-                tools.悬浮球描述(当前地图 + " --- " + 目的地)
+                tools.悬浮球描述(当前地图 + " --- " + 目的地);
                 var routes = config.地图路由[当前地图][目的地][0];
                 var 大地图坐标 = null;
                 if (挂机参数.挂机城市 == "比奇") {
