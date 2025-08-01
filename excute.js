@@ -232,6 +232,7 @@ var 补给枚举 = {
 var 存仓库枚举 = {
     祈祷之刃: "cangku_qidaozhiren.png",
     祝福油: "buji_zhufuyou.png",
+    祷字: "wenzi_zhuangbei_qidao.png",
 }
 var 文字图枚举 = {
     斩: "wenzi_zhan.png",
@@ -1461,6 +1462,7 @@ var tools = {
             if (result != null && result.length > 0) {
                 result = tools.常用操作.处理地图错别字(result[0].text);
                 if (上次所在地图 != result) {
+                    上次所在地图 = result;
                     var isok = tools.常用操作.检测是否在游戏画面();
                     if (isok &&
                         (
@@ -1475,7 +1477,6 @@ var tools = {
                             || result.indexOf("边界村") >= 0
                             || result.indexOf("沙巴克") >= 0
                         )) {
-                        上次所在地图 = result;
                         tools.执行时间戳.检测内挂(true);
                         tools.常用操作.初始化大地图面板(true);
                         tools.常用操作.初始化攻击面板loops();
@@ -2410,16 +2411,23 @@ var tools = {
                 }
             }
             else {
+                tools.悬浮球描述("未发现怪物");
                 var now = new Date().getTime();
-                if (now >= 禁止拾取时间) {
-                    var 拾取明细 = tools.挂机打怪.需要拾取明细()
-                    if (拾取明细 && 拾取明细.count > 0) {
-                        tools.拾取.点击(1);
-                        tools.悬浮球描述("拾取明细（" + 拾取明细.count + "）");
+                var r = tools.挂机打怪.找是否拾取();
+
+                if (now >= 禁止拾取时间 && tools.挂机打怪.找是否拾取()) {
+                    var 时间差 = new Date().getTime() - 上一次拾取时间;
+                    if (时间差 < 333) {
+                        tools.悬浮球描述("距离上次拾取(" + 时间差 + ")");
+                        sleep(333 - 时间差);
                     }
-                    else {
-                        tools.悬浮球描述("未发现怪物");
-                    }
+                    tools.拾取.点击(1);
+                    tools.悬浮球描述("发现需拾取");
+                    // var r = tools.findImage("shiqubiaoji.png", 0.65);
+                    // if (r.status){
+                    //     tools.拾取.点击(1);
+                    //     tools.悬浮球描述("发现需拾取");
+                    // }
                 }
                 if ((new Date().getTime() - 上次打怪时间) >= 1000 * 60 * 15) {
                     tools.常用操作.初始化攻击面板loops();
@@ -2766,6 +2774,21 @@ var tools = {
                 status: false
             };
         },
+        找是否拾取: () => {
+            var img = captureScreen();
+            var r = images.findMultiColors(img, "#D49444", [[0, 23, "#FFFF79"], [0, 38, "#FFFFFF"], [0, 70, "#FFFFFF"]], {
+                threshold: 30
+            });
+            utils.recycleNull(img);
+            // var r = tools.findImage("shiqubiaoji.png", 0.65);
+            if (r && (r.x > 0 || r.y > 0)) {
+                //if (r.status) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        },
         找满血怪: () => {
             var p = config.zuobiao.左攻击面板[fbl].怪物集合;
             var img = captureScreen();
@@ -2855,7 +2878,7 @@ var tools = {
             }
         },
         需要拾取明细: () => {
-            return tools.matchTemplate("shiqubiaoji.png", 10, 0.65);
+            return tools.matchTemplate("shiqubiaoji.png", 5, 0.65);
         },
         初始化挂机: () => {
 
@@ -6243,11 +6266,16 @@ var tools = {
                 pic: 补给枚举.组队卷,
                 验证文字: false,
             },
+            // {
+            //     name: "祈祷之刃",
+            //     pic: 存仓库枚举.祈祷之刃,
+            //     验证文字: false,
+            //     wenPic: 文字图枚举.祈祷
+            // },
             {
-                name: "祈祷之刃",
-                pic: 存仓库枚举.祈祷之刃,
-                验证文字: false,
-                wenPic: 文字图枚举.祈祷
+                name: "祈祷",
+                pic: 存仓库枚举.祷字,
+                验证文字: true,
             },
             {
                 name: "祝福油",
@@ -6257,21 +6285,15 @@ var tools = {
             if (挂机参数.存万年 == 1) {
                 arr.push({
                     name: "万年雪霜",
-                    pic: 补给枚举.万年雪霜
+                    pic: 补给枚举.万年雪霜,
+                    验证文字: false,
                 })
             }
             for (let index = 0; index < arr.length; index++) {
                 var item = arr[index];
-                var result = tools.补给操作.背包选中格子中找图(item.pic, zhengliBtn, index1, index2)
-                if (result.status) {
-                    var 是否存 = true;
-                    if (item.验证文字) {
-                        r = tools.补给操作.背包选中按钮中找字图(item.wenPic, btn)
-                        if (!r.status) {
-                            是否存 = false;
-                        }
-                    }
-                    if (是否存) {
+                if (item.验证文字) {
+                    var r = tools.补给操作.背包选中按钮中找字图(item.pic, btn)
+                    if (r.status) {
                         return {
                             status: true,
                             pic: item.pic,
@@ -6279,6 +6301,17 @@ var tools = {
                         }
                     }
                 }
+                else {
+                    var r = tools.补给操作.背包选中格子中找图(item.pic, zhengliBtn, index1, index2)
+                    if (r.status) {
+                        return {
+                            status: true,
+                            pic: item.pic,
+                            物品名称: item.name
+                        }
+                    }
+                }
+
             }
             return {
                 status: false
@@ -6560,10 +6593,10 @@ var tools = {
                     //     maxTries: 6,
                     //     interval: 666
                     // });
-                    r = tools.findImageForWaitClick("OKBtn.png", {
-                        maxTries: 10,
-                        interval: 666
-                    });
+                    // r = tools.findImageForWaitClick("OKBtn.png", {
+                    //     maxTries: 10,
+                    //     interval: 666
+                    // });
                 }
             }
             tools.补给操作.背包拖动背景至可关闭位置(zhengliBtn);
@@ -7933,7 +7966,8 @@ var tools = {
                 };
             }
         }
-        if (fileName != "closeBtn.png" && fileName != "closeBtn2.png" && fileName != "zuoguaiwuBtn.png" && fileName != "zuoguaiwumanxueBtn.png") {
+        //shiqubiaoji
+        if (fileName != "closeBtn.png" && fileName != "closeBtn2.png" && fileName != "zuoguaiwuBtn.png" && fileName != "zuoguaiwumanxueBtn.png" && fileName != "shiqubiaoji.png") {
             tools.悬浮球描述('找图失败' + fileName);
         }
         return {
@@ -8701,8 +8735,11 @@ threads.start(function () {
             }
 
             var 当前地图 = tools.常用操作.获取人物地图();
+
+
             tools.执行时间戳.检测认证();
             var r = false;
+
             while (开启寻怪) {
                 try {
                     if (当前地图 == "石墓阵") {
@@ -8765,6 +8802,7 @@ threads.start(function () {
                 }
                 上次跑图时间 = new Date().getTime();
             }
+
 
         } else {
             //tools.悬浮球描述(当前总状态);
