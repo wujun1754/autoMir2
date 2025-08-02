@@ -233,6 +233,14 @@ var 存仓库枚举 = {
     祈祷之刃: "cangku_qidaozhiren.png",
     祝福油: "buji_zhufuyou.png",
     祷字: "wenzi_zhuangbei_qidao.png",
+    血字: "wenzi_zhuangbei_moxue.png",
+    记字: "wenzi_zhuangbei_jiyi.png",
+    杖字: "wenzi_zhuangbei_mozhang.png",
+    狱字: "wenzi_zhuangbei_lianyu.png",
+    福字: "wenzi_zhuangbei_zhufuyou.png",
+    虹字: "wenzi_zhuangbei_hongmo.png",
+    命字: "wenzi_zhuangbei_shengming.png",
+    银蛇: "wenzi_zhuangbei_yinse.png",
 }
 var 文字图枚举 = {
     斩: "wenzi_zhan.png",
@@ -4128,6 +4136,7 @@ var tools = {
                 .replace(/金市/g, "")
                 .replace(/全市/g, "")
                 .replace(/全币/g, "")
+                .replace("(", "").replace(")", "")
 
             if (text.indexOf("时间") >= 0 || text.indexOf("不能") >= 0 || text.indexOf("范围") >= 0 || text.indexOf("内") >= 0) {
                 text = "";
@@ -5242,6 +5251,14 @@ var tools = {
             }
         },
         去下一层地图: (当前地图, 目的地) => {
+            var 偏移 = config.zuobiao.打怪点偏移[fbl];
+            var 下一层 = config.地图路由[当前地图]["下一层"];
+            var 偏移 = config.zuobiao.打怪点偏移[fbl];
+            var 大地图坐标 = tools.人物移动.获取大地图偏移();
+
+            if (下一层 == null || 下一层.入口 == null) {
+                tools.人物移动.随机走一步(1200);
+            }
             tools.常用操作.打开大地图();
             var closeBtn = tools.常用操作.找大地图关闭按钮();
             if (!closeBtn.status) {
@@ -5250,11 +5267,10 @@ var tools = {
                 return;
             }
             var closeImg = closeBtn.img;
-            var 偏移 = config.zuobiao.打怪点偏移[fbl];
+
             var 箭头P = tools.挂机打怪.大地图箭头(closeBtn);
-            var 下一层 = config.地图路由[当前地图]["下一层"];
-            var 偏移 = config.zuobiao.打怪点偏移[fbl];
-            var 大地图坐标 = tools.人物移动.获取大地图偏移();
+
+
             var routes = null;
 
             if (下一层 && 下一层.入口 && 箭头P.status) {
@@ -5280,6 +5296,11 @@ var tools = {
                 路由.forEach((item) => {
                     r = (r == null ? 大地图坐标[item] : r[item]);
                 });
+                var 标识 = 路由[路由.length - 1];
+                if (标识 == 0) {
+                    标识 = 路由[0];
+                }
+                var info = config.地图标识[标识];
                 var x = 0;
                 var y = 0;
                 if (Array.isArray(r.x)) {
@@ -5297,142 +5318,11 @@ var tools = {
                         y = closeImg.y + (r.y - 偏移.y) + random(-5, 5);
                     }
                 }
+                sleep(random(1000, 1200));
                 tools.click(x, y)
-                sleep(random(1500, 2500));
             }
             是否强制跑图 = false;
-            tools.常用操作.关闭所有窗口(false, 0, true);
-        },
-        去挂机地图: (目的地, 当前地图) => {
-            // var isCheck = false;
-            // if (当前地图 == "阴森石屋" || 当前地图 == "阴森石路" || 当前地图 == "紫水晶屋" || 当前地图 == "石墓小溪") {
-            //     isCheck = true;
-            // }
-            // if (isCheck) {
-            //     var r = tools.findImageForWaitClick("fenshenquedingjiashiBtn.png", {
-            //         maxTries: 5,
-            //         interval: 100
-            //     })
-            //     if (r.status) {
-            //         tools.常用操作.关闭所有窗口();
-            //     }
-            // }
-            // switch (当前地图) { //这里走动是为了防止有时点地图点不动，走一步就可以了
-            //     case "阴森石屋":
-            //         tools.人物移动.左走一步(random(1200, 1500));
-            //         break;
-            //     case "阴森石路":
-            //         tools.人物移动.下走一步(random(1200, 1500));
-            //         break;
-            //     case "石墓小溪":
-            //     case "紫水晶屋":
-            //     case "石墓入口":
-            //         tools.人物移动.右上走(random(1200, 1500));
-            //         break;
-            //     case "牛魔寺庙入口":
-            //         tools.人物移动.上走一步(random(1200, 1500));
-            //         break;
-            //     default:
-            //         //tools.人物移动.随机走一步(random(1200, 1500))
-            //         break;
-            // }
-            tools.常用操作.打开大地图();
-            var closeBtn = tools.findImageForWait("closeBtn.png", {
-                maxTries: 10,
-                interval: 100
-            });
-            if (closeBtn.status) {
-                var closeImg = closeBtn.img;
-                tools.悬浮球描述(当前地图 + " --- " + 目的地);
-                var routes = config.地图路由[当前地图][目的地][0];
-                var 大地图坐标 = null;
-                if (挂机参数.挂机城市 == "比奇") {
-                    大地图坐标 = config.zuobiao.比奇大地图偏移[fbl];
-                } else if (挂机参数.挂机城市 == "盟重") {
-                    大地图坐标 = config.zuobiao.盟重大地图偏移[fbl];
-                }
-                else if (挂机参数.挂机城市 == "苍月") {
-                    大地图坐标 = config.zuobiao.苍月大地图偏移[fbl];
-                }
-
-                for (var i = 0; i < routes.length; i++) {
-                    var 路由 = routes[i];
-                    var r = null;
-                    路由.forEach((item) => {
-                        r = (r == null ? 大地图坐标[item] : r[item]);
-                    });
-                    var x = 0;
-                    var y = 0;
-                    if (Array.isArray(r.x)) {
-                        x = closeImg.x + random(r.x[0], r.x[1]);
-                        y = closeImg.y + random(r.y[0], r.y[1]);
-                    }
-                    else {
-                        var 偏移 = config.zuobiao.打怪点偏移[fbl];
-                        if (目的地 == "石墓阵") {
-                            x = closeImg.x + (r.x - 偏移.x);
-                            y = closeImg.y + (r.y - 偏移.y);
-                        }
-                        else {
-                            x = closeImg.x + (r.x - 偏移.x) + random(-5, 5);
-                            y = closeImg.y + (r.y - 偏移.y) + random(-5, 5);
-                        }
-                    }
-                    //var targetImg = tools.截屏裁剪(null, x - 60, y - 15, x + 60, y + 15);
-                    tools.click(x, y)
-                    if (i < (routes.length - 1)) {
-                        if (
-                            当前地图.indexOf("土城") >= 0
-                            || 当前地图.indexOf("盟重省") >= 0
-                            || 当前地图.indexOf("红名村") >= 0
-                            || 当前地图.indexOf("沙巴克") >= 0
-                            || 当前地图.indexOf("祖玛寺庙") >= 0
-                            || 当前地图.indexOf("苍月") >= 0
-                            || 当前地图.indexOf("比奇") >= 0
-                            || 当前地图.indexOf("银杏山谷") >= 0
-                            || 当前地图.indexOf("边界村") >= 0
-                            || 当前地图.indexOf("沙巴克") >= 0
-                        ) {
-                            sleep(random(1500, 2500));
-                        } else {
-                            sleep(random(1000, 1200));
-                        }
-                        // while (true) {
-                        //     r = tools.findImageAreaForWaitByImg(targetImg, x - 100, y - 30, x + 100, y + 30, {
-                        //         maxTries: 3,
-                        //         interval: 50,
-                        //         threshold: 0.75
-                        //     });
-                        //     if (!r.status) {
-                        //         break;
-                        //     }
-                        // }
-                    }
-                    //utils.recycleNull(targetImg);
-                }
-                是否强制跑图 = false;
-                if (当前地图.indexOf("土城") >= 0
-                    || 当前地图.indexOf("盟重省") >= 0
-                    || 当前地图.indexOf("红名村") >= 0
-                    || 当前地图.indexOf("沙巴克") >= 0
-                    || 当前地图.indexOf("祖玛寺庙") >= 0
-                    || 当前地图.indexOf("苍月") >= 0
-                    || 当前地图.indexOf("比奇") >= 0
-                    || 当前地图.indexOf("银杏山谷") >= 0
-                    || 当前地图.indexOf("边界村") >= 0
-                    || 当前地图.indexOf("沙巴克") >= 0
-                ) {
-                    sleep(random(1200, 1666));
-                    tools.常用操作.关闭所有窗口();
-                } else {
-                    tools.常用操作.关闭所有窗口(false, 0, true);
-                }
-            } else {
-                跑图错误次数++;
-                toastLog("去挂机地图,未找到closeBtn");
-                return;
-            }
-            return;
+            tools.常用操作.关闭所有窗口();
         },
         去挂机地图Loop: () => {
             var 是否跑图 = false;
@@ -6261,27 +6151,67 @@ var tools = {
             return false;
         },
         判断选中格子是否存仓库: (zhengliBtn, btn, index1, index2) => {
+            //         祈祷之刃: "cangku_qidaozhiren.png",
+            // 祝福油: "buji_zhufuyou.png",
+            // 祷字: "wenzi_zhuangbei_qidao.png",
+            // 血字: "wenzi_zhuangbei_moxue.png",
+            // 记字: "wenzi_zhuangbei_jiyi.png",
+            // 杖字:"wenzi_zhuangbei_mozhang.png",
+            // 狱字:"wenzi_zhuangbei_lianyu.png",
+            // 福字:"wenzi_zhuangbei_zhufuyou.png",
+            // 虹字:"wenzi_zhuangbei_hongmo.png",
+            // 命字:"wenzi_zhuangbei_shengming.png",
+            // 银蛇:"wenzi_zhuangbei_yinse.png",
             var arr = [{
                 name: "组队卷",
                 pic: 补给枚举.组队卷,
                 验证文字: false,
-            },
-            // {
-            //     name: "祈祷之刃",
-            //     pic: 存仓库枚举.祈祷之刃,
-            //     验证文字: false,
-            //     wenPic: 文字图枚举.祈祷
-            // },
-            {
-                name: "祈祷",
-                pic: 存仓库枚举.祷字,
-                验证文字: true,
-            },
-            {
+            }, {
+                name: "祈祷之刃",
+                pic: 存仓库枚举.祈祷之刃,
+                验证文字: false,
+                wenPic: 文字图枚举.祈祷
+            }, {
                 name: "祝福油",
                 pic: 存仓库枚举.祝福油,
                 验证文字: false,
-            }];
+            }, {
+                name: "祷字",
+                pic: 存仓库枚举.祷字,
+                验证文字: true,
+            }, {
+                name: "福字",
+                pic: 存仓库枚举.福字,
+                验证文字: true,
+            }, {
+                name: "血字",
+                pic: 存仓库枚举.血字,
+                验证文字: true,
+            }, {
+                name: "记字",
+                pic: 存仓库枚举.记字,
+                验证文字: true,
+            }, {
+                name: "杖字",
+                pic: 存仓库枚举.杖字,
+                验证文字: true,
+            }, {
+                name: "狱字",
+                pic: 存仓库枚举.狱字,
+                验证文字: true,
+            }, {
+                name: "虹字",
+                pic: 存仓库枚举.虹字,
+                验证文字: true,
+            }, {
+                name: "命字",
+                pic: 存仓库枚举.命字,
+                验证文字: true,
+            }, {
+                name: "银蛇",
+                pic: 存仓库枚举.银蛇,
+                验证文字: true,
+            },];
             if (挂机参数.存万年 == 1) {
                 arr.push({
                     name: "万年雪霜",
@@ -6294,6 +6224,7 @@ var tools = {
                 if (item.验证文字) {
                     var r = tools.补给操作.背包选中按钮中找字图(item.pic, btn)
                     if (r.status) {
+                        tools.常用方法.发送提醒("存仓库" + item.name);
                         return {
                             status: true,
                             pic: item.pic,
@@ -6304,6 +6235,7 @@ var tools = {
                 else {
                     var r = tools.补给操作.背包选中格子中找图(item.pic, zhengliBtn, index1, index2)
                     if (r.status) {
+                        tools.常用方法.发送提醒("存仓库" + item.name);
                         return {
                             status: true,
                             pic: item.pic,
@@ -6593,10 +6525,10 @@ var tools = {
                     //     maxTries: 6,
                     //     interval: 666
                     // });
-                    // r = tools.findImageForWaitClick("OKBtn.png", {
-                    //     maxTries: 10,
-                    //     interval: 666
-                    // });
+                    r = tools.findImageForWaitClick("OKBtn.png", {
+                        maxTries: 10,
+                        interval: 666
+                    });
                 }
             }
             tools.补给操作.背包拖动背景至可关闭位置(zhengliBtn);
