@@ -98,6 +98,123 @@ config.地图标识 = {
             y2: 392
         }
     },
+    "地牢一层东": {
+        pic: "ditu_wugong_dong.png",
+        范围: {
+            x1: 252,
+            x2: 299,
+            y1: 86,
+            y2: 139
+        }
+    },
+    "地牢一层西1": {
+        pic: "ditu_wugong_xi1.png",
+        范围: {
+            x1: 446,
+            x2: 488,
+            y1: 233,
+            y2: 288
+        }
+    },
+    "地牢一层北2": {
+        pic: "ditu_wugong_bei2.png",
+        范围: {
+            x1: 780,
+            x2: 842,
+            y1: 200,
+            y2: 267
+        }
+    },
+    "黑暗地带": {
+        pic: "ditu_wugong_heiandidai.png",
+        范围: {
+            x1: 626,
+            x2: 661,
+            y1: 149,
+            y2: 198
+        }
+    },
+    "传奇部落": {
+        pic: "ditu_wugong_chuanqibuluo.png",
+        范围: {
+            x1: 645,
+            x2: 703,
+            y1: 417,
+            y2: 447
+        }
+    },
+    "邪恶势力": {
+        pic: "ditu_wugong_xieeshili.png",
+        范围: {
+            x1: 166,
+            x2: 221,
+            y1: 94,
+            y2: 132
+        }
+    },
+    "一线天": {
+        pic: "ditu_wugong_yixiantian.png",
+        范围: {
+            x1: 150,
+            x2: 200,
+            y1: 93,
+            y2: 133
+        }
+    },
+    "恐怖空间": {
+        pic: "ditu_wugong_kongbukongjian.png",
+        范围: {
+            x1: 130,
+            x2: 184,
+            y1: 93,
+            y2: 136
+        }
+    },
+    "死亡棺材": {
+        pic: "ditu_wugong_shiwangguancai.png",
+        范围: {
+            x1: 168,
+            x2: 221,
+            y1: 92,
+            y2: 132
+        }
+    },
+    "生死之间": {
+        pic: "ditu_wugong_shensizhijian.png",
+        范围: {
+            x1: 132,
+            x2: 185,
+            y1: 92,
+            y2: 134
+        }
+    },
+    "兽人古墓一层": {
+        pic: "ditu_kuloudong_1.png",
+        范围: {
+            x1: 392,
+            x2: 430,
+            y1: 531,
+            y2: 575
+        }
+    },
+    "兽人古墓二层": {
+        pic: "ditu_kuloudong_2.png",
+        范围: {
+            x1: 544,
+            x2: 580,
+            y1: 292,
+            y2: 321
+        }
+    },
+    "兽人古墓三层": {
+        pic: "ditu_kuloudong_3.png",
+        范围: {
+            x1: 672,
+            x2: 709,
+            y1: 442,
+            y2: 482
+        }
+    },
 }
 config.地图跳转表 = {
     "苍月": {
@@ -2053,196 +2170,12 @@ config.需存仓库装备 = [
 config.怪物集合 = {
     "兽人古墓": ["骷髅战士", "骷髅", "骷髅战将", "洞蛆", "掷斧骷髅"]
 }
-config.怪物找色 = {
+config.怪物名定位 = {
     '720_1280': {
-        // 蜈蚣洞: [
-        //     {
-        //         text: "黑色恶蛆",
-        //         color: [{
-        //             color: "#DB0000"
-        //         }, {
-        //             color: "#FFFFFF",
-        //             x: -5,
-        //             y: 58
-        //         }, {
-        //             color: "#EFEEEE",
-        //             x: 11,
-        //             y: 58
-        //         }, {
-        //             color: "#FFFFFF",
-        //             x: 27,
-        //             y: 57
-        //         }, {
-        //             color: "#FFFFFF",
-        //             x: 44,
-        //             y: 51
-        //         }]
-        //     },
-        //     {
-        //         text: "钳虫",
-        //         color: [{
-        //             color: "#DB0000"
-        //         }, {
-        //             color: "#FFFFFF",
-        //             x: 6,
-        //             y: 56
-        //         }, {
-        //             color: "#FFFFFF",
-        //             x: 12,
-        //             y: 63
-        //         }, {
-        //             color: "#FFFFFF",
-        //             x: 26,
-        //             y: 53
-        //         }, {
-        //             color: "#FFFFFF",
-        //             x: 26,
-        //             y: 63
-        //         }]
-        //     },
-        //     {
-        //         text: "蜈蚣",
-        //         color: [{
-        //             color: "#DB0000"
-        //         }, {
-        //             color: "#F7F7F7",
-        //             x: 6,
-        //             y: 54
-        //         }, {
-        //             color: "#FDFDFD",
-        //             x: 6,
-        //             y: 62
-        //         }, {
-        //             color: "#F8F8F8",
-        //             x: 31,
-        //             y: 52
-        //         }, {
-        //             color: "#F4F3F2",
-        //             x: 29,
-        //             y: 63
-        //         }]
-        //     },
-        //     {
-        //         text: "跳跳蜂",
-        //         color: [{
-        //             color: "#DB0000"
-        //         }, {
-        //             color: "#FFFFFF",
-        //             x: 0,
-        //             y: 55
-        //         }, {
-        //             color: "#FFFFFF",
-        //             x: 16,
-        //             y: 55
-        //         }, {
-        //             color: "#FEFEFD",
-        //             x: 30,
-        //             y: 63
-        //         }, {
-        //             color: "#FAFAF9",
-        //             x: 37,
-        //             y: 63
-        //         }]
-        //     },
-        //     {
-        //         text: "巨型蠕虫",
-        //         color: [{
-        //             color: "#DB0000"
-        //         }, {
-        //             color: "#FFFFFF",
-        //             x: -1,
-        //             y: 56
-        //         }, {
-        //             color: "#FFFFFF",
-        //             x: 11,
-        //             y: 63
-        //         }, {
-        //             color: "#FFFFFF",
-        //             x: 23,
-        //             y: 63
-        //         }, {
-        //             color: "#FFFFFF",
-        //             x: 43,
-        //             y: 63
-        //         }]
-        //     }
-            
-        // ],
+        "1_1": {
 
-         蜈蚣洞: [
-            {
-                text: "黑色恶蛆",
-                color: [{
-                    color: "#DB0000"
-                }, {
-                    color: "#FFFFFF",
-                    x: -5,
-                    y: 58
-                }, {
-                    color: "#FFFFFF",
-                    x: 44,
-                    y: 51
-                }]
-            },
-            {
-                text: "钳虫",
-                color: [{
-                    color: "#DB0000"
-                }, {
-                    color: "#FFFFFF",
-                    x: 6,
-                    y: 56
-                }, {
-                    color: "#FFFFFF",
-                    x: 26,
-                    y: 63
-                }]
-            },
-            {
-                text: "蜈蚣",
-                color: [{
-                    color: "#DB0000"
-                }, {
-                    color: "#F7F7F7",
-                    x: 6,
-                    y: 54
-                },{
-                    color: "#F4F3F2",
-                    x: 29,
-                    y: 63
-                }]
-            },
-            {
-                text: "跳跳蜂",
-                color: [{
-                    color: "#DB0000"
-                }, {
-                    color: "#F3F3F2",
-                    x: -3,
-                    y: 59
-                }, {
-                    color: "#F3F3F2",
-                    x: 37,
-                    y: 59
-                }]
-            },
-            {
-                text: "巨型蠕虫",
-                color: [{
-                    color: "#DB0000"
-                }, {
-                    color: "#FFFFFF",
-                    x: -1,
-                    y: 56
-                },{
-                    color: "#FFFFFF",
-                    x: 43,
-                    y: 63
-                }]
-            }
-            
-        ],
-     }
+        },
+    }
 }
 config.zuobiao = {
     石墓阵: {
@@ -2997,8 +2930,10 @@ config.zuobiao = {
     },
     打怪点偏移: {
         '720_1280': {
-            x: 1137,
-            y: 39
+            // x: 1137,
+            // y: 39
+            x: 1142,
+            y: 45
         }
     },
     比奇大地图偏移: {

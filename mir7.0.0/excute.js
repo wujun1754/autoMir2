@@ -226,6 +226,8 @@ var 补给枚举 = {
     修复油_格子: "buji_xiufuyou_gezi.png",
     中蓝个_背包: "buji_lanyaoge.png",
     中蓝个_格子: "buji_lanyaoge_gezi.png",
+    战神油_背包: "buji_zhanshenyou.png",
+    战神油_格子: "buji_zhanshenyou_gezi.png",
     中蓝包: "buji_lanyaobao.png",
     捆药绳: "buji_kunyaoshen.png",
 }
@@ -1189,7 +1191,8 @@ var tools = {
             tools.常用操作.点击左面板怪物()
             //tools.findImageClick("rewumianbanBtn.png")
             tools.常用操作.关闭所有窗口();
-
+            var zhengliBtn = tools.补给操作.整理背包(true);
+            sleep(222);
             if (挂机参数.衣服持久0回程 == 1 && 衣服.status && 衣服.持久 && 衣服.持久.剩持久 <= 2) {
                 if (!是否用过备用衣服) {
                     var isSuccess = false;
@@ -1216,6 +1219,28 @@ var tools = {
             }
 
             if (挂机参数.武器持久0回程 == 1 && 武器.status && 武器.持久 && 武器.持久.剩持久 <= 2) {
+                if (zhengliBtn.status) {
+                    var isOk = tools.补给操作.喝战神油();
+                    if (isOk) {
+                        toastLog("喝战神油成功")
+                        return false;
+                    }
+                    else {
+                        toastLog("喝战神油失败")
+                    }
+
+                    isOk = tools.补给操作.喝修复油();
+                    if (isOk) {
+                        toastLog("喝修复油成功")
+                        return false;
+                    }
+                    else {
+                        toastLog("喝修复油失败")
+                    }
+                }
+
+
+
                 var isSuccess = false;
                 if (!是否用过备用武器) {
                     if (挂机参数.备用凝霜 == 1) {
@@ -1576,10 +1601,8 @@ var tools = {
                 }
             }
         },
-        使用备用装备: (picName) => {
+        使用备用装备: (picName,zhengliBtn) => {
             var isok = false;
-            var zhengliBtn = tools.补给操作.整理背包(true);
-            sleep(888)
             var 背包面板P = tools.补给操作.获取背包面板位置(zhengliBtn);
             var arr = tools.matchTemplateForArea(picName, 5, 0.7,
                 [背包面板P.x1, 背包面板P.y1, 背包面板P.width, 背包面板P.height]
@@ -1618,7 +1641,6 @@ var tools = {
                     }
                 }
             }
-            tools.常用操作.关闭所有窗口();
             return isok;
         },
         点击人物: () => {
@@ -2650,10 +2672,7 @@ var tools = {
                     tools.执行时间戳.检测蓝药();
 
                     tools.执行时间戳.检测武器衣服();
-                    // var t1 = new Date().getTime()
-                    //tools.挂机打怪.大范围扫描锁定怪物();
-                    // var t2 = new Date().getTime()
-                    // tools.悬浮球临时描述("(" + ((t2 - t1) / 1000).toFixed(3) + ")" + JSON.stringify(ttt) + "");
+
                     tools.悬浮球描述("(" + parseInt((timeout - (时间戳)) / 1000) + ")(" + 锁定的怪物 + ")");
                 } else {
                     tools.拾取.点击(1);
@@ -3926,24 +3945,37 @@ var tools = {
             };;
         },
         向怪物移动: () => {
-            var start = new Date().getTime();
-            var 人物中心 = config.zuobiao.人物血量左上[fbl];
-            var 按钮集合 = config.zuobiao.按钮集合[fbl];
-            var 允许距离 = {
-                x: 64 + 5,
-                y: 42 + 5
-            }
+            var 人物中心 = config.zuobiao.人物血量中心[fbl];
             var r = tools.挂机打怪.大范围扫描锁定怪物();
             if (r && r.x > 0 && r.y > 0) {
-                r = tools.挂机打怪.扫描怪物空位(r)
-                if (r == null) {
-                    return false;
+                var t = random(888, 999);
+                if (Math.abs(r.x - 人物中心.x) > 50) {
+                    if (r.x > 人物中心.x) { //怪物在右面
+                        tools.人物移动.右走一步(t);
+                    }
+                    else {
+                        tools.人物移动.左走一步(t);
+                    }
                 }
-                tools.click(r.click.x, r.click.y);
-                sleep(333);
-                tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                toastLog(r.方向 + "空位移动");
+                else if (Math.abs(r.y - 人物中心.y) > 50) {
+                    if (r.y > 人物中心.y) { //怪物在下面
+                        tools.人物移动.下走一步(t);
+                    }
+                    else {
+                        tools.人物移动.上走一步(t);
+                    }
+                }
                 return true;
+
+                // r = tools.挂机打怪.扫描怪物空位(r)
+                // if (r == null) {
+                //     return false;
+                // }
+                // tools.click(r.click.x, r.click.y);
+                // sleep(333);
+                // tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                // toastLog(r.方向 + "空位移动");
+                // return true;
             }
             return false;
         },
@@ -3954,7 +3986,7 @@ var tools = {
             var 左边范围 = {
                 方向: "左",
                 x: 怪物P.x - 65,
-                y: 怪物P.y - 10,
+                y: 怪物P.y - 60,
                 w: 60,
                 h: 165,
                 click: {
@@ -4234,10 +4266,10 @@ var tools = {
         大范围扫描锁定怪物: () => {//找到后返回怪物血量最左边坐标
             var 身边p = config.zuobiao.身边怪物范围[fbl];
             var p = {
-                x1: 222,
-                y1: 50,
-                x2: 917,
-                y2: 560
+                x1: 210,
+                y1: 0,
+                x2: 1078,
+                y2: 620
             }
             var t = 0.5;
             var arr = [];
@@ -4286,71 +4318,38 @@ var tools = {
                 || 挂机参数.挂机地图.indexOf("恐怖空间") >= 0
 
             ) {
-                找色 = config.怪物找色[fbl].蜈蚣洞;
-                // arr.push({
-                //     pic: 文字图枚举.钳,
-                //     text: "钳虫"
-                // })
-                // arr.push({
-                //     pic: 文字图枚举.恶蛆,
-                //     text: "黑色恶蛆"
-                // })
-                // arr.push({
-                //     pic: 文字图枚举.蠕,
-                //     text: "巨型蠕虫"
-                // })
-                // arr.push({
-                //     pic: 文字图枚举.蜈,
-                //     text: "蜈蚣"
-                // })
-                // arr.push({
-                //     pic: 文字图枚举.跳,
-                //     text: "跳跳蜂"
-                // })
-                // arr.push({
-                //     pic: 文字图枚举.邪恶,
-                //     text: "邪恶蚶虫"
-                // })
+                arr.push({
+                    pic: 文字图枚举.钳,
+                    text: "钳虫"
+                })
+                arr.push({
+                    pic: 文字图枚举.恶蛆,
+                    text: "黑色恶蛆"
+                })
+                arr.push({
+                    pic: 文字图枚举.蠕,
+                    text: "巨型蠕虫"
+                })
+                arr.push({
+                    pic: 文字图枚举.蜈,
+                    text: "蜈蚣"
+                })
+                arr.push({
+                    pic: 文字图枚举.跳,
+                    text: "跳跳蜂"
+                })
+                arr.push({
+                    pic: 文字图枚举.邪恶,
+                    text: "邪恶蚶虫"
+                })
             }
-            if (找色.length > 0) {
-                var t1 = new Date().getTime();
-                var img = captureScreen();
-                for (var index = 0; index < 找色.length; index++) {
-                    var c = 找色[index].color;
-                    var text = 找色[index].text;
-                    var r = images.findMultiColors(img, c[0].color, [
-                        [c[1].x, c[1].y, c[1].color],
-                        [c[2].x, c[2].y, c[2].color],
-                    ], {
-                        threshold: 30,
-                        region: [200, 0, 1280 - 200, 615],
-                    });
-                    var t2 = new Date().getTime();
-
-                    if (r && (r.x > 0 || r.y > 0)) {
-                        var result = {
-                            text: text,
-                            r: r
-                        }
-                        tools.悬浮球临时描述("(" + ((t2 - t1) / 1000).toFixed(3) + ")" + JSON.stringify(result))
-                        return r;
-                    }
-                }
-                
-                存入仓库数量++;
-                tools.悬浮球临时描述("无("+存入仓库数量+")")
-                sleep(1000)
-                utils.recycleNull(img);
-            }
-            else if (arr.length > 0) {
+            if (arr.length > 0) {
                 var t1 = new Date().getTime();
                 for (var index = 0; index < arr.length; index++) {
                     var item = arr[index];
                     var r = tools.findImageArea(item.pic, p.x1, p.y1, p.x2, p.y2, t);
-                    //var r = tools.findImage(item.pic, t);
                     if (r.status) {
-                        var t2 = new Date().getTime();
-                        tools.悬浮球临时描述("(" + ((t2 - t1) / 1000).toFixed(3) + ")" + JSON.stringify(r.img))
+                        tools.悬浮球临时描述("(" + ((new Date().getTime() - t1) / 1000).toFixed(3) + ")" + JSON.stringify(r.img))
                         return r.img
                         // var r = r.img;
                         // r = tools.挂机打怪.通过文字计算血条位置(r.x, r.y, false);
@@ -4364,6 +4363,7 @@ var tools = {
                         // }
                     }
                 }
+                tools.悬浮球临时描述("(" + ((new Date().getTime() - t1) / 1000).toFixed(3) + ")找怪物名失败")
             }
 
 
@@ -5216,7 +5216,6 @@ var tools = {
             }
         },
         回老兵: (当前地图, routes, 大地图偏移) => {
-            //tools.人物移动.检测地图走动方向(当前地图);
             tools.常用操作.打开大地图();
             var closeBtn = tools.findImageForWait("closeBtn.png", {
                 maxTries: 6,
@@ -5293,12 +5292,8 @@ var tools = {
         去下一层地图: (当前地图, 目的地) => {
             var 偏移 = config.zuobiao.打怪点偏移[fbl];
             var 下一层 = config.地图路由[当前地图]["下一层"];
-            var 偏移 = config.zuobiao.打怪点偏移[fbl];
             var 大地图坐标 = tools.人物移动.获取大地图偏移();
 
-            if (下一层 == null || 下一层.入口 == null) {
-                tools.人物移动.随机走一步(1200);
-            }
             tools.常用操作.打开大地图();
             var closeBtn = tools.常用操作.找大地图关闭按钮();
             if (!closeBtn.status) {
@@ -5348,7 +5343,6 @@ var tools = {
                     y = closeImg.y + random(r.y[0], r.y[1]);
                 }
                 else {
-                    var 偏移 = config.zuobiao.打怪点偏移[fbl];
                     if (目的地 == "石墓阵") {
                         x = closeImg.x + (r.x - 偏移.x);
                         y = closeImg.y + (r.y - 偏移.y);
@@ -5363,7 +5357,11 @@ var tools = {
                 }
                 tools.click(x, y)
                 if (info && info.pic && info.pic.length > 0) {
-                    var r = tools.findImageAreaForWait(info.pic, info.范围.x1, info.范围.y1, info.范围.x2, info.范围.x2, {
+                    info.范围.x1 = closeImg.x + (info.范围.x1 - 偏移.x);
+                    info.范围.x2 = closeImg.x + (info.范围.x2 - 偏移.x);
+                    info.范围.y1 = closeImg.y + (info.范围.y1 - 偏移.y);
+                    info.范围.y2 = closeImg.y + (info.范围.y2 - 偏移.y);
+                    var r = tools.findImageAreaForWait(info.pic, info.范围.x1, info.范围.y1, info.范围.x2, info.范围.y2, {
                         maxTries: 5,
                         interval: 200,
                         threshold: 0.85
@@ -5578,25 +5576,53 @@ var tools = {
             }
             return r;
         },
-        喝修复油: () => {
-            var 背包按钮 = tools.常用操作.打开背包();
-            if (背包按钮.status) {
-                var 修复油 = tools.findImageForWaitClick(补给枚举.修复油_背包, {
+        喝战神油: () => {
+            var r = tools.findImageForWaitClick(补给枚举.战神油_背包, {
+                maxTries: 5,
+                interval: 200
+            });
+            if (r.status) {
+                if (r.img.y < config.zuobiao.药品格子面板[fbl].y1) {
+                    r = tools.补给操作.获取操作按钮(["使用"], "使用战神油", true, false, false);
+                    if (r.status) {
+                        return true;
+                    }
+                }
+            }
+            else {
+                r = tools.findImageForWaitClick(补给枚举.战神油_格子, {
                     maxTries: 5,
                     interval: 200
                 });
-                if (修复油.status) {
-                    if (修复油.img.y < config.zuobiao.药品格子面板[fbl].y1) {
-                        tools.findImageForWaitClick("shiyongBtn.png", {
-                            maxTries: 5,
-                            interval: 200
-                        });
-                    }
-                    tools.常用操作.关闭所有窗口();
+                if (r.status) {
+                    tools.常用操作.关闭所有窗口(false, 0, true);
                     return true;
                 }
             }
-            tools.常用操作.关闭所有窗口();
+            return false;
+        },
+        喝修复油: () => {
+            var r = tools.findImageForWaitClick(补给枚举.修复油_背包, {
+                maxTries: 5,
+                interval: 200
+            });
+            if (r.status) {
+                if (r.img.y < config.zuobiao.药品格子面板[fbl].y1) {
+                    r = tools.补给操作.获取操作按钮(["使用"], "使用修复油", true, false, false);
+                    if (r.status) {
+                        return true;
+                    }
+                }
+            }
+            else {
+                r = tools.findImageForWaitClick(补给枚举.修复油_格子, {
+                    maxTries: 5,
+                    interval: 200
+                });
+                if (r.status) {
+                    return true;
+                }
+            }
             return false;
         },
         找地牢: () => {
@@ -5779,7 +5805,7 @@ var tools = {
                 }
                 if (r.status) {
                     if (isClick) {
-                        var x = r.img.x + r.size.w / 2 + random(-5, 5);
+                        var x = r.img.x + r.size.w / 2 + random(-3, 3);
                         var y = r.img.y + r.size.h / 2 + random(-3, 3);
                         tools.click(x, y)
                     }
@@ -5935,7 +5961,6 @@ var tools = {
         整理背包: (isOpen) => {
             if (isOpen) {
                 tools.常用操作.打开背包();
-                sleep(555)
             }
             var r = tools.findImageForWaitClick("beibaozhengliBtn.png", {
                 maxTries: 10,
@@ -8694,12 +8719,13 @@ function showWinConfig() {
 }
 
 
-while (true) {
-    tools.挂机打怪.大范围扫描锁定怪物();
-    sleep(333)
-}
+// while (true) {
+//     tools.挂机打怪.大范围扫描锁定怪物();
+//     sleep(333)
+// }
 // sleep(2100)
-// tools.补给操作.检查仓库雪霜();
+// var closeBtn = tools.常用操作.找大地图关闭按钮();
+// tools.悬浮球描述(JSON.stringify(closeBtn))
 
 //启动程序
 threads.start(function () {
