@@ -132,10 +132,10 @@ utilsObj.getOrientation = () => {
     let orientation = context.getResources().getConfiguration().orientation
 
     // 宽大于高 平板
-    if(device.width > device.height){
+    if (device.width > device.height) {
         // 转换一下方向
         orientation = orientation === 1 ? 2 : 1
-    // 高大于宽 手机
+        // 高大于宽 手机
     }
     return orientation;
 }
@@ -811,7 +811,7 @@ utilsObj.getMemoryInfo = () => {
     availMemory = parseInt(availMemory / 1024 / 1024);
     usedMemory = parseInt(usedMemory / 1024 / 1024);
     precentlong = parseInt(precentlong);
-    return  precentlong + "%";
+    return precentlong + "%";
     //return "【内存】\r\n总共: " + totalMemory + " MB\r\n" + "已用: " + usedMemory + " MB\r\n" + "可用: " + availMemory + " MB\r\n" + "百分比: " + precentlong + "%";
 }
 
@@ -1150,10 +1150,10 @@ utilsObj.remoteHandler = (message) => {
     threads.start(() => {
         if (['remoteClipGrayscaleAndThresholdToServer', 'remoteClipGrayscaleAndThresholdAnalysisChartToServer'].includes(functionName)) {
             // 唤醒设备
-			device.wakeUpIfNeeded();
-			try {
+            device.wakeUpIfNeeded();
+            try {
                 images.stopScreenCapture()
-                images.requestScreenCapture({orientation:utilsObj.getOrientation()})
+                images.requestScreenCapture({ orientation: utilsObj.getOrientation() })
                 sleep(500)
             } catch (error) {
                 if (commonStorage.get('debugModel')) {
@@ -1303,22 +1303,22 @@ utilsObj.scaleSmallImg = (targetImg) => {
  * @returns {x:int,y:int} 转换后的坐标
  */
 utilsObj.convertXY = (x, y, location) => {
-     // x轴最大值  竖屏为宽度  横屏为高度
-     let xMax = utilsObj.getOrientation() === 1 ? device.width : device.height
-     // y轴最大值  竖屏为高度 横屏为宽度
-     let yMax = utilsObj.getOrientation() === 1 ? device.height : device.width
+    // x轴最大值  竖屏为宽度  横屏为高度
+    let xMax = utilsObj.getOrientation() === 1 ? device.width : device.height
+    // y轴最大值  竖屏为高度 横屏为宽度
+    let yMax = utilsObj.getOrientation() === 1 ? device.height : device.width
     // 超界限处理
-    let overHandler = (result)=>{
-        if(Number(result.x) < 0){
+    let overHandler = (result) => {
+        if (Number(result.x) < 0) {
             result.x = 0
         }
-        if(Number(result.y) < 0){
+        if (Number(result.y) < 0) {
             result.y = 0
         }
-        if(Number(result.x) > Number(xMax)){
+        if (Number(result.x) > Number(xMax)) {
             result.x = Number(xMax)
         }
-        if(Number(result.y) > Number(yMax)){
+        if (Number(result.y) > Number(yMax)) {
             result.y = Number(yMax)
         }
         return result;
@@ -2044,7 +2044,7 @@ utilsObj.regionalFindImg3 = (img, targetImg, paramArray, canvasMsg) => {
  * @returns 
  */
 utilsObj.canvasRect = (x1, y1, x2, y2, type, msg) => {
-    // 非调试模式
+    // // 非调试模式
     if (!commonStorage.get("debugModel")) {
         return;
     }
@@ -2106,36 +2106,147 @@ utilsObj.canvasRect = (x1, y1, x2, y2, type, msg) => {
             let paint = new Paint();
             //设置画笔为填充，则绘制出来的图形都是实心的
             paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(4);
+            paint.setStrokeWidth(1);
             //设置画笔颜色为红色
             paint.setColor(colors.parseColor(rectColor));
 
             let textPaint = new Paint();
             textPaint.setTextAlign(Paint.Align.CENTER);
-            textPaint.setTextSize(30);
+            textPaint.setTextSize(14);
             textPaint.setStyle(Paint.Style.FILL);
             textPaint.setColor(colors.parseColor(rectColor));
-            
+
             // 竖屏时
-            if(utilsObj.getOrientation() === 1){
+            if (utilsObj.getOrientation() === 1) {
                 let canvasOffset = Number(commonStorage.get("canvasOffset") || 0)
                 //绘制一个方框 左上角的点 坐标偏移
                 canvas.drawRect(Number(x1), Number(y1) - canvasOffset, Number(x2), Number(y2) - canvasOffset, paint);
                 //绘文字
                 canvas.drawText(msg, Number(x1), Number(y1) - canvasOffset, textPaint)
             } else {
-                 //绘制一个方框
+                //绘制一个方框
                 canvas.drawRect(Number(x1), Number(y1), Number(x2), Number(y2), paint);
                 //绘文字
                 canvas.drawText(msg, Number(x1), Number(y1), textPaint)
             }
-            
+
         })
-        sleep(200 + Number(debugSleep))
+        sleep(2000 + Number(debugSleep))
         if (canvasFloat) {
             canvasFloat.close();
         }
-        sleep(200)
+        sleep(2000)
+    }
+}
+
+/**
+ * 绘制方框
+ * @param {int} x1 区域坐标x1
+ * @param {int} y1 区域坐标y1
+ * @param {int} x2 区域坐标x2
+ * @param {int} y2 区域坐标y2
+ * @param {*} type 消息类型 img chart color
+ * @param {*} msg 消息内容
+ * @returns 
+ */
+utilsObj.canvasRectCus = (x1, y1, x2, y2, type, msg, witeTime) => {
+    // // 非调试模式
+    // if (!commonStorage.get("debugModel")) {
+    //     return;
+    // }
+    let debugSleep = commonStorage.get("debugSleep") || 0
+    sleep(Number(debugSleep))
+    // 默认绿色
+    let rectColor = "#ff8000";
+    if (type === "img") {
+        // 黄色
+        rectColor = "#ffac8c";
+    } else if (type === "chart") {
+        // 红色
+        rectColor = "#eb4f18"
+    } else if (type === "color") {
+        // 蓝色
+        rectColor = "#397fff";
+    }
+    if (x1 > - 1) {
+        if (x1 > 2) {
+            x1 = x1 - 2
+        }
+        if (y1 > 2) {
+            y1 = y1 - 2
+        }
+        // 竖屏
+        if (utilsObj.getOrientation() === 1 && device.width - 2 > x2) {
+            x2 = x2 + 2
+        }
+        // 横屏
+        if (utilsObj.getOrientation() === 1 && device.height - 2 > x2) {
+            x2 = x2 + 2
+        }
+        // 竖屏
+        if (utilsObj.getOrientation() === 1 && device.height - 2 > y2) {
+            y2 = y2 + 2
+        }
+        // 横屏
+        if (utilsObj.getOrientation() === 1 && device.width - 2 > y2) {
+            y2 = y2 + 2
+        }
+
+        if (canvasFloat) {
+            canvasFloat.close();
+        }
+        canvasFloat = floaty.rawWindow(
+            <relative>
+                <button id="boardClose" alpha="0" h="*" w="*" layout_centerInParent="true" />
+                <canvas id="board" w="*" h="*" layout_centerInParent="true"></canvas>
+            </relative>
+        );
+        // canvasFloat.setTouchable(false);
+        canvasFloat.boardClose.on("click", () => {
+            if (canvasFloat) {
+                canvasFloat.close();
+            }
+        })
+        canvasFloat.setSize(-1, -1);
+        canvasFloat.board.on("draw", function (canvas) {
+            let paint = new Paint();
+            //设置画笔为填充，则绘制出来的图形都是实心的
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(1);
+            //设置画笔颜色为红色
+            paint.setColor(colors.parseColor(rectColor));
+
+            let textPaint = new Paint();
+            textPaint.setTextAlign(Paint.Align.CENTER);
+            textPaint.setTextSize(14);
+            textPaint.setStyle(Paint.Style.FILL);
+            textPaint.setColor(colors.parseColor(rectColor));
+
+            // 竖屏时
+            if (utilsObj.getOrientation() === 1) {
+                let canvasOffset = Number(commonStorage.get("canvasOffset") || 0)
+                //绘制一个方框 左上角的点 坐标偏移
+                canvas.drawRect(Number(x1), Number(y1) - canvasOffset, Number(x2), Number(y2) - canvasOffset, paint);
+                //绘文字
+                canvas.drawText(msg, Number(x1), Number(y1) - canvasOffset, textPaint)
+            } else {
+                //绘制一个方框
+                canvas.drawRect(Number(x1), Number(y1), Number(x2), Number(y2), paint);
+                //绘文字
+                canvas.drawText(msg, Number(x1), Number(y1), textPaint)
+            }
+
+        })
+        if (witeTime && witeTime > 0) {
+            sleep(witeTime + Number(debugSleep))
+        }
+        else {
+            sleep(200 + Number(debugSleep))
+        }
+        if (canvasFloat) {
+            canvasFloat.close();
+        }
+        //sleep(200 + Number(debugSleep))
     }
 }
 
@@ -2378,7 +2489,7 @@ utilsObj.regionalMatchTemplate = (img, targetImg, x1, y1, x2, y2, threshold, max
 utilsObj.regionalFindImgOrFeatures = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg) => {
     // 标准分辨率下进行找图  否则进行特征匹配
     let isStandard = utilsObj.getIsStandard()
-	// 标准分辨率下 或者 设置了无需转换标记
+    // 标准分辨率下 或者 设置了无需转换标记
     if (isStandard || commonStorage.get("notNeedConvert")) {
         // 区域找图
         return utilsObj.regionalFindImg2(img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, isOpenGray, isOpenThreshold, canvasMsg)
@@ -2504,7 +2615,7 @@ utilsObj.regionalMatchTemplate2 = (img, targetImg, x1, y1, x2, y2, threshold, ma
 utilsObj.regionalMatchTemplateOrMatchFeatures = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, matchingCount, transparentMask, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg) => {
     // 标准分辨率
     let isStandard = utilsObj.getIsStandard();
-	// 标准分辨率下 或者 设置了无需转换标记
+    // 标准分辨率下 或者 设置了无需转换标记
     if (isStandard || commonStorage.get("notNeedConvert")) {
         // 区域特征匹配
         return utilsObj.regionalMatchTemplate2(img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, matchingCount, transparentMask, isOpenGray, isOpenThreshold, canvasMsg);
@@ -2952,7 +3063,7 @@ utilsObj.regionalAnalysisChart2 = (img, x1, y1, x2, y2, threshold, maxVal, isOpe
  * @param {String} canvasMsg 绘制消息
  * @returns {Array} 文字识别结果对象数组
  */
- utilsObj.regionalAnalysisChart3 = (img, x1, y1, x2, y2, threshold, maxVal, isOpenGray, isOpenThreshold, canvasMsg) => {
+utilsObj.regionalAnalysisChart3 = (img, x1, y1, x2, y2, threshold, maxVal, isOpenGray, isOpenThreshold, canvasMsg) => {
     // 坐标转换
     let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
     let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
@@ -2967,9 +3078,9 @@ utilsObj.regionalAnalysisChart2 = (img, x1, y1, x2, y2, threshold, maxVal, isOpe
     // 回收裁剪图片
     utilsObj.recycleNull(clipImg);
     // 获取文字识别结果对象数组
-    let objArr = utilsObj.ocrGetContentObjArr(imgAfter,xy1["x"], xy1["y"], xy2["x"], xy2["y"])
+    let objArr = utilsObj.ocrGetContentObjArr(imgAfter, xy1["x"], xy1["y"], xy2["x"], xy2["y"])
     // 绘制方框
-    utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【文字识别结果】" + (objArr||[]).map(item=> item.text).join(''));
+    utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【文字识别结果】" + (objArr || []).map(item => item.text).join(''));
     // 回收灰度化、阈值化后的图片
     utilsObj.recycleNull(imgAfter);
     return objArr;
@@ -3083,7 +3194,7 @@ utilsObj.ocrGetContentStr = (img) => {
  * ocr获取文字识别内容对象数据结果
  * @param {*} img 
  */
- utilsObj.ocrGetContentObjArr = (img, x1, y1, x2, y2) => {
+utilsObj.ocrGetContentObjArr = (img, x1, y1, x2, y2) => {
     let objArr = [];
     try {
         // 当前使用浩然ocr且已经初始化
@@ -3099,12 +3210,12 @@ utilsObj.ocrGetContentStr = (img) => {
                 console.log(`【识别耗时:】 ${end - start}ms`);
                 console.info("")
             }
-            results.forEach(item=>{
+            results.forEach(item => {
                 let frame = item.frame
                 let obj = {
-                    'text':item.text,
-                    'x':(frame[0] + (frame[4] - frame[0]) / 2),
-                    'y':(frame[1] + (frame[5] - frame[1]) / 2)
+                    'text': item.text,
+                    'x': (frame[0] + (frame[4] - frame[0]) / 2),
+                    'y': (frame[1] + (frame[5] - frame[1]) / 2)
                 }
                 objArr.push(obj);
             })
@@ -3118,10 +3229,10 @@ utilsObj.ocrGetContentStr = (img) => {
             // 读取文字识别内容
             let ocrArr = results ? JSON.parse(results) : []
             // 返回文字识别内容结果
-            ocrArr.forEach(item=>{
+            ocrArr.forEach(item => {
                 // 计算匹配结果
                 let obj = {
-                    'text':item.words,
+                    'text': item.words,
                     'x': ((x2 - x1) / 2),
                     'y': ((y2 - y1) / 2)
                 }
@@ -3143,13 +3254,13 @@ utilsObj.ocrGetContentStr = (img) => {
                 console.info("")
             }
             // 返回文字识别内容结果
-            ocrArr2.forEach(item=>{
+            ocrArr2.forEach(item => {
                 // 计算匹配结果
                 let location = item.location
                 let obj = {
-                    'text':item.words,
-                    'x':(location[0][0] + (location[2][0] - location[0][0]) / 2),
-                    'y':(location[0][1] + (location[2][1] - location[0][1]) / 2)
+                    'text': item.words,
+                    'x': (location[0][0] + (location[2][0] - location[0][0]) / 2),
+                    'y': (location[0][1] + (location[2][1] - location[0][1]) / 2)
                 }
                 objArr.push(obj);
             })
@@ -3166,12 +3277,12 @@ utilsObj.ocrGetContentStr = (img) => {
                 console.log(`【识别耗时:】 ${end - start}ms`);
                 console.info("")
             }
-             // 返回文字识别内容结果
-             resultMlk.forEach(item=>{
+            // 返回文字识别内容结果
+            resultMlk.forEach(item => {
                 // 计算匹配结果
                 let bounds = item.bounds
                 let obj = {
-                    'text':item.text,
+                    'text': item.text,
                     'x': (bounds.left + (bounds.right - bounds.left) / 2),
                     'y': (bounds.top + (bounds.bottom - bounds.top) / 2)
                 }
@@ -4081,17 +4192,17 @@ utilsObj.remoteUploadRootNodeJsonToServer = () => {
  */
 utilsObj.uploadNodePreviewImg = () => {
     try {
-		// 唤醒设备
-		device.wakeUpIfNeeded();
-		try {
-			images.stopScreenCapture()
-			images.requestScreenCapture({orientation:utilsObj.getOrientation()})
-			sleep(500)
-		} catch (error) {
-			if (commonStorage.get('debugModel')) {
-				console.error("远程请求截图错误", error)
-			}
-		}
+        // 唤醒设备
+        device.wakeUpIfNeeded();
+        try {
+            images.stopScreenCapture()
+            images.requestScreenCapture({ orientation: utilsObj.getOrientation() })
+            sleep(500)
+        } catch (error) {
+            if (commonStorage.get('debugModel')) {
+                console.error("远程请求截图错误", error)
+            }
+        }
         let img = images.captureScreen()
         let tempImgPath = '/sdcard/screenImg/nodePreviewImg.jpg'
         files.createWithDirs("/sdcard/screenImg/")
@@ -4246,28 +4357,28 @@ utilsObj.recursionNode = (childNodeObj) => {
 
 // 使用堆栈模拟递归调用，实现尾递归
 utilsObj.recursionNode = (childNodeObj) => {
-  let stack = [childNodeObj]; // 初始化堆栈，将初始节点压入堆栈
-  while (stack.length > 0) { // 当堆栈不为空时，循环处理节点
-    let node = stack.pop(); // 从堆栈中弹出一个节点
-    let sourceNode = node.sourceNode; // 获取节点对应的源节点
-    let childCount = sourceNode.childCount(); // 获取源节点的子节点数量
-    if (childCount == null || childCount === 0) { // 如果子节点数量为0，则跳过
-      continue;
+    let stack = [childNodeObj]; // 初始化堆栈，将初始节点压入堆栈
+    while (stack.length > 0) { // 当堆栈不为空时，循环处理节点
+        let node = stack.pop(); // 从堆栈中弹出一个节点
+        let sourceNode = node.sourceNode; // 获取节点对应的源节点
+        let childCount = sourceNode.childCount(); // 获取源节点的子节点数量
+        if (childCount == null || childCount === 0) { // 如果子节点数量为0，则跳过
+            continue;
+        }
+        let children = node.children ? node.children : []; // 初始化子节点数组
+        for (let i = 0; i < childCount; i++) { // 遍历源节点的子节点
+            let childNode1 = sourceNode.child(i); // 获取子节点
+            if (!childNode1) { // 如果子节点不存在，则跳过
+                continue;
+            }
+            let childNodeObj1 = utilsObj.convertNodeToObj(childNode1); // 将子节点转换为对象
+            childNodeObj1.sourceNode = childNode1; // 将子节点的源节点保存到对象中
+            children.push(childNodeObj1); // 将子节点对象添加到子节点数组中
+            stack.push(childNodeObj1); // 将子节点对象压入堆栈中，以便后续处理
+        }
+        node.children = children; // 将子节点数组保存到节点对象中
     }
-    let children = node.children ? node.children : []; // 初始化子节点数组
-    for (let i = 0; i < childCount; i++) { // 遍历源节点的子节点
-      let childNode1 = sourceNode.child(i); // 获取子节点
-      if (!childNode1) { // 如果子节点不存在，则跳过
-        continue;
-      }
-      let childNodeObj1 = utilsObj.convertNodeToObj(childNode1); // 将子节点转换为对象
-      childNodeObj1.sourceNode = childNode1; // 将子节点的源节点保存到对象中
-      children.push(childNodeObj1); // 将子节点对象添加到子节点数组中
-      stack.push(childNodeObj1); // 将子节点对象压入堆栈中，以便后续处理
-    }
-    node.children = children; // 将子节点数组保存到节点对象中
-  }
-  return childNodeObj; // 返回处理后的节点对象
+    return childNodeObj; // 返回处理后的节点对象
 }
 
 // 
