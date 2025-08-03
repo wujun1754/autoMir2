@@ -2238,10 +2238,10 @@ utilsObj.canvasRectCus = (x1, y1, x2, y2, type, msg, witeTime) => {
 
         })
         if (witeTime && witeTime > 0) {
-            sleep(witeTime + Number(debugSleep))
+            sleep(witeTime)
         }
         else {
-            sleep(200 + Number(debugSleep))
+            sleep(200)
         }
         if (canvasFloat) {
             canvasFloat.close();

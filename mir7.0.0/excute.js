@@ -2667,6 +2667,10 @@ var tools = {
                             }
                         }
                     }
+                    r = tools.挂机打怪.向怪物移动(左面板怪物);
+                    tools.悬浮球临时描述(JSON.stringify(r));
+                    sleep(300)
+                    continue;
                     if (挂机参数.隐身走动 == 1 && !是否强制攻击 && (new Date().getTime() - 发现其他玩家时间) <= 发现其他玩家时间等待) { //二分钟内发现玩家需要强制攻击
                         toastLog((new Date().getTime() - 发现其他玩家时间) / 1000 + "秒前发现玩家,强制攻击")
                         是否强制攻击 = true;
@@ -4261,7 +4265,7 @@ var tools = {
                 if ((r1 == null || r1.x <= 0 || r1.y <= 0) && (r2 == null || r2.x <= 0 || r2.y <= 0)) {
                     result = item;
                     if (是否绘制) {
-                        utils.canvasRectCus(item.click.x, item.click.y, item.click.x + 5, item.click.y + 5, "img", "空位", 1000);
+                        utils.canvasRectCus(item.click.x, item.click.y, item.click.x + 5, item.click.y + 5, "img", "空位", 2000);
                     }
                     break;
                 }
