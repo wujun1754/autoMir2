@@ -2588,7 +2588,7 @@ var tools = {
             var 是否强制攻击 = false;
             var 切换左面板人物 = false;
             var 是否正在攻击宝宝身边怪 = false;
-            var 是否检测了左面板怪物 = false;
+            var 左面板怪物 = null;
             var 扫描宝宝 = {
                 status: false
             };
@@ -2637,43 +2637,31 @@ var tools = {
                         }
                     }
                     if (锁定的怪物.length <= 0) {
-                        锁定的怪物 = tools.挂机打怪.身边锁定怪物();
+                        锁定的怪物 = tools.挂机打怪.扫描怪物名文字身边();
                     }
-                    if (锁定的怪物.length > 0 && !是否锁定危险怪) {
-                        var 危险怪物 = null;
-                        if (锁定的怪物.indexOf("牛魔将军") >= 0) {
-                            危险怪物 = 精英怪枚举.牛魔将军;
+                    if (精英怪 && 精英怪.status && !是否锁定危险怪) {
+                        if (精英怪.value.是否施毒) {
+                            tools.挂机打怪.施毒();
+                            上一次施毒 = new Date().getTime();
                         }
-                        else if (锁定的怪物.indexOf("牛魔法师") >= 0) {
-                            危险怪物 = 精英怪枚举.牛魔法师;
+                        if (精英怪.value.是否打防) {
+                            tools.挂机打怪.打防();
                         }
-                        else if (锁定的怪物.indexOf("邪恶蚶虫") >= 0) {
-                            危险怪物 = 精英怪枚举.邪恶蚶虫;
+                        if (精英怪.value.是否打魔) {
+                            tools.挂机打怪.打魔();
                         }
-                        if (危险怪物 != null) {
-                            if (危险怪物.是否施毒) {
-                                tools.挂机打怪.施毒();
-                                上一次施毒 = new Date().getTime();
-                            }
-                            if (危险怪物.是否打防) {
-                                tools.挂机打怪.打防();
-                            }
-                            if (危险怪物.是否打魔) {
-                                tools.挂机打怪.打魔();
-                            }
-                            if (危险怪物.是否隐身) {
-                                tools.人物移动.随机走一步(random(1222, 1555));
-                                tools.挂机打怪.启动隐身();
-                                上一次隐身 = new Date().getTime();
-                            }
-                            if (危险怪物.是否攻击) {
-                                是否强制攻击 = true;
-                            }
-                            else {
-                                是否隐身等待 = true;
-                            }
-                            是否锁定危险怪 = true;
+                        if (精英怪.value.是否隐身) {
+                            tools.人物移动.随机走一步(random(1222, 1555));
+                            tools.挂机打怪.启动隐身();
+                            上一次隐身 = new Date().getTime();
                         }
+                        if (精英怪.value.是否攻击) {
+                            是否强制攻击 = true;
+                        }
+                        else {
+                            是否隐身等待 = true;
+                        }
+                        是否锁定危险怪 = true;
                     }
                     if (挂机参数.随机血量 > 0) {
                         if (tools.挂机打怪.是否逃跑()) {
@@ -2684,7 +2672,7 @@ var tools = {
                         }
                     }
                     if ((挂机参数.隐身走动 == 0 || 是否强制攻击) && !是否正在攻击宝宝身边怪 && isChange && 锁定的怪物.length <= 0) {
-                        锁定的怪物 = tools.挂机打怪.身边锁定怪物();
+                        锁定的怪物 = tools.挂机打怪.扫描怪物名文字身边();
                         if (锁定的怪物.length <= 0) {
                             if (是否强制攻击 && 切换左面板人物) {
                                 切换左面板人物 = false;
@@ -2769,7 +2757,10 @@ var tools = {
                             锁定的怪物 = 精英怪.value.name;
                         }
                     }
-                    if (!是否检测了左面板怪物 && 锁定怪物截图 != null) {
+                    if ((左面板怪物 == null || !左面板怪物.status) && 锁定怪物截图 != null) {
+                        左面板怪物 = tools.挂机打怪.分析左面板怪物()
+                    }
+                    else {
 
                     }
 
@@ -2784,8 +2775,12 @@ var tools = {
 
                     tools.执行时间戳.检测武器衣服包袱();
 
-
-                    tools.悬浮球描述("(" + parseInt((timeout - (时间戳)) / 1000) + ")(" + 锁定的怪物 + ")");
+                    if (左面板怪物 && 左面板怪物.status) {
+                        tools.悬浮球描述("(" + parseInt((timeout - (时间戳)) / 1000) + ")左面板(" + 左面板怪物.value.name + ")(" + 锁定的怪物 + ")");
+                    }
+                    else {
+                        tools.悬浮球描述("(" + parseInt((timeout - (时间戳)) / 1000) + ")(" + 锁定的怪物 + ")");
+                    }
                 } else {
                     tools.拾取.点击(1);
                     if (isChange) {
@@ -2840,22 +2835,21 @@ var tools = {
             if (挂机参数.挂机地图大 == "蜈蚣洞") {
                 var arr = 左怪物文字枚举.蜈蚣洞;
             }
-            // {
-            //     name: "钳虫",
-            //     pic: "wenzhi_zuomianban_wugong_qian.png",
-            //     怪物显示图: "wenzi_wugongdong_qian.png",
-            //     左上血条偏移: {
-            //         x: -4,
-            //         y: -51
-            //     }
-            // }, 
-            if (arr != null && arr.length > 0 && 截图锁定怪物 != null) {
+            if (arr != null && arr.length > 0 && 锁定怪物截图 != null) {
                 for (var index = 0; index < arr.length; index++) {
                     var item = arr[index];
-                    tools.findImageArea
+                    var r = tools.findImage(item.pic, 0.7, 锁定怪物截图);
+                    if (r.status) {
+                        return {
+                            status: true,
+                            value: item
+                        };
+                    }
                 }
             }
-            return false;
+            return {
+                status: false
+            };
         },
         寻找精英怪: () => {
             var arr = [];
@@ -4348,7 +4342,7 @@ var tools = {
             }
             return text;
         },
-        身边锁定怪物: () => {
+        扫描怪物名文字身边: () => {
             var p = config.zuobiao.身边怪物范围[fbl];
             var t = 0.55;
             if (挂机参数.挂机地图.indexOf("兽人古墓") >= 0) {
@@ -4356,71 +4350,6 @@ var tools = {
                 if (result.status) {
                     return "骷髅(找图发现)"
                 }
-            }
-            else if (挂机参数.挂机地图.indexOf("石墓") >= 0) {
-                // var result = tools.findImageArea(文字图枚举.猪, p.x1, p.y1, p.x2, p.y2, t);
-                // if (result.status) {
-                //     return "猪(找图发现)"
-                // }
-                // else {
-                //     result = tools.findImageArea(文字图枚举.蝎, p.x1, p.y1, p.x2, p.y2, t);
-                //     if (result.status) {
-                //         return "蝎蛇(找图发现)"
-                //     }
-                //     else {
-                //         result = tools.findImageArea(文字图枚举.蛾, p.x1, p.y1, p.x2, p.y2, t);
-                //         if (result.status) {
-                //             return "契蛾(找图发现)"
-                //         }
-                //     }
-                // }
-            }
-            else if (挂机参数.挂机地图.indexOf("牛魔") >= 0) {
-                var result = tools.findImageArea(文字图枚举.怪物名将军, p.x1, p.y1, p.x2, p.y2, t);
-                if (result.status) {
-                    return "牛魔将军(找图发现)"
-                }
-                result = tools.findImageArea(文字图枚举.怪物名法师, p.x1, p.y1, p.x2, p.y2, t);
-                if (result.status) {
-                    return "牛魔法师(找图发现)"
-                }
-                result = tools.findImageArea(文字图枚举.魔, p.x1, p.y1, p.x2, p.y2, t);
-                if (result.status) {
-                    return "魔(找图发现)"
-                }
-            }
-            else if (挂机参数.挂机地图.indexOf("地牢") >= 0
-                || 挂机参数.挂机地图.indexOf("黑暗地带") >= 0
-                || 挂机参数.挂机地图.indexOf("传奇部落") >= 0
-                || 挂机参数.挂机地图.indexOf("邪恶势力") >= 0
-                || 挂机参数.挂机地图.indexOf("一线天") >= 0
-                || 挂机参数.挂机地图.indexOf("恐怖空间") >= 0
-                || 挂机参数.挂机地图.indexOf("死亡棺材") >= 0
-                || 挂机参数.挂机地图.indexOf("生死之间") >= 0) {
-                var result = tools.findImageArea(文字图枚举.邪恶, p.x1, p.y1, p.x2, p.y2, t);
-                if (result.status) {
-                    return "邪恶蚶虫(找图发现)"
-                }
-                // result = tools.findImageArea(文字图枚举.钳, p.x1, p.y1, p.x2, p.y2, t);
-                // if (result.status) {
-                //     return "蚶虫(找图发现)"
-                // }
-                // result = tools.findImageArea(文字图枚举.蜈, p.x1, p.y1, p.x2, p.y2, t);
-                // if (result.status) {
-                //     return "蜈蚣(找图发现)"
-                // }
-                // result = tools.findImageArea(文字图枚举.恶蛆, p.x1, p.y1, p.x2, p.y2, t);
-                // if (result.status) {
-                //     return "黑色恶蛆(找图发现)"
-                // }
-                // result = tools.findImageArea(文字图枚举.蠕, p.x1, p.y1, p.x2, p.y2, t);
-                // if (result.status) {
-                //     return "巨型蠕虫(找图发现)"
-                // }
-                // result = tools.findImageArea(文字图枚举.跳, p.x1, p.y1, p.x2, p.y2, t);
-                // if (result.status) {
-                //     return "跳跳蜂(找图发现)"
-                // }
             }
             var imgSmall = tools.截屏裁剪(null, p.x1, p.y1, p.x2, p.y2);
             var huiduImg = images.grayscale(imgSmall);//灰度化
@@ -8138,11 +8067,12 @@ var tools = {
         }
         return result;
     },
-    findImage: (fileName, threshold) => {
+    findImage: (fileName, threshold, img) => {
         var w = device.width;
         var h = device.height;
         var targetImgPath = `/sdcard/Download/res/UI/${w}_${h}/${fileName}`;
         var targetImg = images.read(targetImgPath);
+        var 是否销毁img = false;
         if (targetImg) {
             var options = {
                 threshold: 0.7
@@ -8154,9 +8084,14 @@ var tools = {
                 w: targetImg.width,
                 h: targetImg.height
             }
-            var img = captureScreen();
+            if (img == null) {
+                img = captureScreen();
+                是否销毁img = true;
+            }
             var result = images.findImage(img, targetImg, options);
-            utils.recycleNull(img);
+            if (是否销毁img) {
+                utils.recycleNull(img);
+            }
             utils.recycleNull(targetImg);
             if (result != null && (result.x > 0 || result.y > 0)) {
                 return {
