@@ -2045,98 +2045,98 @@ utilsObj.regionalFindImg3 = (img, targetImg, paramArray, canvasMsg) => {
  */
 utilsObj.canvasRect = (x1, y1, x2, y2, type, msg) => {
     // // 非调试模式
-    if (!commonStorage.get("debugModel")) {
-        return;
-    }
-    let debugSleep = commonStorage.get("debugSleep") || 0
-    sleep(Number(debugSleep))
-    // 默认绿色
-    let rectColor = "#ff8000";
-    if (type === "img") {
-        // 黄色
-        rectColor = "#ffac8c";
-    } else if (type === "chart") {
-        // 红色
-        rectColor = "#eb4f18"
-    } else if (type === "color") {
-        // 蓝色
-        rectColor = "#397fff";
-    }
-    if (x1 > - 1) {
-        if (x1 > 2) {
-            x1 = x1 - 2
-        }
-        if (y1 > 2) {
-            y1 = y1 - 2
-        }
-        // 竖屏
-        if (utilsObj.getOrientation() === 1 && device.width - 2 > x2) {
-            x2 = x2 + 2
-        }
-        // 横屏
-        if (utilsObj.getOrientation() === 1 && device.height - 2 > x2) {
-            x2 = x2 + 2
-        }
-        // 竖屏
-        if (utilsObj.getOrientation() === 1 && device.height - 2 > y2) {
-            y2 = y2 + 2
-        }
-        // 横屏
-        if (utilsObj.getOrientation() === 1 && device.width - 2 > y2) {
-            y2 = y2 + 2
-        }
+    // if (!commonStorage.get("debugModel")) {
+    //     return;
+    // }
+    // let debugSleep = commonStorage.get("debugSleep") || 0
+    // sleep(Number(debugSleep))
+    // // 默认绿色
+    // let rectColor = "#ff8000";
+    // if (type === "img") {
+    //     // 黄色
+    //     rectColor = "#ffac8c";
+    // } else if (type === "chart") {
+    //     // 红色
+    //     rectColor = "#eb4f18"
+    // } else if (type === "color") {
+    //     // 蓝色
+    //     rectColor = "#397fff";
+    // }
+    // if (x1 > - 1) {
+    //     if (x1 > 2) {
+    //         x1 = x1 - 2
+    //     }
+    //     if (y1 > 2) {
+    //         y1 = y1 - 2
+    //     }
+    //     // 竖屏
+    //     if (utilsObj.getOrientation() === 1 && device.width - 2 > x2) {
+    //         x2 = x2 + 2
+    //     }
+    //     // 横屏
+    //     if (utilsObj.getOrientation() === 1 && device.height - 2 > x2) {
+    //         x2 = x2 + 2
+    //     }
+    //     // 竖屏
+    //     if (utilsObj.getOrientation() === 1 && device.height - 2 > y2) {
+    //         y2 = y2 + 2
+    //     }
+    //     // 横屏
+    //     if (utilsObj.getOrientation() === 1 && device.width - 2 > y2) {
+    //         y2 = y2 + 2
+    //     }
 
-        if (canvasFloat) {
-            canvasFloat.close();
-        }
-        canvasFloat = floaty.rawWindow(
-            <relative>
-                <button id="boardClose" alpha="0" h="*" w="*" layout_centerInParent="true" />
-                <canvas id="board" w="*" h="*" layout_centerInParent="true"></canvas>
-            </relative>
-        );
-        // canvasFloat.setTouchable(false);
-        canvasFloat.boardClose.on("click", () => {
-            if (canvasFloat) {
-                canvasFloat.close();
-            }
-        })
-        canvasFloat.setSize(-1, -1);
-        canvasFloat.board.on("draw", function (canvas) {
-            let paint = new Paint();
-            //设置画笔为填充，则绘制出来的图形都是实心的
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(1);
-            //设置画笔颜色为红色
-            paint.setColor(colors.parseColor(rectColor));
+    //     if (canvasFloat) {
+    //         canvasFloat.close();
+    //     }
+    //     canvasFloat = floaty.rawWindow(
+    //         <relative>
+    //             <button id="boardClose" alpha="0" h="*" w="*" layout_centerInParent="true" />
+    //             <canvas id="board" w="*" h="*" layout_centerInParent="true"></canvas>
+    //         </relative>
+    //     );
+    //     // canvasFloat.setTouchable(false);
+    //     canvasFloat.boardClose.on("click", () => {
+    //         if (canvasFloat) {
+    //             canvasFloat.close();
+    //         }
+    //     })
+    //     canvasFloat.setSize(-1, -1);
+    //     canvasFloat.board.on("draw", function (canvas) {
+    //         let paint = new Paint();
+    //         //设置画笔为填充，则绘制出来的图形都是实心的
+    //         paint.setStyle(Paint.Style.STROKE);
+    //         paint.setStrokeWidth(1);
+    //         //设置画笔颜色为红色
+    //         paint.setColor(colors.parseColor(rectColor));
 
-            let textPaint = new Paint();
-            textPaint.setTextAlign(Paint.Align.CENTER);
-            textPaint.setTextSize(14);
-            textPaint.setStyle(Paint.Style.FILL);
-            textPaint.setColor(colors.parseColor(rectColor));
+    //         let textPaint = new Paint();
+    //         textPaint.setTextAlign(Paint.Align.CENTER);
+    //         textPaint.setTextSize(14);
+    //         textPaint.setStyle(Paint.Style.FILL);
+    //         textPaint.setColor(colors.parseColor(rectColor));
 
-            // 竖屏时
-            if (utilsObj.getOrientation() === 1) {
-                let canvasOffset = Number(commonStorage.get("canvasOffset") || 0)
-                //绘制一个方框 左上角的点 坐标偏移
-                canvas.drawRect(Number(x1), Number(y1) - canvasOffset, Number(x2), Number(y2) - canvasOffset, paint);
-                //绘文字
-                canvas.drawText(msg, Number(x1), Number(y1) - canvasOffset, textPaint)
-            } else {
-                //绘制一个方框
-                canvas.drawRect(Number(x1), Number(y1), Number(x2), Number(y2), paint);
-                //绘文字
-                canvas.drawText(msg, Number(x1), Number(y1), textPaint)
-            }
+    //         // 竖屏时
+    //         if (utilsObj.getOrientation() === 1) {
+    //             let canvasOffset = Number(commonStorage.get("canvasOffset") || 0)
+    //             //绘制一个方框 左上角的点 坐标偏移
+    //             canvas.drawRect(Number(x1), Number(y1) - canvasOffset, Number(x2), Number(y2) - canvasOffset, paint);
+    //             //绘文字
+    //             canvas.drawText(msg, Number(x1), Number(y1) - canvasOffset, textPaint)
+    //         } else {
+    //             //绘制一个方框
+    //             canvas.drawRect(Number(x1), Number(y1), Number(x2), Number(y2), paint);
+    //             //绘文字
+    //             canvas.drawText(msg, Number(x1), Number(y1), textPaint)
+    //         }
 
-        })
-        sleep(2000 + Number(debugSleep))
-        if (canvasFloat) {
-            canvasFloat.close();
-        }
-        sleep(2000)
-    }
+    //     })
+    //     sleep(2000 + Number(debugSleep))
+    //     if (canvasFloat) {
+    //         canvasFloat.close();
+    //     }
+    //     sleep(2000)
+    //}
 }
 
 /**
