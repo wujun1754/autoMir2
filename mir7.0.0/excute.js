@@ -4681,6 +4681,38 @@ var tools = {
             var 拾取时长 = 150 * 1000;
             while (当前总状态 == 总状态.已启动) {
                 tools.悬浮球描述("拾取(" + parseInt((拾取时长 - (new Date().getTime() - start)) / 1000) + ")");
+                if (new Date().getTime() - start > 拾取时长) {
+                    toastLog("拾取超时")
+                    if (是否激活状态) {
+                        tools.拾取.点击(0);
+                    }
+                    禁止拾取时间 = new Date().getTime() + (1000 * 15);
+                    break;
+                }
+                if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
+                    var 是否跑图 = tools.人物移动.是否跑图并截图坐标(false);
+                    if (是否跑图) {
+                        累计未移动次数++;
+                        if (累计未移动次数 >= 5) {
+                            if (是否激活状态) {
+                                tools.拾取.点击(0);
+                            }
+                            禁止拾取时间 = new Date().getTime() + (1000 * 15);
+                            break;
+                        }
+                        else {
+                            if (是否激活状态) {
+                                tools.拾取.点击(0);
+                                sleep(1000);
+                                tools.拾取.点击(1);
+                            }
+                        }
+                    }
+                    else {
+
+                    }
+                    上一次移动 = new Date().getTime();
+                }
                 var isFind = tools.findImageArea(文字图枚举.已满, p1.x1, p1.y1, p1.x2, p1.y2, 0.85);
                 if (isFind.status) {
                     toastLog("文字识别装备已满")
@@ -4696,17 +4728,10 @@ var tools = {
                 if (isFind.status) {
                     上一次不能拾取时间 = new Date().getTime()
                 }
+
                 if (挂机参数.强制拾取 == 1) {
                     if (是否激活状态) {
-                       
-                        if (new Date().getTime() - start > 拾取时长) {
-                            toastLog("拾取超时")
-                            if (是否激活状态) {
-                                tools.拾取.点击(0);
-                            }
-                            禁止拾取时间 = new Date().getTime() + (1000 * 15);
-                            break;
-                        }
+
 
                         if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
                             //人物是否移动 = tools.人物移动.跑图坐标是否变化();
@@ -4827,43 +4852,7 @@ var tools = {
                             break;
                         }
 
-                        if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
-                            //人物是否移动 = tools.人物移动.跑图坐标是否变化();
-                            var 是否跑图 = tools.人物移动.是否跑图并截图坐标(false);
-                            if (!是否跑图) {
-                                累计未移动次数 = 0;
-                            }
-                            else {
-                                累计未移动次数++;
-                                if (累计未移动次数 >= 5) {
-                                    if (!isFind) {
-                                        无不可拾取且没有移动次数++;
-                                        toastLog("不可拾取（" + 无不可拾取且没有移动次数 + "）")
-                                    }
-                                    if (是否激活状态) {
-                                        tools.拾取.点击(0);
-                                    }
-                                    禁止拾取时间 = new Date().getTime() + (1000 * 15);
-                                    break;
-                                }
-                                else if (无不可拾取且没有移动次数 >= 3) {
-                                    无不可拾取且没有移动次数 = 0;
-                                    if (是否激活状态) {
-                                        tools.拾取.点击(0);
-                                    }
-                                    禁止拾取时间 = new Date().getTime() + (1000 * 15);
-                                    break;
-                                }
-                                else {
-                                    if (是否激活状态) {
-                                        tools.拾取.点击(0);
-                                        sleep(1000);
-                                        tools.拾取.点击(1);
-                                    }
-                                }
-                            }
-                            上一次移动 = new Date().getTime();
-                        }
+
 
 
 
