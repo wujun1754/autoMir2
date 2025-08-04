@@ -2616,7 +2616,7 @@ var tools = {
             var r = null;
             上次打怪时间 = new Date().getTime();
             var timeout = 挂机参数.打怪等待 * 1000;
-            var 移动时间戳 = 1000 * 1.8;
+            var 移动时间戳 = 1000 * 1.4;
             var 上一次移动 = new Date().getTime();
 
             var 攻击时间戳 = 1000 * 2;
@@ -2738,7 +2738,7 @@ var tools = {
                             tools.挂机打怪.自愈();
                         }
                     }
-                    if ((挂机参数.隐身走动 == 0 || 是否强制攻击) && !是否正在攻击宝宝身边怪 && isChange && 锁定的怪物.length <= 0) {
+                    if ((精英怪 == null || !精英怪.status) && (挂机参数.隐身走动 == 0 || 是否强制攻击) && !是否正在攻击宝宝身边怪 && isChange && 锁定的怪物.length <= 0) {
                         if (是否强制攻击 && 切换左面板人物) {
                             切换左面板人物 = false;
                             tools.常用操作.点击左面板怪物();
