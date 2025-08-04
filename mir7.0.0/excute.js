@@ -456,7 +456,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="7.0.0" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="7.0.1" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -2648,14 +2648,12 @@ var tools = {
             var 精英怪 = null;
             var 锁定的怪物 = "";
             var isChange = false;
-            var 扫描怪物错误次数 = 0;
             var 是否隐身等待 = false;
             var 是否锁定危险怪 = false;
             var 是否强制攻击 = false;
             var 切换左面板人物 = false;
             var 是否正在攻击宝宝身边怪 = false;
             var 左面板怪物 = null;
-            var 主动拾次数 = 0;
             var 扫描宝宝 = {
                 status: false
             };
@@ -2677,8 +2675,8 @@ var tools = {
                 r = tools.挂机打怪.找正上锁定怪物(0, 0);
                 tools.拾取.激活后操作();
                 if (r.status) {
-                    if ((精英怪 == null || !精英怪.status) && 主动拾次数 <= 2 && (new Date().getTime() - 上一次拾取时间) > (3 * 1000) && tools.拾取.扫描拾取(拾取范围P)) {
-                        主动拾次数++;
+                    if ((精英怪 == null || !精英怪.status) && tools.拾取.扫描拾取(拾取范围P)) {
+                        tools.悬浮球临时描述("点击拾取")
                         tools.拾取.点击(1);
                     }
                     if ((左面板怪物 == null || !左面板怪物.status) && 锁定怪物截图 != null) {
@@ -2721,7 +2719,8 @@ var tools = {
                                 锁定的怪物 = r.name;
                             }
                             else {
-                                toastLog("扫描怪物名失败")
+                                tools.悬浮球临时描述("扫描怪名失败")
+                                // toastLog("扫描怪物名失败")
                             }
                         }
                         if (锁定的怪物.length <= 0) {
@@ -4597,14 +4596,14 @@ var tools = {
             var 是否激活状态 = tools.拾取.状态();
             if (type == 1) {
                 if (是否激活状态) {
-                    toastLog("处于激活");
+                    tools.悬浮球临时描述("处于激活");
                     return;
                 }
                 上一次拾取时间 = new Date().getTime();
                 上次坐标截图 = tools.常用操作.截图当前坐标();
             } else {
                 if (!是否激活状态) {
-                    toastLog("处于未激活");
+                    tools.悬浮球临时描述("处于未激活");
                     return;
                 }
             }
@@ -4681,23 +4680,29 @@ var tools = {
             var 拾取时长 = 1000 * 150;
             var 禁止拾取时间戳 = 1000 * 15;
             while (当前总状态 == 总状态.已启动) {
-                tools.悬浮球描述("拾取(" + parseInt((拾取时长 - (new Date().getTime() - start)) / 1000) + ")");
-                var 是否激活状态 = tools.拾取.状态();
                 var 是否已满 = tools.findImageArea(文字图枚举.已满, p1.x1, p1.y1, p1.x2, p1.y2, 0.85);
-                var 不能拾取 = tools.findImageArea(文字图枚举.不能拾取, p.x1, p.y1, p.x2, p.y2, 0.85);
-                if (是否激活状态) {
-                    是否强制跑图 = true;
-                    上次跑图时间 = new Date().getTime() - (60 * 1000);
-                }
-                if (不能拾取.status) {
-                    不能拾取次数++;
-                    上一次不能拾取时间 = new Date().getTime()
-                }
                 if (是否已满.status) {
                     toastLog("文字识别装备已满")
                     tools.挂机打怪.回城补给在挂机("文字识别装备已满");
                     break;
                 }
+                
+                var 是否激活状态 = tools.拾取.状态();
+                if (是否激活状态) {
+                    是否强制跑图 = true;
+                    上次跑图时间 = new Date().getTime() - (60 * 1000);
+                }
+                else {
+                    break;
+                }
+                var 不能拾取 = tools.findImageArea(文字图枚举.不能拾取, p.x1, p.y1, p.x2, p.y2, 0.85);
+                if (不能拾取.status) {
+                    不能拾取次数++;
+                    上一次不能拾取时间 = new Date().getTime()
+                }
+               
+                
+                tools.悬浮球描述("拾取(" + parseInt((拾取时长 - (new Date().getTime() - start)) / 1000) + ")");
                 if (new Date().getTime() - start > 拾取时长) {
                     toastLog("拾取超时")
                     if (是否激活状态) {
@@ -4729,78 +4734,62 @@ var tools = {
                     }
                     上一次移动 = new Date().getTime();
                 }
-                if (挂机参数.强制拾取 == 1) {
+                if (是否拾取多个物品) {
                     if (不能拾取.status) {
                         累计未移动次数 = 0;
-                        sleep(100);
-                    }
-                }
-                else {
-                    if (是否激活状态 || 是否拾取多个物品) {
-                        if (是否拾取多个物品) {
-                            if (不能拾取.status) {
-                                累计未移动次数 = 0;
-                                if (是否激活状态) {
-                                    tools.拾取.点击(0);
-                                    sleep(1000);
-                                    tools.拾取.点击(1);
-                                }
-                                else {
-                                    tools.拾取.点击(1);
-                                }
-                                sleep(1500);
-                            }
-                            else {
-                                sleep(200);
-                            }
-                            continue;
+                        if (是否激活状态) {
+                            tools.拾取.点击(0);
+                            sleep(1000);
+                            tools.拾取.点击(1);
+
                         }
                         else {
-                            if (不能拾取.status) {
-                                var 拾取明细 = tools.挂机打怪.需要拾取明细()
-                                if (拾取明细 && 拾取明细.count >= 3) {
-                                    累计未移动次数 = 0;
-                                    是否拾取多个物品 = true;
-                                    toastLog("拾取数（" + 拾取明细.count + "）强制拾取")
-                                    continue;
+                            tools.拾取.点击(1);
+                        }
+                    }
+                    continue;
+                }
+                else {
+                    if (不能拾取.status) {
+                        var 拾取明细 = tools.挂机打怪.需要拾取明细()
+                        if (拾取明细 && 拾取明细.count >= 3) {
+                            累计未移动次数 = 0;
+                            是否拾取多个物品 = true;
+                            toastLog("拾取数（" + 拾取明细.count + "）强制拾取")
+                            continue;
+                        }
+                        else if (拾取明细 && 拾取明细.count >= 2) {
+                            if (不能拾取次数 >= 3) {
+                                if (是否激活状态) {
+                                    tools.拾取.点击(0);
                                 }
-                                else if (拾取明细 && 拾取明细.count >= 2) {
-                                    if (不能拾取次数 >= 3) {
-                                        if (是否激活状态) {
-                                            tools.拾取.点击(0);
-                                        }
-                                        toastLog("拾取数（" + 拾取明细.count + "）,已尝试触发(" + 不能拾取次数 + "),退出")
-                                        禁止拾取时间 = new Date().getTime() + 禁止拾取时间戳;
-                                        break;
-                                    }
-                                    else {
-                                        if (是否激活状态) {
-                                            tools.拾取.点击(0);
-                                            sleep(2000);
-                                            tools.拾取.点击(1);
-                                        }
-                                        else {
-                                            tools.拾取.点击(1);
-                                        }
-                                        sleep(2000);
-                                        continue;
-                                    }
-                                }
-                                else {
-                                    if (是否激活状态) {
-                                        tools.拾取.点击(0);
-                                    }
-                                    禁止拾取时间 = new Date().getTime() + 禁止拾取时间戳;
-                                    break;
-                                }
+                                toastLog("拾取数（" + 拾取明细.count + "）,已尝试触发(" + 不能拾取次数 + "),退出")
+                                禁止拾取时间 = new Date().getTime() + 禁止拾取时间戳;
+                                break;
                             }
                             else {
-                                sleep(100);
+                                if (是否激活状态) {
+                                    tools.拾取.点击(0);
+                                    sleep(2000);
+                                    tools.拾取.点击(1);
+                                }
+                                else {
+                                    tools.拾取.点击(1);
+                                }
+                                sleep(2000);
+                                continue;
                             }
+                        }
+                        else {
+                            if (是否激活状态) {
+                                tools.拾取.点击(0);
+                            }
+                            禁止拾取时间 = new Date().getTime() + 禁止拾取时间戳;
+                            break;
                         }
                     }
                     else {
-                        break;
+                        sleep(100);
                     }
                 }
             }
