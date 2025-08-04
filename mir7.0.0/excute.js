@@ -4672,15 +4672,26 @@ var tools = {
             var 累计未移动次数 = 0;
             var 移动时间戳 = 1000 * 1.5;
             var 上一次移动 = new Date().getTime();
-            var 拾取 = config.zuobiao.按钮集合[fbl].拾取;
             var p = config.zuobiao.聊天框最后一行[fbl];
             var p1 = config.zuobiao.聊天框面板[fbl];
             var 不能拾取次数 = 0;
             let start = new Date().getTime();
             var 是否强制拾取 = false;
-            var 拾取时长 = 150 * 1000;
+            var 拾取时长 = 1000 * 150;
+            var 禁止拾取时间戳 = 1000 * 15;
             while (当前总状态 == 总状态.已启动) {
                 tools.悬浮球描述("拾取(" + parseInt((拾取时长 - (new Date().getTime() - start)) / 1000) + ")");
+                var 是否激活状态 = tools.拾取.状态();
+                var 是否已满 = tools.findImageArea(文字图枚举.已满, p1.x1, p1.y1, p1.x2, p1.y2, 0.85);
+                var 不能拾取 = tools.findImageArea(文字图枚举.不能拾取, p.x1, p.y1, p.x2, p.y2, 0.85);
+                if (是否已满.status) {
+                    toastLog("文字识别装备已满")
+                    tools.挂机打怪.回城补给在挂机("文字识别装备已满");
+                    break;
+                }
+                if (!是否激活状态) {
+                    break;
+                }
                 if (new Date().getTime() - start > 拾取时长) {
                     toastLog("拾取超时")
                     if (是否激活状态) {
@@ -4689,175 +4700,42 @@ var tools = {
                     禁止拾取时间 = new Date().getTime() + (1000 * 15);
                     break;
                 }
-                if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
-                    var 是否跑图 = tools.人物移动.是否跑图并截图坐标(false);
-                    if (是否跑图) {
-                        累计未移动次数++;
-                        if (累计未移动次数 >= 5) {
-                            if (是否激活状态) {
-                                tools.拾取.点击(0);
-                            }
-                            禁止拾取时间 = new Date().getTime() + (1000 * 15);
-                            break;
-                        }
-                        else {
-                            if (是否激活状态) {
-                                tools.拾取.点击(0);
-                                sleep(1000);
-                                tools.拾取.点击(1);
-                            }
-                        }
-                    }
-                    else {
-
-                    }
-                    上一次移动 = new Date().getTime();
-                }
-                var isFind = tools.findImageArea(文字图枚举.已满, p1.x1, p1.y1, p1.x2, p1.y2, 0.85);
-                if (isFind.status) {
-                    toastLog("文字识别装备已满")
-                    tools.挂机打怪.回城补给在挂机("文字识别装备已满");
-                    return;
-                }
-                var 是否激活状态 = tools.拾取.状态();
+                // if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
+                //     var 是否静止 = tools.人物移动.是否跑图并截图坐标(false);
+                //     if (是否静止) {
+                //         累计未移动次数++;
+                //         if()
+                //         if (累计未移动次数 >= 6) {
+                //             if (是否激活状态) {
+                //                 tools.拾取.点击(0);
+                //             }
+                //             toastLog("人物静止(" + 累计未移动次数 + "),退出")
+                //             禁止拾取时间 = new Date().getTime() + 禁止拾取时间戳;
+                //             break;
+                //         }
+                //         else {
+                //             toastLog("人物静止(" + 累计未移动次数 + "),重新触发")
+                //             if (是否激活状态) {
+                //                 tools.拾取.点击(0);
+                //                 sleep(1000);
+                //                 tools.拾取.点击(1);
+                //             }
+                //         }
+                //     }
+                //     上一次移动 = new Date().getTime();
+                // }
                 if (是否激活状态) {
                     是否强制跑图 = true;
                     上次跑图时间 = new Date().getTime() - (60 * 1000);
                 }
-                isFind = tools.findImageArea(文字图枚举.不能拾取, p.x1, p.y1, p.x2, p.y2, 0.85);
-                if (isFind.status) {
+                if (不能拾取.status) {
+                    不能拾取次数++;
                     上一次不能拾取时间 = new Date().getTime()
                 }
-
-                if (挂机参数.强制拾取 == 1) {
-                    if (是否激活状态) {
-
-
-                        if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
-                            //人物是否移动 = tools.人物移动.跑图坐标是否变化();
-                            var 是否跑图 = tools.人物移动.是否跑图并截图坐标(false);
-                            if (!是否跑图) {
-                                累计未移动次数 = 0;
-                            }
-                            else {
-                                累计未移动次数++;
-                                if (累计未移动次数 >= 5) {
-                                    if (!isFind) {
-                                        无不可拾取且没有移动次数++;
-                                        toastLog("不可拾取（" + 无不可拾取且没有移动次数 + "）")
-                                    }
-                                    if (是否激活状态) {
-                                        tools.拾取.点击(0);
-                                    }
-                                    禁止拾取时间 = new Date().getTime() + (1000 * 15);
-                                    break;
-                                }
-                                else if (无不可拾取且没有移动次数 >= 3) {
-                                    无不可拾取且没有移动次数 = 0;
-                                    if (是否激活状态) {
-                                        tools.拾取.点击(0);
-                                    }
-                                    禁止拾取时间 = new Date().getTime() + (1000 * 15);
-                                    break;
-                                }
-                                else {
-                                    if (是否激活状态) {
-                                        tools.拾取.点击(0);
-                                        sleep(1000);
-                                        tools.拾取.点击(1);
-                                    }
-                                }
-                            }
-                            上一次移动 = new Date().getTime();
-                        }
-
-
-
-                        if (是否强制拾取) {
-                            if (isFind.status) {
-                                if (是否激活状态) {
-                                    tools.拾取.点击(0);
-                                    sleep(1000);
-                                    tools.拾取.点击(1);
-                                }
-                                else {
-                                    tools.拾取.点击(1);
-                                }
-                                sleep(1500);
-                            }
-                            else {
-                                sleep(200);
-                            }
-                            continue;
-                        }
-                        else {
-                            if (isFind.status) {
-                                不能拾取次数++;
-                                var 拾取明细 = tools.挂机打怪.需要拾取明细()
-                                if (拾取明细 && 拾取明细.count >= 3) {
-                                    累计未移动次数 = 0;
-                                    是否强制拾取 = true;
-                                    toastLog("拾取数（" + 拾取明细.count + "）强制拾取")
-                                    continue;
-                                }
-                                else if (拾取明细 && 拾取明细.count >= 2) {
-                                    if (不能拾取次数 > 3) {
-                                        if (是否激活状态) {
-                                            tools.拾取.点击(0);
-                                        }
-                                        禁止拾取时间 = new Date().getTime() + (1000 * 15);
-                                        break;
-                                    }
-                                    else {
-                                        if (是否激活状态) {
-                                            tools.拾取.点击(0);
-                                            sleep(2000);
-                                            tools.拾取.点击(1);
-                                        }
-                                        else {
-                                            tools.拾取.点击(1);
-                                        }
-                                        sleep(2000);
-                                        continue;
-                                    }
-                                }
-                                else {
-                                    if (是否激活状态) {
-                                        tools.拾取.点击(0);
-                                    }
-                                    禁止拾取时间 = new Date().getTime() + (1000 * 15);
-                                    break;
-                                }
-                            }
-                            else {
-                                sleep(200);
-                            }
-                        }
-                    }
-                }
-                else {
+                if (挂机参数.强制拾取 == 0) {
                     if (是否激活状态 || 是否强制拾取) {
-                        是否强制跑图 = true;
-                        上次跑图时间 = new Date().getTime() - (60 * 1000);
-                        isFind = tools.findImageArea(文字图枚举.不能拾取, p.x1, p.y1, p.x2, p.y2, 0.85);
-                        if (isFind) {
-                            上一次不能拾取时间 = new Date().getTime()
-                        }
-                        if (new Date().getTime() - start > 拾取时长) {
-                            toastLog("拾取超时")
-                            if (是否激活状态) {
-                                tools.拾取.点击(0);
-                            }
-                            禁止拾取时间 = new Date().getTime() + (1000 * 15);
-                            break;
-                        }
-
-
-
-
-
                         if (是否强制拾取) {
-                            if (isFind.status) {
+                            if (不能拾取.status) {
                                 if (是否激活状态) {
                                     tools.拾取.点击(0);
                                     sleep(1000);
@@ -4874,8 +4752,7 @@ var tools = {
                             continue;
                         }
                         else {
-                            if (isFind.status) {
-                                不能拾取次数++;
+                            if (不能拾取.status) {
                                 var 拾取明细 = tools.挂机打怪.需要拾取明细()
                                 if (拾取明细 && 拾取明细.count >= 3) {
                                     累计未移动次数 = 0;
@@ -4884,11 +4761,12 @@ var tools = {
                                     continue;
                                 }
                                 else if (拾取明细 && 拾取明细.count >= 2) {
-                                    if (不能拾取次数 > 3) {
+                                    if (不能拾取次数 >= 3) {
                                         if (是否激活状态) {
                                             tools.拾取.点击(0);
                                         }
-                                        禁止拾取时间 = new Date().getTime() + (1000 * 15);
+                                        toastLog("拾取数（" + 拾取明细.count + "）,已尝试触发(" + 不能拾取次数 + "),退出")
+                                        禁止拾取时间 = new Date().getTime() + 禁止拾取时间戳;
                                         break;
                                     }
                                     else {
@@ -4908,12 +4786,12 @@ var tools = {
                                     if (是否激活状态) {
                                         tools.拾取.点击(0);
                                     }
-                                    禁止拾取时间 = new Date().getTime() + (1000 * 15);
+                                    禁止拾取时间 = new Date().getTime() + 禁止拾取时间戳;
                                     break;
                                 }
                             }
                             else {
-                                sleep(200);
+                                sleep(100);
                             }
                         }
                     }
@@ -4921,7 +4799,6 @@ var tools = {
                         break;
                     }
                 }
-
             }
         },
 
