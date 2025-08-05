@@ -1307,15 +1307,19 @@ var tools = {
             tools.常用操作.关闭所有窗口();
 
             var zhengliBtn = tools.补给操作.整理背包(true);
-
-            sleep(222);
-
             var r = tools.常用操作.检查背包是否已满(zhengliBtn);
             if (r) {
-                return {
-                    status: true,
-                    msg: "装备已满"
-                };
+                var count = tools.补给操作.喝中蓝_背包(zhengliBtn, false);
+                if (count > 0) {
+                    tools.常用方法.错误日志(来源, "成功喝中蓝(" + count + ")");
+                    上次装备已满喝药时间 = new Date().getTime();
+                }
+                else {
+                    return {
+                        status: true,
+                        msg: "装备已满"
+                    };
+                }
             }
 
             if (挂机参数.衣服持久0回程 == 1 && 衣服.status && 衣服.持久 && 衣服.持久.剩持久 <= 2) {
@@ -1742,7 +1746,7 @@ var tools = {
                         x: item.point.x + random(5, 10),
                         y: item.point.y + random(2, 8),
                     }
-                    longClick(点击P.x, 点击P.y);
+                    click(点击P.x, 点击P.y);
                     var r = tools.补给操作.获取操作按钮(["穿戴"], "寻找装备", false, false);
                     if (!r.status) {
                         tools.常用操作.点击左面板怪物();
@@ -2468,10 +2472,10 @@ var tools = {
 
             // return false;
         },
-        寻找打怪: () => {
+        寻找打怪: (打怪次数) => {
             var r = tools.挂机打怪.锁定怪物();
             if (r) {
-                tools.挂机打怪.攻击怪物();
+                tools.挂机打怪.攻击怪物(打怪次数);
             }
             return r;
         },
@@ -2613,7 +2617,7 @@ var tools = {
                 锁定怪物截图 = tools.截屏裁剪(null, 截图P.x1, 截图P.y1, 截图P.x2, 截图P.y2);
             }
         },
-        攻击怪物: () => {
+        攻击怪物: (打怪次数) => {
             var 按钮集合 = config.zuobiao.按钮集合[fbl];
             var 身边怪物范围P = config.zuobiao.身边怪物范围[fbl];
             var 拾取范围P = config.zuobiao.扫描拾取身边范围[fbl];
@@ -2705,6 +2709,9 @@ var tools = {
                         }
                     }
                     if (锁定的怪物.length <= 0) {
+                        if (打怪次数 > 0) {
+                            sleep(200);
+                        }
                         if (左面板怪物 && 左面板怪物.status) {
                             r = tools.挂机打怪.扫描怪物名(左面板怪物.value, false, 身边怪物范围P);
                             if (r.status) {
@@ -2758,6 +2765,7 @@ var tools = {
                         }
                         toastLog("血量变化强制关闭")
                         tools.click(random(726, 736), random(25, 35));
+
                         return true;
                     }
                     if (挂机参数.隐身数量 > 0 && 怪物 && 怪物.length > 0 && (new Date().getTime() - 上一次隐身 >= 隐身时间戳)) {
@@ -4169,7 +4177,10 @@ var tools = {
             if (左面板怪物 == null || !左面板怪物.status) {
                 return false;
             }
-            var result = false;
+            var result = {
+                status: false,
+                msg: ""
+            };
             var p = config.zuobiao.大范围扫描怪物名[fbl];
             var 人物血量 = config.zuobiao.人物血量左上[fbl];
             var 点击范围 = config.zuobiao.人物点击范围[fbl];
@@ -4183,7 +4194,6 @@ var tools = {
                         if (r1 && !result) {
                             tools.悬浮球临时描述("点右")
                             result = true;
-                            sleep(333)
                         }
                     }
                     else {
@@ -4191,7 +4201,6 @@ var tools = {
                         if (r1 && !result) {
                             tools.悬浮球临时描述("点左")
                             result = true;
-                            sleep(333)
                         }
                     }
                 }
@@ -4201,7 +4210,6 @@ var tools = {
                         if (r1 && !result) {
                             result = true;
                             tools.悬浮球临时描述("点下")
-                            sleep(333)
                         }
                     }
                     else {
@@ -4214,6 +4222,7 @@ var tools = {
                     }
                 }
                 if (result) {
+                    sleep(333)
                     tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                     //sleep(555);
                 }
@@ -4452,7 +4461,7 @@ var tools = {
             return r;
         },
         扫描怪物名: (文字枚举, 是否绘制, p) => {
-            var t = 0.55;
+            var t = 0.5;
             var r = tools.findImageArea(文字枚举.怪物显示图, p.x1, p.y1, p.x2, p.y2, t);
             if (r.status) {
                 var x = r.img.x + 文字枚举.左上血条偏移.x;
@@ -4676,7 +4685,7 @@ var tools = {
                 if (new Date().getTime() - 上次装备已满喝药时间 > (1000 * 60 * 2)) {
                     var 是否已满 = tools.findImageArea(文字图枚举.已满, p1.x1, p1.y1, p1.x2, p1.y2, 0.85);
                     if (是否已满.status) {
-                        var count = tools.补给操作.喝中蓝_背包(null);
+                        var count = tools.补给操作.喝中蓝_背包(null, true);
                         if (count > 0) {
                             tools.常用方法.错误日志(来源, "成功喝中蓝(" + count + ")");
                             上次装备已满喝药时间 = new Date().getTime();
@@ -4854,6 +4863,30 @@ var tools = {
         //     }
         // },
         点击人物空位: (arr) => {
+            var img = captureScreen();
+            var isok = false;
+            var color = "#DB0000";//红血条
+            var color2 = "#00BF00";//蓝血条
+            for (var index = 0; index < arr.length; index++) {
+                var item = arr[index];
+                var r1 = images.findColor(img, color, {
+                    region: [item.x1, item.y1, item.x2 - item.x1, item.y2 - item.y1],
+                    threshold: 4
+                })
+                var r2 = images.findColor(img, color2, {
+                    region: [item.x1, item.y1, item.x2 - item.x1, item.y2 - item.y1],
+                    threshold: 4
+                })
+                if ((r1 == null || r1.x <= 0 || r1.y <= 0) && (r2 == null || r2.x <= 0 || r2.y <= 0)) {
+                    tools.click(item.click.x, item.click.y)
+                    isok = true;
+                    break;
+                }
+            }
+            utils.recycleNull(img);
+            return isok;
+        },
+        点击怪物空位: (arr) => {
             var img = captureScreen();
             var isok = false;
             var color = "#DB0000";//红血条
@@ -5487,7 +5520,7 @@ var tools = {
                         var 打怪次数 = 0;
                         while (当前总状态 == 总状态.已启动) {
                             try {
-                                r = tools.挂机打怪.寻找打怪();
+                                r = tools.挂机打怪.寻找打怪(打怪次数);
                             } catch (e) {
                                 r = false;
                                 toastLog("去挂机地图Loop打怪异常")
@@ -5673,26 +5706,29 @@ var tools = {
             }
             return false;
         },
-        喝中蓝_背包: (zhengliBtn) => {
+        喝中蓝_背包: (zhengliBtn, isClose) => {
             if (zhengliBtn == null) {
                 zhengliBtn = tools.补给操作.整理背包(true);
             }
+            sleep(666);
             var p = tools.补给操作.获取背包面板位置(zhengliBtn);
             var arr = tools.matchTemplateForArea(补给枚举.中蓝个_背包, 10, 0.8,
                 [p.x1, p.y1, p.width, p.height]
             )
+            tools.悬浮球描述("匹配到" + arr.count);
             var count = 0;
             if (arr.count > 0) {
-                for (let index = 0; index < arr.length; index++) {
+                for (let index = 0; index < arr.count; index++) {
                     var item = arr.r[index];
                     var 点击P = {
                         x: item.point.x + random(5, 10),
                         y: item.point.y + random(4, 8),
                     }
-                    longClick(点击P.x, 点击P.y);
+                    sleep(1200);
+                    click(点击P.x, 点击P.y);
                     var r = tools.补给操作.获取操作按钮(["使用"], "喝蓝_背包", false, false, true);
                     if (r.status) {
-                        var isFind = tools.补给操作.背包选中按钮中找字图(文字图枚举.药, r.value)
+                        var isFind = tools.补给操作.背包选中按钮中找字图("wenzi_zhuangbei_yao.png", r.value)
                         if (isFind.status) {
                             var x = r.value.img.x + r.value.size.w / 2 + random(-3, 3);
                             var y = r.value.img.y + r.value.size.h / 2 + random(-3, 3);
@@ -5701,6 +5737,9 @@ var tools = {
                         }
                     }
                 }
+            }
+            if (isClose) {
+                tools.常用操作.关闭所有窗口(false, 0, true);
             }
             return count;
         },
@@ -5811,10 +5850,6 @@ var tools = {
             // }
         },
         点击背包格子: (index1, index2, zhengliBtn) => {
-            var p = tools.补给操作.获取背包格子位置(index1, index2, zhengliBtn);
-            longClick(p.x, p.y)
-        },
-        获取背包格子位置: (index1, index2, zhengliBtn) => {
             var zhengliP = {
                 x: zhengliBtn.img.x,
                 y: zhengliBtn.img.y
@@ -5822,10 +5857,7 @@ var tools = {
             var 背包格子偏移 = config.zuobiao.背包格子偏移[fbl];
             var x = zhengliP.x + 背包格子偏移["1_1"].x + (背包格子偏移.中心点偏移量X * (index2 - 1)) + random(-5, 5)
             var y = zhengliP.y + 背包格子偏移["1_1"].y + (背包格子偏移.中心点偏移量Y * (index1 - 1)) + random(-5, 5)
-            return {
-                x: x,
-                y: y
-            }
+            click(x, y)
         },
         背包拖动背景至可关闭位置: (zhengliBtn) => {
             if (zhengliBtn == null) {
@@ -6481,7 +6513,12 @@ var tools = {
             }
             if (当前总状态 == 总状态.已启动) {
                 tools.补给操作.卖物品Loop();
-                tools.常用方法.错误日志("卖物品Loop完成", 2)
+                tools.常用方法.错误日志("卖物品Loop完成1", 2)
+            }
+            if (当前总状态 == 总状态.已启动) {
+                tools.补给操作.把药品格非蓝拖到背包();
+                tools.补给操作.卖物品Loop();
+                tools.常用方法.错误日志("卖物品Loop完成2", 2)
             }
             if (当前总状态 == 总状态.已启动) {
                 tools.补给操作.修理装备Loop();
@@ -6634,19 +6671,11 @@ var tools = {
                     r = tools.补给操作.获取操作按钮(["放入"], "卖物品", false, false, true);
                     if (!r.status) {
                         if (r.游戏画面) { //有游戏画面，说明东西卖完了 确实找不到按钮
-                            if (index == 5 && index1 == 8) {
-                                return {
-                                    status: false,
-                                    err: ""
-                                }
-                            }
-                            else {
-                                tools.补给操作.背包拖动背景至可关闭位置(zhengliBtn);
-                                tools.常用操作.关闭所有窗口();
-                                return {
-                                    status: true,
-                                    err: ""
-                                }
+                            tools.补给操作.背包拖动背景至可关闭位置(zhengliBtn);
+                            tools.常用操作.关闭所有窗口();
+                            return {
+                                status: true,
+                                err: ""
                             }
                         }
                         else {//没游戏画面，说明花屏了
@@ -6724,21 +6753,26 @@ var tools = {
         把药品格非蓝拖到背包: () => {
             var arr = config.zuobiao.药品格子面板[fbl].arr;
             var zhengliBtn = tools.补给操作.整理背包(true);
+            sleep(1000)
             for (let index = 0; index < arr.length; index++) {
-                var p = arr[index];
-                var r = tools.findImageArea(补给枚举.中蓝个_格子, p.x1, p.y1, p.x2, p.y2, 0.85);
+                var 药品格子P = arr[index];
+                var r = tools.findImageArea(补给枚举.中蓝个_格子, 药品格子P.x1, 药品格子P.y1, 药品格子P.x2, 药品格子P.y2, 0.85);
                 if (r.status) {
                     continue;
                 }
-                var p = tools.补给操作.获取背包格子位置(5, (8 - index), zhengliBtn);
+
+                var 背包格子P = tools.补给操作.获取背包格子位置(5, (8 - index), zhengliBtn);
                 var duration = random(888, 1288);
-                var x1 = p.x1 + ((p.x2 - p.x1) / 2);
-                var y1 = p.y1 + ((p.y2 - p.y1) / 2);
-                var x2 = p.中心.x;
-                var y2 = p.中心.y;
-                gesture(duration, [x1, y1], [x2, y2])
-                sleep(666);
+                var 起点x = 药品格子P.x1 + ((药品格子P.x2 - 药品格子P.x1) / 2);
+                var 起点y = 药品格子P.y1 + ((药品格子P.y2 - 药品格子P.y1) / 2);
+
+                var 目标x = 背包格子P.中心.x;
+                var 目标y = 背包格子P.中心.y;
+
+                gesture(duration, [起点x, 起点y], [目标x, 目标y])
+                sleep(1000);
             }
+            tools.常用操作.关闭所有窗口(false, 0, true);
         },
         寻找装备: (zhengliBtn, picName, 已替换) => {
             var 背包面板P = tools.补给操作.获取背包面板位置(zhengliBtn);
@@ -6757,7 +6791,7 @@ var tools = {
                         x: item.point.x + random(5, 10),
                         y: item.point.y + random(4, 8),
                     }
-                    longClick(点击P.x, 点击P.y);
+                    click(点击P.x, 点击P.y);
                     var r = tools.补给操作.获取操作按钮(["穿戴"], "寻找装备", false, false, true);
                     r = tools.补给操作.获取物品信息(r.value);
                     sleep(333);
@@ -8885,7 +8919,7 @@ threads.start(function () {
                         r = tools.挂机打怪.石墓阵打怪();
                     }
                     else {
-                        r = tools.挂机打怪.寻找打怪();
+                        r = tools.挂机打怪.寻找打怪(打怪次数);
                     }
                 } catch (e) {
                     r = false;

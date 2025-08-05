@@ -5713,7 +5713,7 @@ var tools = {
             var 背包格子偏移 = config.zuobiao.背包格子偏移[fbl];
             var x = zhengliP.x + 背包格子偏移["1_1"].x + (背包格子偏移.中心点偏移量X * (index2 - 1)) + random(-5, 5)
             var y = zhengliP.y + 背包格子偏移["1_1"].y + (背包格子偏移.中心点偏移量Y * (index1 - 1)) + random(-5, 5)
-            longClick(x, y)
+            click(x, y)
         },
         背包拖动背景至可关闭位置: (zhengliBtn) => {
             if (zhengliBtn == null) {
