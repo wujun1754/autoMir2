@@ -255,6 +255,7 @@ var 文字图枚举 = {
     盔: "wenzi_kui.png",
     修: "wenzi_xiu.png",
     凝: "wenzi_ning.png",
+    霜: "wenzi_shuang.png",
     凌: "wenzi_ling.png",
     黄: "wenzi_huang.png",
     蝎: "wenzi_xieshe.png",
@@ -1663,14 +1664,20 @@ var tools = {
                     break;
                 }
                 var img = captureScreen();
-                var r = images.findMultiColors(img, s[0].color, [[s[1].x, s[1].y, s[1].color], [s[2].x, s[2].y, s[2].color], [s[3].x, s[3].y, s[3].color]]);
+
+                var r = images.findMultiColors(img, s[0].color, [[s[1].x, s[1].y, s[1].color], [s[2].x, s[2].y, s[2].color], [s[3].x, s[3].y, s[3].color]], {
+                    region: [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]]
+                });
+
+
+                //var r = images.findMultiColors(img, s[0].color, [[s[1].x, s[1].y, s[1].color], [s[2].x, s[2].y, s[2].color], [s[3].x, s[3].y, s[3].color]]);
                 utils.recycleNull(img);
                 if (r != null) {
                     break;
                 }
                 else {
-                    tools.click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]));
-                    sleep(random(666, 999));
+                    tools.click(p.点击.x, p.点击.y);
+                    sleep(random(666, 777));
                 }
                 tryCount++;
             }
@@ -5102,7 +5109,7 @@ var tools = {
                                 break;
                             }
                             else {
-                                if (是否激活状态) {
+                                if (是否激活状态 && 不能拾取次数 >= 2) {
                                     tools.拾取.点击(0);
                                     sleep(1200);
                                     tools.拾取.点击(1);
@@ -6650,6 +6657,16 @@ var tools = {
                                 status: true,
                                 pic: item.pic,
                                 物品名称: item.name
+                            }
+                        }
+                        else {
+                            r = tools.补给操作.背包选中按钮中找字图(文字图枚举.霜, btn)
+                            if (r.status) {
+                                return {
+                                    status: true,
+                                    pic: item.pic,
+                                    物品名称: item.name
+                                }
                             }
                         }
                     }
@@ -8838,7 +8855,7 @@ var tools = {
         }
         var 时间差 = new Date().getTime() - 上一次点拾取时间;
         if (时间差 < 360) {
-            tools.悬浮球临时描述("上次拾取(" + 时间差 + ")");
+            //tools.悬浮球临时描述("上次拾取(" + 时间差 + ")");
             sleep(360 - 时间差);
         }
         click(x, y);
@@ -9212,15 +9229,17 @@ function updateWindowPosition(x) {
     let edgeMargin = 100;
 
     let windowWidth = window.getWidth();
-    let windowX = window.getX();
+    let windowX = 0;
     let windowY = window.getY();
     let 偏移量 = 0;
     if (h == 720) {
         偏移量 = 30;
+        windowX = 480;
     } else {
-        偏移量 = 100;
+        偏移量 = 40;
+        windowX = 810;
     }
-    ui.run(() => window.setPosition(480, h - 偏移量));
+    ui.run(() => window.setPosition(windowX, h - 偏移量));
     // 如果悬浮窗靠近左边边缘，则吸附到左边
     // if (windowX < edgeMargin) {
     //     ui.run(() => window.setPosition(-24, h-50)); // 只露出一半图标
