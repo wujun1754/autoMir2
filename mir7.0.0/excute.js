@@ -2915,7 +2915,7 @@ var tools = {
                         // if (tools.挂机打怪.是否小退()) {
                         //     tools.常用操作.小退();
                         // }
-                        if (tools.挂机打怪.是否逃跑()) {
+                        if ((精英怪 == null || !精英怪.status) && tools.挂机打怪.是否逃跑()) {
                             tools.挂机打怪.开始逃跑();
                         }
                         else if (tools.挂机打怪.是否自愈()) {
@@ -2976,20 +2976,27 @@ var tools = {
                         }
                         else {
                             if ((!是否隐身等待 || 是否强制攻击) && 锁定的怪物.length <= 0) {
-                                r = tools.挂机打怪.向怪物移动(左面板怪物);
-                                if (r.status) {
-                                    continue; //这里continue是为了快速再次执行该方法，避免等移动时间戳
-                                }
-                                else if (挂机参数.隐身走动 == 0) {
-                                    锁定失败次数++;
+                                isChange = tools.挂机打怪.怪物血量是否变化();
+                                if (isChange) {
+                                    toastLog("血变动放弃")
                                     tools.click(random(726, 736), random(25, 35));
-                                    toastLog(r.msg);
-                                    return false;
                                 }
                                 else {
-                                    tools.人物移动.随机走一步(random(777, 999));
-                                    tools.悬浮球临时描述("无法移动")
-                                    //tools.挂机打怪.打符();
+                                    r = tools.挂机打怪.向怪物移动(左面板怪物);
+                                    if (r.status) {
+                                        continue; //这里continue是为了快速再次执行该方法，避免等移动时间戳
+                                    }
+                                    else if (挂机参数.隐身走动 == 0) {
+                                        锁定失败次数++;
+                                        tools.click(random(726, 736), random(25, 35));
+                                        toastLog(r.msg);
+                                        return false;
+                                    }
+                                    else {
+                                        tools.人物移动.随机走一步(random(777, 999));
+                                        tools.悬浮球临时描述("无法移动")
+                                        //tools.挂机打怪.打符();
+                                    }
                                 }
                             }
                         }
@@ -4815,7 +4822,7 @@ var tools = {
                     x1: 0,
                     x2: 1280,
                     y1: 0,
-                    y2: 600
+                    y2: 565
                 }
             }
             var r = images.findMultiColors(img, "#FFFF68", [[0, 40, "#FFFFFF"], [0, 60, "#FFFFFF"]], {
@@ -6993,6 +7000,7 @@ var tools = {
                     threshold: 0.9
                 })
                 sleep(random(1500, 2000));
+
 
                 r = tools.findImageAreaForWaitClick("fenshen_paiqianBtn.png", 派遣p.x[0], 派遣p.y[0], 派遣p.x[1], 派遣p.y[1], {
                     maxTries: 10,
