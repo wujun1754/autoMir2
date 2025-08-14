@@ -296,6 +296,7 @@ var 持久提示枚举 = {
 var 左怪物文字枚举 = {
     蜈蚣洞: [
         {
+            精英怪: false,
             name: "钳虫",
             pic: "wenzhi_zuomianban_wugong_qian.png",
             怪物显示图: "wenzi_wugongdong_qian.png",
@@ -304,6 +305,7 @@ var 左怪物文字枚举 = {
                 y: -51
             }
         }, {
+            精英怪: false,
             name: "黑色恶蛆",
             pic: "wenzhi_zuomianban_wugong_e.png",
             怪物显示图: "wenzi_wugongdong_equ.png",
@@ -312,6 +314,7 @@ var 左怪物文字枚举 = {
                 y: -51
             }
         }, {
+            精英怪: false,
             name: "蜈蚣",
             pic: "wenzhi_zuomianban_wugong_wu.png",
             怪物显示图: "wenzi_wugongdong_wu.png",
@@ -320,6 +323,7 @@ var 左怪物文字枚举 = {
                 y: -51
             }
         }, {
+            精英怪: false,
             name: "跳跳蜂",
             pic: "wenzhi_zuomianban_wugong_tiao.png",
             怪物显示图: "wenzi_wugongdong_tiao.png",
@@ -328,6 +332,7 @@ var 左怪物文字枚举 = {
                 y: -51
             }
         }, {
+            精英怪: true,
             name: "巨型蠕虫",
             pic: "wenzhi_zuomianban_wugong_ru.png",
             //怪物显示图: "wenzi_wugongdong_lu.png",
@@ -337,6 +342,7 @@ var 左怪物文字枚举 = {
                 y: -51
             }
         }, {
+            精英怪: true,
             name: "邪恶蚶虫",
             pic: "wenzhi_zuomianban_xiee.png",
             怪物显示图: "wenzi_wugongdong_xiee.png",
@@ -347,6 +353,7 @@ var 左怪物文字枚举 = {
         }],
     骷髅洞: [
         {
+            精英怪: false,
             name: "掷斧骷髅",
             pic: "wenzhi_zuomianban_kulou_fu.png",
             怪物显示图: "wenzi_kurou_fu.png",
@@ -356,6 +363,7 @@ var 左怪物文字枚举 = {
             }
         },
         {
+            精英怪: false,
             name: "骷髅战士",
             pic: "wenzhi_zuomianban_kulou_zhan.png",
             怪物显示图: "wenzi_kurou_zhan.png",
@@ -365,6 +373,7 @@ var 左怪物文字枚举 = {
             }
         },
         {
+            精英怪: false,
             name: "骷髅战将",
             pic: "wenzhi_zuomianban_kulou_jiang.png",
             怪物显示图: "wenzi_kurou_jiang.png",
@@ -374,6 +383,7 @@ var 左怪物文字枚举 = {
             }
         },
         {
+            精英怪: false,
             name: "骷髅(髅)",
             pic: "wenzhi_zuomianban_kulou_lou.png",
             怪物显示图: "wenzi_kurou_lou.png",
@@ -383,6 +393,7 @@ var 左怪物文字枚举 = {
             }
         },
         {
+            精英怪: false,
             name: "骷髅(骷)",
             pic: "wenzhi_zuomianban_kulou_ku.png",
             怪物显示图: "wenzi_kurou_ku.png",
@@ -394,6 +405,7 @@ var 左怪物文字枚举 = {
     ],
     牛魔洞: [
         {
+            精英怪: false,
             name: "牛魔战士",
             pic: "wenzhi_zuomianban_niumo_zhan.png",
             怪物显示图: "wenzi_niumo_zhan.png",
@@ -403,6 +415,7 @@ var 左怪物文字枚举 = {
             }
         },
         {
+            精英怪: false,
             name: "牛魔斗士",
             pic: "wenzhi_zuomianban_niumo_dou.png",
             怪物显示图: "wenzi_niumo_dou.png",
@@ -412,6 +425,7 @@ var 左怪物文字枚举 = {
             }
         },
         {
+            精英怪: false,
             name: "牛魔侍卫",
             pic: "wenzhi_zuomianban_niumo_shi.png",
             怪物显示图: "wenzi_niumo_wei.png",
@@ -421,6 +435,7 @@ var 左怪物文字枚举 = {
             }
         },
         {
+            精英怪: true,
             name: "牛魔法师",
             pic: "wenzhi_zuomianban_niumo_fa.png",
             怪物显示图: "wenzi_niumo_fa.png",
@@ -430,6 +445,7 @@ var 左怪物文字枚举 = {
             }
         },
         {
+            精英怪: false,
             name: "牛魔",
             pic: "wenzhi_zuomianban_niumo_mo.png",
             怪物显示图: "wenzi_niumo_mo.png",
@@ -538,7 +554,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="7.0.1" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="7.0.2" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -2813,7 +2829,7 @@ var tools = {
                                 tools.拾取.点击(1);
                                 是否触发拾取 = true;
                                 tools.悬浮球临时描述("主动拾取");
-
+                                sleep(666)
                             }
                         }
                         if (是否触发拾取) {
@@ -2822,27 +2838,28 @@ var tools = {
                     }
                     if ((左面板怪物 == null || !左面板怪物.status) && 锁定怪物截图 != null) {
                         左面板怪物 = tools.挂机打怪.分析左面板怪物()
+                        if (左面板怪物 != null && 左面板怪物.status && 左面板怪物.value.精英怪) {
+                            精英怪 = {
+                                status: true,
+                                value: 精英怪枚举[左面板怪物.value.name]
+                            }
+                            //tools.悬浮球临时描述("扫描到精英怪")
+                        }
                     }
                     本次扫描的怪物名 = tools.挂机打怪.扫描身边怪物名(左面板怪物);
                     if (本次扫描的怪物名.length > 0) {
                         锁定的怪物 = 本次扫描的怪物名;
-                        if (锁定的怪物 == "巨型蠕虫" || 锁定的怪物 == "邪恶蚶虫") {
-                            tools.悬浮球临时描述("扫描到精英怪")
-                            精英怪 = {
-                                status: true,
-                                value: 精英怪枚举[锁定的怪物]
-                            }
-                        }
                         上一次怪物身边时间 = new Date().getTime();
                     }
-                    if (锁定的怪物.length > 0 && (!是否隐身等待 || 是否强制攻击) && (new Date().getTime() - 上一次怪物身边时间) >= (1000 * 3)) {
+                    if (锁定的怪物.length > 0 && (!是否隐身等待 || 是否强制攻击) && (new Date().getTime() - 上一次怪物身边时间) >= (1000 * 1.8)) {
                         r = tools.挂机打怪.向怪物移动(左面板怪物);
                         if (r.status) {
                             continue; //这里continue是为了快速再次执行该方法，避免等移动时间戳
                         }
                         else if (挂机参数.隐身走动 == 0) {
-                            toastLog("2秒未靠近怪")
                             锁定失败次数++;
+                            上一次怪物身边时间 = new Date().getTime();
+                            toastLog("2秒未靠近怪")
                             // tools.click(random(726, 736), random(25, 35));
                             // if (切换左面板人物) {
                             //     切换左面板人物 = false;
@@ -2909,7 +2926,7 @@ var tools = {
                         // if (tools.挂机打怪.是否小退()) {
                         //     tools.常用操作.小退();
                         // }
-                        if (tools.挂机打怪.是否逃跑()) {
+                        if (tools.挂机打怪.是否逃跑() && (精英怪 == null || !精英怪.status)) {
                             tools.挂机打怪.开始逃跑();
                         }
                         else if (tools.挂机打怪.是否自愈()) {
@@ -3222,14 +3239,45 @@ var tools = {
             };
         },
         找满血怪: () => {
-            var p = config.zuobiao.左攻击面板[fbl].怪物集合;
+            var arr = config.zuobiao.左攻击面板[fbl].血量坐标;
             var img = captureScreen();
-            var r = images.findMultiColors(img, p.找色[0].color, [[p.找色[1].x, p.找色[1].y, p.找色[1].color], [p.找色[2].x, p.找色[2].y, p.找色[2].color]], {
-                region: [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]],
-                threshold: 30
-            });
+            var result = null;
+            var t1 = new Date().getTime();
+            for (let index = 0; index < arr.length; index++) {
+                var item = arr[index];
+                var isC1 = images.detectsColor(img, item.c1, item.x1, item.y1, 10, "diff")
+                if (isC1) {
+                    var isC2 = images.detectsColor(img, item.c2, item.x2, item.y2, 10, "diff")
+                    if (isC2) {
+                        result = {
+                            x: item.x1 + random(30, 90),
+                            y: item.y1 + random(-5, 3),
+                        }
+                        break;
+                    }
+                }
+                // var reg = [item.x1, item.y1, item.x2 - item.x1, item.y2 - item.y1];
+                // var r = images.findMultiColors(img, p[0].color, [[p[1].x, p[1].y, p[1].color]], {
+                //     region: reg,
+                //     threshold: 15
+                // });
+                // tools.悬浮球临时描述(JSON.stringify(r) + ":" + JSON.stringify(reg))
+                // if (r && (r.x > 0 || r.y > 0)) {
+                //     result = r;
+                //     break;
+                // }
+            }
             utils.recycleNull(img);
-            return r;
+            
+            return result;
+            // var p = config.zuobiao.左攻击面板[fbl].怪物集合;
+            // var img = captureScreen();
+            // var r = images.findMultiColors(img, p.找色[0].color, [[p.找色[1].x, p.找色[1].y, p.找色[1].color], [p.找色[2].x, p.找色[2].y, p.找色[2].color]], {
+            //     region: [p.x[0], p.y[0], p.x[1] - p.x[0], p.y[1] - p.y[0]],
+            //     threshold: 30
+            // });
+            // utils.recycleNull(img);
+            // return r;
         },
         找非满血怪: () => {
             var p = config.zuobiao.左攻击面板[fbl].怪物集合;
@@ -4880,15 +4928,16 @@ var tools = {
                             break;
                         }
                         else {
-                            if (是否激活状态 && 累计未移动次数 >= 2) {
-                                if (tools.拾取.扫描拾取(null, false)) {
-                                    tools.拾取.点击(0);
-                                    sleep(1200);
-                                    tools.拾取.点击(1);
-                                    sleep(1200)
-                                }
-                                toastLog("人物静止(" + 累计未移动次数 + ")")
-                            }
+                            toastLog("人物静止(" + 累计未移动次数 + ")")
+                            // if (是否激活状态 && 累计未移动次数 >= 2) {
+                            //     if (tools.拾取.扫描拾取(null, false)) {
+                            //         tools.拾取.点击(0);
+                            //         sleep(1200);
+                            //         tools.拾取.点击(1);
+                            //         sleep(1200)
+                            //     }
+                            //     toastLog("人物静止(" + 累计未移动次数 + ")")
+                            // }
                         }
                     }
                     上一次移动 = new Date().getTime();
@@ -4982,14 +5031,14 @@ var tools = {
                             break;
                         }
                         else {
-                            if (是否激活状态 && 累计未移动次数 >= 2) {
-                                if (tools.拾取.扫描拾取(null, false)) {
-                                    tools.拾取.点击(0);
-                                    sleep(1200);
-                                    tools.拾取.点击(1);
-                                    sleep(1200)
-                                }
-                            }
+                            // if (是否激活状态 && 累计未移动次数 >= 2) {
+                            //     if (tools.拾取.扫描拾取(null, false)) {
+                            //         tools.拾取.点击(0);
+                            //         sleep(1200);
+                            //         tools.拾取.点击(1);
+                            //         sleep(1200)
+                            //     }
+                            // }
                             toastLog("人物静止(" + 累计未移动次数 + ")")
                         }
                     }
