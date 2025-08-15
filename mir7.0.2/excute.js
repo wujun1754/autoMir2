@@ -1327,15 +1327,15 @@ var tools = {
             }
             return r;
         },
-        小退: () => {
+        小退: (msg) => {
             var r = tools.findImageForWaitClick("yijianxiaoTuiBtn.png", {
                 maxTries: 10,
                 interval: 666
             });
             if (r.status) {
                 当前总状态 = 总状态.小退中;
-                tools.悬浮球描述("小退等待重新登录");
-                tools.常用方法.发送提醒("小退")
+                tools.悬浮球描述(msg);
+                tools.常用方法.发送提醒(msg)
             }
         },
         小退后开始登录: () => {
@@ -2924,9 +2924,6 @@ var tools = {
                         是否锁定危险怪 = true;
                     }
                     if (挂机参数.随机血量 > 0) {
-                        // if (tools.挂机打怪.是否小退()) {
-                        //     tools.常用操作.小退();
-                        // }
                         if (tools.挂机打怪.是否逃跑()) {
                             tools.挂机打怪.开始逃跑();
                         }
@@ -6949,6 +6946,10 @@ var tools = {
                 var msg = tools.补给操作.检查仓库雪霜();
                 tools.常用方法.错误日志("检查仓库雪霜:" + msg, 2);
             }
+            if (当前总状态 == 总状态.已启动) {
+                tools.补给操作.取武器衣服();
+                tools.常用方法.错误日志("取武器衣服完成", 2)
+            }
 
             tools.常用方法.错误日志("补给完成", 2)
             tools.悬浮球描述("补给完成");
@@ -8006,77 +8007,71 @@ var tools = {
             }
         },
         取武器衣服: () => {
-            var t = 0.85;
-            var 取回数量 = 0;
+            var t = 0.7;
             var 仓库p = config.zuobiao.存取范围[fbl].仓库;
             var 包袱p = config.zuobiao.存取范围[fbl].包袱;
-            var arr = [];
-            if (挂机参数.备用凌风 == 1) {
-                arr.push({
-                    name: "凌风",
-                    pic: 装备枚举.凌风
-                })
-            }
-            if (挂机参数.备用凝霜 == 1) {
-                arr.push({
-                    name: "凝霜",
-                    pic: 装备枚举.凝霜
-                })
-            }
-            if (挂机参数.备用男重盔 == 1) {
-                arr.push({
-                    name: "重盔甲（男）",
-                    pic: 装备枚举.重盔男
-                })
-            }
-            if (挂机参数.备用女重盔 == 1 ) {
-                arr.push({
-                    name: "重盔甲（女）",
-                    pic: 装备枚举.重盔女
-                })
-            }
-
-
-            var r = tools.matchTemplateForArea(补给枚举.万年雪霜, 12, t,
-                [仓库p.x, 仓库p.y, 仓库p.w, 仓库p.h]
-            )
-            var 雪霜数量 = r.count;
-            if (r.status && 雪霜数量 >= 6) {
-                while (true) {
-                    var r = tools.findImageAreaForWait(补给枚举.万年雪霜, 仓库p.x, 仓库p.y, 仓库p.x + 仓库p.w, 仓库p.y + 仓库p.h, {
-                        maxTries: 10,
-                        interval: 100,
-                        threshold: t
-                    })
-                    if (r.status) {
-                        var x1 = r.img.x + r.size.w / 2 + random(5, 10);
-                        var y1 = r.img.y + r.size.h / 2 + random(5, 10);
-                        var x2 = 包袱p.中心.x + random(5, 10);
-                        var y2 = 包袱p.中心.y + random(5, 10);
-                        gesture(random(666, 999), [x1, y1], [x2, y2])
-                        tools.悬浮球描述("雪霜数量(" + 雪霜数量 + "),已取出(" + (取回数量 + 1) + ")");
-                        sleep(random(666, 999));
-                        取回数量++;
-                        if (取回数量 >= 6) {
-                            return {
-                                status: true
-                            };
-                        }
-                    }
-                    else {
-                        return {
-                            status: false,
-                            msg: "未获取到雪霜图片"
-                        };
-                    }
-                }
-            }
-            else {
+            var r = tools.补给操作.点击小贩按钮("保存", false);
+            if (!r) {
                 return {
                     status: false,
-                    msg: "雪霜数量(" + 雪霜数量 + ")不用捆"
-                };
+                    err: "未获取出售物品按钮"
+                }
             }
+            sleep(1500);
+            var arr = [];
+            if (挂机参数.备用凌风 == 1) {
+                var r = tools.findImageArea(装备枚举.凌风, 包袱p.x, 包袱p.y, 包袱p.x + 包袱p.w, 包袱p.y + 包袱p.h, 0.7);
+                if (!r.status) {
+                    arr.push({
+                        name: "凌风",
+                        pic: 装备枚举.凌风
+                    })
+                }
+            }
+            if (挂机参数.备用凝霜 == 1) {
+                var r = tools.findImageArea(装备枚举.凝霜, 包袱p.x, 包袱p.y, 包袱p.x + 包袱p.w, 包袱p.y + 包袱p.h, 0.7);
+                if (!r.status) {
+                    arr.push({
+                        name: "凝霜",
+                        pic: 装备枚举.凝霜
+                    })
+                }
+            }
+            if (挂机参数.备用男重盔 == 1) {
+                var r = tools.findImageArea(装备枚举.重盔男, 包袱p.x, 包袱p.y, 包袱p.x + 包袱p.w, 包袱p.y + 包袱p.h, 0.7);
+                if (!r.status) {
+                    arr.push({
+                        name: "重盔甲（男）",
+                        pic: 装备枚举.重盔男
+                    })
+                }
+            }
+            if (挂机参数.备用女重盔 == 1) {
+                var r = tools.findImageArea(装备枚举.重盔女, 包袱p.x, 包袱p.y, 包袱p.x + 包袱p.w, 包袱p.y + 包袱p.h, 0.7);
+                if (!r.status) {
+                    arr.push({
+                        name: "重盔甲（女）",
+                        pic: 装备枚举.重盔女
+                    })
+                }
+            }
+
+            for (let index = 0; index < arr.length; index++) {
+                var item = arr[index];
+                var r = tools.findImageArea(item.pic, 仓库p.x, 仓库p.y, 仓库p.x + 仓库p.w, 仓库p.y + 仓库p.h, t);
+                if (r.status && r.img.x > 0) {
+                    var x1 = r.img.x + r.size.w / 2 + random(5, 10);
+                    var y1 = r.img.y + r.size.h / 2 + random(5, 10);
+                    var x2 = 包袱p.中心.x + random(5, 10);
+                    var y2 = 包袱p.中心.y + random(5, 10);
+                    gesture(random(666, 999), [x1, y1], [x2, y2])
+                }
+                else {
+                    tools.常用操作.小退("仓库中无" + item.name);
+                }
+            }
+
+            tools.常用操作.关闭所有窗口();
         },
         捆雪霜: () => {
             var 包袱p = config.zuobiao.存取范围[fbl].包袱;
