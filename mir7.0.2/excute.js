@@ -6587,12 +6587,12 @@ var tools = {
             }, {
                 name: "战神油",
                 pic: 补给枚举.战神油_背包
-            }, {
-                name: "护身符大",
-                pic: 补给枚举.护身符
             }];
             if (!是否排除装备) {
-                arr.push()
+                arr.push({
+                    name: "护身符大",
+                    pic: 补给枚举.护身符
+                });
                 arr.push({
                     name: "红毒",
                     pic: 补给枚举.红毒
@@ -6665,13 +6665,10 @@ var tools = {
                     else if (item.pic == 补给枚举.护身符) {
                         r = tools.补给操作.背包选中按钮中找字图(文字图枚举.符, btn)
                         if (r.status) {
-                            var 符持久 = tools.补给操作.获取护身符持久(btn);
-                            if (符持久 == null || 符持久 > 100) {
-                                return {
-                                    status: true,
-                                    pic: item.pic,
-                                    物品名称: item.name
-                                }
+                            return {
+                                status: true,
+                                pic: item.pic,
+                                物品名称: item.name
                             }
                         }
                     }
@@ -6952,6 +6949,7 @@ var tools = {
                 var msg = tools.补给操作.检查仓库雪霜();
                 tools.常用方法.错误日志("检查仓库雪霜:" + msg, 2);
             }
+
             tools.常用方法.错误日志("补给完成", 2)
             tools.悬浮球描述("补给完成");
         },
@@ -7110,13 +7108,22 @@ var tools = {
                         }
                     }
                     var info = tools.补给操作.判断选中格子动作(false, true, true, zhengliBtn, r.value, index, index1);
-
+                    if (info.物品名称 == "护身符大") {
+                        var 符持久 = tools.补给操作.获取护身符持久(btn);
+                        if (符持久 != null && 符持久 < 100) {
+                            tools.补给操作.丢护身符(index, index1, zhengliBtn);
+                            continue;
+                        }
+                    }
                     if (info.是否跳过) {
                         var 是否跳过 = false;
                         if (info.物品名称 == "斩马" || info.物品名称 == "修罗" || info.物品名称 == "凝霜") {
                             if (!是否已跳过武器) {
-                                是否跳过 = true;
-                                是否已跳过武器 = true;
+                                var 物品信息 = tools.补给操作.获取物品信息(r.value);
+                                if (物品信息 == null || !物品信息.status || 物品信息.持久 == null || 物品信息.持久.满持久 >= 10) {
+                                    是否跳过 = true;
+                                    是否已跳过武器 = true;
+                                }
                             }
                             else {
                                 tools.悬浮球描述("已保留过武器");
@@ -7124,8 +7131,11 @@ var tools = {
                         }
                         else if (info.物品名称 == "重盔甲（男）" || info.物品名称 == "重盔甲（女）") {
                             if (!是否已跳过衣服) {
-                                是否跳过 = true;
-                                是否已跳过衣服 = true;
+                                var 物品信息 = tools.补给操作.获取物品信息(r.value);
+                                if (物品信息 == null || !物品信息.status || 物品信息.持久 == null || 物品信息.持久.满持久 >= 10) {
+                                    是否跳过 = true;
+                                    是否已跳过衣服 = true;
+                                }
                             }
                             else {
                                 tools.悬浮球描述("已保留过衣服");
@@ -7153,10 +7163,6 @@ var tools = {
                     var y = r.value.img.y + r.value.size.h / 2 + random(-3, 3);
                     tools.click(x, y)
                     sleep(777);
-                    // r = tools.findImageForWaitClick(r.btnName, {
-                    //     maxTries: 6,
-                    //     interval: 666
-                    // });
                     r = tools.findImageForWaitClick("OKBtn.png", {
                         maxTries: 10,
                         interval: 666
@@ -7887,12 +7893,14 @@ var tools = {
             var duration = random(888, 1288);
             gesture(duration, [x, y], [x2, y2])
         },
-        丢护身符: (格子x, 格子y, 时间戳) => {
-            var fbl = `${device.width}_${device.height}`;
-            var x1 = 格子x + random(-5, 5);
-            var y1 = 格子y + random(-5, 5);
-            var x2 = random(config.zuobiao.丢东西范围[fbl].x[0], config.zuobiao.丢东西范围[fbl].x[1]);
-            var y2 = random(config.zuobiao.丢东西范围[fbl].y[0], config.zuobiao.丢东西范围[fbl].y[1]);
+        丢护身符: (index1, index2, zhengliBtn) => {
+            var 时间戳 = random(888, 1288);
+            var 丢东西p = config.zuobiao.丢东西范围[fbl];
+            var 格子p = tools.补给操作.获取背包格子位置(index1, index2, zhengliBtn, false);
+            var x1 = 格子p.中心.x + random(-5, 5);
+            var y1 = 格子p.中心.y + random(-5, 5);
+            var x2 = random(丢东西p.x[0], 丢东西p.x[1]);
+            var y2 = random(丢东西p.y[0], 丢东西p.y[1]);
             gesture(时间戳, [x1, y1], [x2, y2]);
         },
         购买捆药绳: () => {
@@ -7956,6 +7964,79 @@ var tools = {
             var 取回数量 = 0;
             var 仓库p = config.zuobiao.存取范围[fbl].仓库;
             var 包袱p = config.zuobiao.存取范围[fbl].包袱;
+            var r = tools.matchTemplateForArea(补给枚举.万年雪霜, 12, t,
+                [仓库p.x, 仓库p.y, 仓库p.w, 仓库p.h]
+            )
+            var 雪霜数量 = r.count;
+            if (r.status && 雪霜数量 >= 6) {
+                while (true) {
+                    var r = tools.findImageAreaForWait(补给枚举.万年雪霜, 仓库p.x, 仓库p.y, 仓库p.x + 仓库p.w, 仓库p.y + 仓库p.h, {
+                        maxTries: 10,
+                        interval: 100,
+                        threshold: t
+                    })
+                    if (r.status) {
+                        var x1 = r.img.x + r.size.w / 2 + random(5, 10);
+                        var y1 = r.img.y + r.size.h / 2 + random(5, 10);
+                        var x2 = 包袱p.中心.x + random(5, 10);
+                        var y2 = 包袱p.中心.y + random(5, 10);
+                        gesture(random(666, 999), [x1, y1], [x2, y2])
+                        tools.悬浮球描述("雪霜数量(" + 雪霜数量 + "),已取出(" + (取回数量 + 1) + ")");
+                        sleep(random(666, 999));
+                        取回数量++;
+                        if (取回数量 >= 6) {
+                            return {
+                                status: true
+                            };
+                        }
+                    }
+                    else {
+                        return {
+                            status: false,
+                            msg: "未获取到雪霜图片"
+                        };
+                    }
+                }
+            }
+            else {
+                return {
+                    status: false,
+                    msg: "雪霜数量(" + 雪霜数量 + ")不用捆"
+                };
+            }
+        },
+        取武器衣服: () => {
+            var t = 0.85;
+            var 取回数量 = 0;
+            var 仓库p = config.zuobiao.存取范围[fbl].仓库;
+            var 包袱p = config.zuobiao.存取范围[fbl].包袱;
+            var arr = [];
+            if (挂机参数.备用凌风 == 1) {
+                arr.push({
+                    name: "凌风",
+                    pic: 装备枚举.凌风
+                })
+            }
+            if (挂机参数.备用凝霜 == 1) {
+                arr.push({
+                    name: "凝霜",
+                    pic: 装备枚举.凝霜
+                })
+            }
+            if (挂机参数.备用男重盔 == 1) {
+                arr.push({
+                    name: "重盔甲（男）",
+                    pic: 装备枚举.重盔男
+                })
+            }
+            if (挂机参数.备用女重盔 == 1 ) {
+                arr.push({
+                    name: "重盔甲（女）",
+                    pic: 装备枚举.重盔女
+                })
+            }
+
+
             var r = tools.matchTemplateForArea(补给枚举.万年雪霜, 12, t,
                 [仓库p.x, 仓库p.y, 仓库p.w, 仓库p.h]
             )
