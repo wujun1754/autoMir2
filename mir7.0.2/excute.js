@@ -937,7 +937,7 @@ var tools = {
                         if (j.type == 1) {//打开组队
                             是否需要启动组队 = true;
                         }
-                        else if (j.type == 2) {//确认组队
+                        else if (j.type == 2) {//通知队长组队完成
 
                         }
                         //toastLog("收到服务器消息: " + line);
@@ -1006,12 +1006,40 @@ var tools = {
                     result.push(arr[index].split("|")[1])
                 }
             }
+            return result;
+        },
+        通知队长开组完成: () => {
+            var 队长Id = 0;
+            try {
+                队长Id = parseInt(挂机参数.组队);
+            } catch (error) {
+                队长Id = 0;
+            }
+            if (队长Id <= 0) {
+                toastLog("队长ID非法");
+                return;
+            }
+            threads.start(function () {
+                tools.Socket.output.println(JSON.stringify({
+                    type: 2,
+                    account: 挂机参数.机器标识,
+                    Id: 挂机参数.唯一ID,
+                    msg: 队长Id
+                }));
+            });
         },
         队长: {
             队员: [],
             通知开组: () => {
-
-            }
+                var Ids = tools.组队.获取队员Id();
+                threads.start(function () {
+                    tools.Socket.output.println(JSON.stringify({
+                        type: 1,
+                        msg: Ids
+                    }));
+                });
+            },
+            
         }
     },
     常用方法: {
@@ -9411,11 +9439,11 @@ function showWinConfig() {
 threads.start(function () {
     var 开启寻怪 = false;
     while (true) {
-        // if (是否需要启动组队) {
-        //     tools.常用操作.开启组队();
-        //     是否完成开启组队 = true;
-        //     是否需要启动组队 = false;
-        // }
+        if (是否需要启动组队) {
+            tools.常用操作.开启组队();
+            是否需要启动组队 = false;
+            tools.组队.通知队长开组完成();
+        }
         if (当前总状态 == 总状态.已启动) {
             var 打怪次数 = 0; //大于0则坐标移动过，需强制跑图
             if (!是否启动初始化过) {
