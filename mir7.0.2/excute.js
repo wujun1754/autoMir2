@@ -25,13 +25,11 @@ let ocr = new MLKitOCR();
 let ocrPladderOCR = $ocr.create({
     models: 'slim', // 指定精度相对低但速度更快的模型，若不指定则为default模型，精度高一点但速度慢一点
 });
-
 let 存入仓库数量 = 0;
 var 挂机点跑图顺序 = 0;
 var 是否强制跑图 = false;
 
-var 是否需要启动组队 = false;
-var 是否完成开启组队 = false;
+var 是否发起过组队 = false;
 
 let 认证自检时间 = new Date().getTime();
 let 认证自检时间戳 = 30 * 1000;
@@ -541,7 +539,6 @@ let tabW = 0;
 var 是否启动初始化过 = false;
 var isStart = true
 var isShowConfig = false;
-var 是否有组队任务 = false;
 var 跑图错误次数 = 0;
 var 锁定失败次数 = 0;
 var 宝宝最后位置信息 = {
@@ -915,6 +912,10 @@ var win = floaty.rawWindow(
 
 var tools = {
     Socket: {
+        是否开启组队: false,
+        是否确定组队: false,
+        是否有队员申请: false,
+        申请队员Id: 0,
         socket: null,
         input: null,
         output: null,
@@ -923,31 +924,48 @@ var tools = {
             let InputStreamReader = java.io.InputStreamReader;
             let BufferedReader = java.io.BufferedReader;
             let PrintWriter = java.io.PrintWriter;
-
-            tools.Socket.socket = new Socket("183.249.84.44", 7777);
-            tools.Socket.input = new BufferedReader(new InputStreamReader(tools.Socket.socket.getInputStream()));
-            tools.Socket.output = new PrintWriter(tools.Socket.socket.getOutputStream(), true);
+            try {
+                tools.Socket.socket = new Socket("183.249.84.44", 7777);
+                tools.Socket.input = new BufferedReader(new InputStreamReader(tools.Socket.socket.getInputStream()));
+                tools.Socket.output = new PrintWriter(tools.Socket.socket.getOutputStream(), true);
+                tools.Socket.output.println(JSON.stringify({
+                    type: 0,
+                    account: 挂机参数.机器标识,
+                    isDuiZhang: 挂机参数.是否队长,
+                    Id: 挂机参数.唯一ID
+                }));
+            } catch (error) {
+                tools.常用方法.发送提醒("socket异常_1" + error)
+            }
         },
         监听: () => {
-            try {
-                while (true) {
-                    let msg = tools.Socket.input.readLine();  // 阻塞式读取
-                    if (msg != null) {
-                        var j = JSON.parse(msg);
-                        if (j.type == 1) {//打开组队
-                            是否需要启动组队 = true;
-                        }
-                        else if (j.type == 2) {//通知队长组队完成
-
-                        }
-                        //toastLog("收到服务器消息: " + line);
-                    } else {
-                        tools.常用方法.发送提醒("socket异常_2")
-                        break;
-                    }
+            while (true) {
+                var msg = "";
+                try {
+                    msg = tools.Socket.input.readLine();  // 阻塞式读取
+                } catch (e) {
+                    tools.常用方法.发送提醒("socket异常_3" + e)
                 }
-            } catch (e) {
-                tools.常用方法.发送提醒("socket异常_3")
+                if (msg != null) {
+                    msg = msg.trim()
+                    var j = JSON.parse(msg);
+                    if (j.type == 1) {//打开组队
+                        tools.Socket.是否开启组队 = true;
+                    }
+                    else if (j.type == 2) {//通知队长开组完成
+                        tools.组队.队长.更新队员状态(parseInt(j.msg))
+                    }
+                    else if (j.type == 3) {//通知队员确定组队
+                        tools.Socket.是否确定组队 = true;
+                    }
+                    else if (j.type == 4) {//通知队员确定组队
+                        tools.Socket.是否有队员申请 = true;
+                        tools.Socket.申请队员Id = parseInt(j.msg);
+                    }
+                } else {
+                    tools.常用方法.发送提醒("socket异常_2")
+                    break;
+                }
             }
         }
     },
@@ -956,47 +974,16 @@ var tools = {
             var p = config.zuobiao.按钮集合[fbl].组队;
             tools.click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]))
             tools.findImageForWaitClick("zuduicloseBtn.png", {
-                maxTries: 5,
+                maxTries: 12,
                 interval: 100
             }, 0.9);
             tools.常用操作.关闭所有窗口(false, 0, true);
         },
-        组队好友: () => {
-            var arr = 挂机参数.组队.split(",");
-            if (arr != null && arr.length > 0) {
-                var p = config.zuobiao.按钮集合[fbl].好友;
-                tools.click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]))
-                sleep(1200);
-                var x = 1005;
-                var y = 0;
-                for (var index = 0; index < arr.length; index++) {
-                    var item = arr[index];
-                    switch (parseInt(item)) {
-                        case 1:
-                            y = 152;
-                            break;
-                        case 2:
-                            y = 222;
-                            break;
-                        case 3:
-                            y = 292;
-                            break;
-                        case 4:
-                            y = 358;
-                            break;
-                    }
-                    tools.click(x + random(-50, 50), y + random(-15, 15));
-                    sleep(1000);
-                    tools.findImageForWaitClick(文字图枚举.组, {
-                        maxTries: 6,
-                        interval: 200
-                    }, 0.9);
-                    sleep(1000);
-                    toastLog("已完成" + (index + 1) + "号好友组队");
-                }
-                tools.常用操作.关闭所有窗口();
-            }
-            是否有组队任务 = false;
+        确定组队: () => {
+            tools.findImageForWaitClick("queBtn.png", {
+                maxTries: 12,
+                interval: 100
+            })
         },
         获取队员Id: () => {
             var result = [];
@@ -1028,18 +1015,165 @@ var tools = {
                 }));
             });
         },
+        申请组队: () => {
+            tools.组队.开启组队();
+            threads.start(function () {
+                tools.Socket.output.println(JSON.stringify({
+                    type: 4,
+                    account: 挂机参数.机器标识,
+                    Id: 挂机参数.唯一ID,
+                    msg: 队长Id
+                }));
+            });
+        },
         队长: {
             队员: [],
-            通知开组: () => {
-                var Ids = tools.组队.获取队员Id();
+            通知开组: (Ids) => {
                 threads.start(function () {
-                    tools.Socket.output.println(JSON.stringify({
+                    var r = JSON.stringify({
                         type: 1,
-                        msg: Ids
-                    }));
+                        account: 挂机参数.机器标识,
+                        msg: Ids.join(",")
+                    });
+                    tools.Socket.output.println(r);
                 });
+
             },
-            
+            初始化队员: (Ids) => {
+                tools.组队.队长.队员 = [];
+                if (Ids && Ids.length > 0) {
+                    for (var index = 0; index < Ids.length; index++) {
+                        var Id = Ids[index];
+                        tools.组队.队长.队员.push({
+                            Id: Id,
+                            是否完成开组: false,
+                            是否完成组队: false
+                        })
+                    }
+                }
+            },
+            更新队员状态: (Id) => {
+                for (var index = 0; index < tools.组队.队长.队员.length; index++) {
+                    var item = tools.组队.队长.队员[index];
+                    if (item.Id == Id) {
+                        item.是否完成开组 = true;
+                        break;
+                    }
+                }
+            },
+            队员是否准备完成: () => {
+                var result = true;
+                var 队员 = tools.组队.队长.队员;
+                if (队员 == null || 队员.length <= 0) {
+                    return result;
+                }
+                for (var index = 0; index < 队员.length; index++) {
+                    var item = 队员[index];
+                    if (!item.是否完成开组) {
+                        result = false;
+                        break;
+                    }
+                }
+                return result;
+            },
+            组队好友: () => {
+                tools.常用操作.关闭所有窗口();
+                var arr = 挂机参数.组队.split(",");
+                if (arr != null && arr.length > 0) {
+                    var p = config.zuobiao.按钮集合[fbl].好友;
+                    var 顺序p = config.zuobiao.好友顺序[fbl];
+                    tools.click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]))
+                    sleep(1500);
+                    var x = 顺序p.x;
+                    var y = 0;
+                    for (var index = 0; index < arr.length; index++) {
+                        var item = arr[index].split('|');
+                        var 顺序 = parseInt(item[0]);
+                        var Id = parseInt(item[1]);
+                        y = 顺序p.y[顺序 - 1];
+                        tools.click(x + random(-50, 20), y + random(-5, 5));
+                        var r = tools.findImageForWaitClick(文字图枚举.组, {
+                            maxTries: 10,
+                            interval: 200
+                        }, 0.9);
+
+                        if (r.status) {
+                            threads.start(function () {
+                                tools.Socket.output.println(JSON.stringify({
+                                    type: 3,
+                                    account: 挂机参数.机器标识,
+                                    msg: Id
+                                }));
+                            });
+                        }
+                        sleep(1000);
+                        toastLog("已完成" + (index + 1) + "号好友组队");
+                    }
+                    tools.常用操作.关闭所有窗口();
+                }
+            },
+            组单个对员: (队员Id) => {
+                tools.常用操作.关闭所有窗口();
+                var arr = 挂机参数.组队.split(",");
+                if (arr != null && arr.length > 0) {
+                    var p = config.zuobiao.按钮集合[fbl].好友;
+                    var 顺序p = config.zuobiao.好友顺序[fbl];
+                    tools.click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]))
+                    sleep(1500);
+                    var x = 顺序p.x;
+                    var y = 0;
+                    for (var index = 0; index < arr.length; index++) {
+                        var item = arr[index].split('|');
+                        var 顺序 = parseInt(item[0]);
+                        var Id = parseInt(item[1]);
+                        if (队员Id == Id) {
+                            y = 顺序p.y[顺序 - 1];
+                            tools.click(x + random(-50, 20), y + random(-5, 5));
+                            var r = tools.findImageForWaitClick(文字图枚举.组, {
+                                maxTries: 10,
+                                interval: 200
+                            }, 0.9);
+                            if (r.status) {
+                                threads.start(function () {
+                                    tools.Socket.output.println(JSON.stringify({
+                                        type: 3,
+                                        account: 挂机参数.机器标识,
+                                        msg: Id
+                                    }));
+                                });
+                            }
+                            break;
+                        }
+                    }
+                    toastLog("已完成组队");
+                    tools.常用操作.关闭所有窗口();
+                }
+            },
+            组队: () => {
+                var Ids = tools.组队.获取队员Id();
+                tools.组队.队长.初始化队员(Ids);
+                tools.组队.队长.通知开组(Ids);
+                var start = new Date().getTime();
+                var timeout = 30 * 1000;
+                while (true) {
+                    var 时间戳 = new Date().getTime() - start;
+                    if (时间戳 > timeout) {
+                        tools.常用方法.发送提醒("组队超时");
+                        break;
+                    }
+                    var isok = tools.组队.队长.队员是否准备完成();
+                    tools.悬浮球临时描述(isok.toString());
+                    if (isok) {
+                        tools.组队.队长.组队好友();
+                        break;
+                    }
+                    else {
+                        sleep(100);
+                    }
+                }
+                tools.悬浮球临时描述("组队完成")
+            },
+
         }
     },
     常用方法: {
@@ -1117,6 +1251,7 @@ var tools = {
             });
         },
         启动初始化: () => {
+            tools.挂机打怪.启动隐身();
             var r = tools.常用操作.获取人物金币();//这里不用多线程好像会被卡死
             if (r != null) {
                 启动金币 = r;
@@ -1439,6 +1574,28 @@ var tools = {
         },
     },
     常用操作: {
+        及时执行事件: () => {
+            if (开启强行补给) {
+                开启强行补给 = false;
+                toastLog("强制回城补给")
+                tools.挂机打怪.回城补给在挂机("强行补给");
+            }
+            if (tools.Socket.是否开启组队) {
+                tools.组队.开启组队();
+                tools.组队.通知队长开组完成();
+                tools.Socket.是否开启组队 = false;
+            }
+            if (tools.Socket.是否有队员申请) {
+                tools.组队.队长.组单个对员(tools.Socket.申请队员Id);
+                tools.Socket.申请队员Id = 0;
+                tools.Socket.是否有队员申请 = false;
+            }
+            if (tools.Socket.是否确定组队) {
+                tools.组队.确定组队()
+                tools.Socket.是否确定组队 = false;
+            }
+            tools.执行时间戳.检测认证();
+        },
         截图当前坐标: () => {
             var p = config.zuobiao.人物坐标范围精确[fbl];
             return tools.截屏裁剪(null, p.x1, p.y1, p.x2, p.y2);
@@ -1681,8 +1838,6 @@ var tools = {
                 status: false
             };
         },
-
-
         设置内挂: () => {
             var 高亮显血自己 = config.zuobiao.设置面板[fbl].高亮显血自己;
             var 高亮显血组队 = config.zuobiao.设置面板[fbl].高亮显血组队;
@@ -3114,7 +3269,7 @@ var tools = {
                     //     tools.执行时间戳.检测武器衣服包袱(true);
                     // }
 
-                    tools.执行时间戳.检测认证();
+                    tools.常用操作.及时执行事件();
 
                     tools.执行时间戳.检测画面();
 
@@ -5566,7 +5721,7 @@ var tools = {
         去小贩Loop: () => {
             var 是否宝宝休息 = false;
             while (当前总状态 == 总状态.已启动) {
-                tools.执行时间戳.检测认证();
+                tools.常用操作.及时执行事件();
                 var 人物坐标 = tools.常用操作.获取人物坐标();
                 var 当前地图 = tools.常用操作.获取人物地图();
                 var 安全区坐标范围 = tools.人物移动.获取安全区坐标范围();
@@ -5645,7 +5800,7 @@ var tools = {
             var 安全区坐标范围 = tools.人物移动.获取安全区坐标范围();
             var 大地图偏移 = tools.人物移动.获取大地图偏移();
             while (当前总状态 == 总状态.已启动) {
-                tools.执行时间戳.检测认证();
+                tools.常用操作.及时执行事件();
                 var 当前地图 = tools.常用操作.获取人物地图();
                 var routesGroup = tools.人物移动.获取路由组(当前地图, "回老兵");
                 var routes = routesGroup[0];
@@ -5805,7 +5960,7 @@ var tools = {
                     目的地 = last[0];
                 }
                 while (当前总状态 == 总状态.已启动) {
-                    tools.执行时间戳.检测认证();
+                    tools.常用操作.及时执行事件();
                     tools.常用操作.跑图累计错误执行();
                     var 是否沿途打怪 = config.沿途打怪点.some(item => item === 当前地图)
                     if (new Date().getTime() - 上次跑图时间 > 跑图时间戳) {
@@ -6064,6 +6219,7 @@ var tools = {
             var count = 0;
             if (arrClick && arrClick.length > 0) {
                 for (let index = 0; index < arrClick.length; index++) {
+                    tools.常用操作.及时执行事件();
                     var item = arrClick[index];
                     sleep(1000);
                     tools.click(item.x, item.y);
@@ -7041,6 +7197,7 @@ var tools = {
                 sleep(random(1500, 2000));
 
                 while (true) {
+                    tools.常用操作.及时执行事件();
                     sleep(random(1500, 2000));
                     r = tools.findImageAreaForWaitClick("fenshenjiashiBtn.png", 加时p.x[0], 加时p.y[0], 加时p.x[1], 加时p.y[1], {
                         maxTries: 10,
@@ -7100,13 +7257,13 @@ var tools = {
             var 是否已跳过武器 = false;
             for (let index = 1; index <= 5; index++) {
                 for (let index1 = 1; index1 <= 8; index1++) {
-                    tools.执行时间戳.检测认证();
                     if (当前总状态 != 总状态.已启动) {
                         return {
                             status: true,
                             err: "程序未启动"
                         }
                     }
+                    tools.常用操作.及时执行事件();
                     sleep(random(666, 888))
                     tools.补给操作.点击背包格子(index, index1, zhengliBtn);
                     r = tools.补给操作.获取操作按钮(["放入"], "卖物品", false, false, true);
@@ -7206,6 +7363,7 @@ var tools = {
             var zhengliBtn = tools.补给操作.整理背包(true);
             sleep(1000)
             for (let index = 0; index < arr.length; index++) {
+                tools.常用操作.及时执行事件();
                 var 药品格子P = arr[index];
                 var r = tools.findImageArea(补给枚举.中蓝个_格子, 药品格子P.x1, 药品格子P.y1, 药品格子P.x2, 药品格子P.y2, 0.85);
                 if (r.status) {
@@ -7485,6 +7643,7 @@ var tools = {
             }
 
             for (var index = 0; index < result.length; index++) {
+                tools.常用操作.及时执行事件();
                 var pic = result[index];
                 sleep(random(666, 888));
                 var arr = tools.补给操作.寻找装备(zhengliBtn, pic, 替换);
@@ -7547,7 +7706,7 @@ var tools = {
                 var 修复油数量 = 修复油数量_背包 + 修复油数量_格子;
                 for (var i = 0; i < 物品集合.length; i++) {
                     if (当前总状态 == 总状态.已启动) {
-                        tools.执行时间戳.检测认证();
+                        tools.常用操作.及时执行事件();
                         var 物品对象 = 物品集合[i];
                         var buyNum = 物品对象["数量"];
                         if (护身符数量 > 0 && 物品对象["名称"].indexOf("护身符") >= 0) {
@@ -7753,7 +7912,7 @@ var tools = {
             var 是否返回修理 = false;
             for (let index = 1; index <= 5; index++) {
                 for (let index1 = 1; index1 <= 8; index1++) {
-                    tools.执行时间戳.检测认证();
+                    tools.常用操作.及时执行事件();
                     if (是否返回修理) {
                         var result = tools.findImageForWaitClick("xiulifanhui.png", {
                             maxTries: 5,
@@ -7840,7 +7999,7 @@ var tools = {
             if (zhengliBtn.status) {
                 for (let index = 1; index <= 5; index++) {
                     for (let index1 = 1; index1 <= 8; index1++) {
-                        tools.执行时间戳.检测认证();
+                        tools.常用操作.及时执行事件();
                         tools.补给操作.点击背包格子(index, index1, zhengliBtn);
                         var r = tools.补给操作.获取操作按钮(["穿戴", "使用"], "穿 装 备", false, true, true);
                         if (r.status) {
@@ -9249,9 +9408,8 @@ ui.run(() => {
         isShowConfig = false
         win.setPosition(-10000, padding_top);
 
-        //是否有组队任务 = true;
         threads.start(function () {
-            tools.人物移动.使用地牢()
+            tools.组队.申请组队()
         });
     });
 
@@ -9429,7 +9587,10 @@ function showWinConfig() {
 
 }
 
-//sleep(2100)
+
+// sleep(2100)
+
+// tools.组队.确定组队()
 //var zhengliBtn = tools.补给操作.整理背包(true);
 // while (true) {
 //     var r = tools.拾取.是否精品装备();
@@ -9438,31 +9599,33 @@ function showWinConfig() {
 //启动程序
 threads.start(function () {
     var 开启寻怪 = false;
+    tools.Socket.链接();
+    threads.start(() => {
+        tools.Socket.监听();
+    })
     while (true) {
-        if (是否需要启动组队) {
-            tools.常用操作.开启组队();
-            是否需要启动组队 = false;
-            tools.组队.通知队长开组完成();
-        }
         if (当前总状态 == 总状态.已启动) {
-            var 打怪次数 = 0; //大于0则坐标移动过，需强制跑图
             if (!是否启动初始化过) {
                 tools.常用方法.启动初始化();
                 tools.挂机打怪.初始化挂机();
                 是否启动初始化过 = true;
             }
-            if (开启强行补给) {
-                开启强行补给 = false;
-                toastLog("强制回城补给")
-                tools.挂机打怪.回城补给在挂机("强行补给");
+            if (!是否发起过组队) {
+                if (挂机参数.是否队长 == 1) {
+                    try {
+                        tools.组队.队长.组队();
+                    } catch (error) {
+                        tools.悬浮球临时描述(error.toString())
+                    }
+                }
+                else {
+
+                }
+                是否发起过组队 = true;
             }
-
-
-            tools.执行时间戳.检测认证();
+            tools.常用操作.及时执行事件();
+            var 打怪次数 = 0; //大于0则坐标移动过，需强制跑图
             var r = false;
-
-
-
             while (开启寻怪) {
                 try {
                     r = tools.挂机打怪.寻找打怪(打怪次数);
@@ -9479,17 +9642,6 @@ threads.start(function () {
                     break;
                 }
             }
-            // if (挂机参数.地图轮询 == 1 && 当前地图 == 挂机参数.挂机地图) {
-            //     if (挂机参数.挂机地图大 == "蜈蚣洞") {
-            //         if (挂机参数.挂机地图.indexOf("地牢一层东") >= 0) {
-            //             挂机参数.挂机地图 = 挂机参数.轮询切换地图;
-            //         }
-            //         else {
-            //             挂机参数.轮询切换地图 = 当前地图;
-            //             挂机参数.挂机地图 = "地牢一层东";
-            //         }
-            //     }
-            // }
 
 
             if (new Date().getTime() - 上次跑图时间 > 跑图时间戳) {
@@ -9518,19 +9670,20 @@ threads.start(function () {
                 }
                 上次跑图时间 = new Date().getTime();
             }
-
-
         } else {
-            if (isStart) {
+            var { w, h } = tools.获取屏幕高宽();
+            tools.悬浮球描述(w + ":" + h)
+            if (isStart && w > h) {
                 if (tools.常用操作.检测是否在游戏画面()) {
                     当前总状态 = 总状态.已启动;
                     是否启动初始化过 = false;
                 }
             }
-            sleep(1000);
+            sleep(333);
         }
     }
 });
+
 
 // 开一个线程周期性更新 UI
 threads.start(function () {
@@ -9559,75 +9712,10 @@ threads.start(function () {
     }
 });
 
-
-threads.start(function () {
-    try {
-        tools.Socket.链接();
-        tools.Socket.output.println(JSON.stringify({
-            type: 0,
-            account: 挂机参数.机器标识,
-            isDuiZhang: 挂机参数.是否队长,
-            Id: 挂机参数.唯一ID
-        }));
-        // 启动一个线程监听服务器消息
-        threads.start(function () {
-            tools.Socket.监听();
-        });
-        if (挂机参数.是否队长 == 1) {
-            var arr = 挂机参数.组队.split(",");
-            if (arr != null && arr.length > 0) {
-                // var p = config.zuobiao.按钮集合[fbl].好友;
-                // tools.click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]))
-                // sleep(1200);
-                // var x = 1005;
-                // var y = 0;
-                for (var index = 0; index < arr.length; index++) {
-                    var item = arr[index].split("|");
-                    var 顺序 = item[0];
-                    var Id = item[1];
-                    switch (parseInt(item)) {
-                        case 1:
-                            y = 152;
-                            break;
-                        case 2:
-                            y = 222;
-                            break;
-                        case 3:
-                            y = 292;
-                            break;
-                        case 4:
-                            y = 358;
-                            break;
-                    }
-                    tools.click(x + random(-50, 50), y + random(-15, 15));
-                    sleep(1000);
-                    tools.findImageForWaitClick(文字图枚举.组, {
-                        maxTries: 6,
-                        interval: 200
-                    }, 0.9);
-                    sleep(1000);
-                    toastLog("已完成" + (index + 1) + "号好友组队");
-                }
-                tools.常用操作.关闭所有窗口();
-            }
-            是否有组队任务 = false;
-        }
-        // 10 秒后关闭 socket
-        // sleep(10000);
-        // socket.close();
-        // log("✅ 连接已关闭");
-
-    } catch (err) {
-        tools.常用方法.发送提醒("socket异常_1" + err)
-    }
-});
-
-
 // var Intent = android.content.Intent;
 // var intent = new Intent(Intent.ACTION_MAIN);
 // intent.addCategory(Intent.CATEGORY_HOME);
 // intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 // context.startActivity(intent);
-
 
 setInterval(() => { }, 1000);
