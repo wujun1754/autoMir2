@@ -1820,9 +1820,6 @@ var tools = {
             };
         },
         设置内挂: () => {
-            var 高亮显血自己 = config.zuobiao.设置面板[fbl].高亮显血自己;
-            var 高亮显血组队 = config.zuobiao.设置面板[fbl].高亮显血组队;
-            var 血量加药 = config.zuobiao.设置面板[fbl].血量加药;
             var 随机保护 = config.zuobiao.设置面板[fbl].随机保护;
             //sleep(555)
             var r = tools.findImageForWaitClick("setting.png", {
@@ -2883,7 +2880,7 @@ var tools = {
                             x: p.x[0],
                             y: item.point.y,
                             w: p.x[1] - p.x[0],
-                            h: 35,
+                            h: p.h,
                         }
                         var r = null;
                         if (挂机参数.只打满血怪 == 1) {
