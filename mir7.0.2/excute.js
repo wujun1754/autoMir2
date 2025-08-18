@@ -29,6 +29,8 @@ let 存入仓库数量 = 0;
 var 挂机点跑图顺序 = 0;
 var 是否强制跑图 = false;
 
+let Socket心跳时间 = new Date().getTime() - 1000 * 60 * 24;
+
 let 上一次申请组队时间 = new Date().getTime() - 1000 * 60 * 24;
 let 申请组队时间戳 = 60 * 1000 * 5;
 
@@ -953,7 +955,11 @@ var tools = {
                 if (msg != null) {
                     msg = msg.trim()
                     var j = JSON.parse(msg);
-                    if (j.type == 3) {//通知队员确定组队
+                    if (j.type == -1) {//通知队员确定组队
+                        Socket心跳时间 = new Date().getTime()
+                        //tools.悬浮球临时描述("心跳")
+                    }
+                    else if (j.type == 3) {//通知队员确定组队
                         tools.Socket.是否确定组队 = true;
                         tools.悬浮球临时描述("通知确定组队")
                     }
@@ -9569,14 +9575,14 @@ function showWinConfig() {
     win.tab1.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
     win.tab2.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
     win.tab3.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
-    win.btnStart.setLayoutParams(android.widget.LinearLayout.LayoutParams(100, 60));
-    win.btnSave.setLayoutParams(android.widget.LinearLayout.LayoutParams(100, 60));
-    win.btnClose.setLayoutParams(android.widget.LinearLayout.LayoutParams(100, 60));
-    win.btnSetFouse.setLayoutParams(android.widget.LinearLayout.LayoutParams(100, 60));
-    win.btnReset.setLayoutParams(android.widget.LinearLayout.LayoutParams(100, 60));
-    win.btnBuJi.setLayoutParams(android.widget.LinearLayout.LayoutParams(100, 60));
-    win.btnExit.setLayoutParams(android.widget.LinearLayout.LayoutParams(100, 60));
-    win.btnRenZheng.setLayoutParams(android.widget.LinearLayout.LayoutParams(100, 60));
+    win.btnStart.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
+    win.btnSave.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
+    win.btnClose.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
+    win.btnSetFouse.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
+    win.btnReset.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
+    win.btnBuJi.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
+    win.btnExit.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
+    win.btnRenZheng.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
 
 }
 
@@ -9595,10 +9601,6 @@ function showWinConfig() {
 //启动程序
 threads.start(function () {
     var 开启寻怪 = false;
-    tools.Socket.链接();
-    threads.start(() => {
-        tools.Socket.监听();
-    })
     while (true) {
         if (当前总状态 == 总状态.已启动) {
             if (!是否启动初始化过) {
@@ -9668,6 +9670,21 @@ threads.start(function () {
 });
 
 
+threads.start(() => {
+    while (true) {
+        if ((new Date().getTime() - Socket心跳时间) > 1000 * 30) {
+            tools.悬浮球临时描述("链接Socket")
+            tools.Socket.链接();
+            threads.start(() => {
+                tools.Socket.监听();
+            })
+            Socket心跳时间 = new Date().getTime()
+        }
+        else {
+            sleep(1000);
+        }
+    }
+})
 // 开一个线程周期性更新 UI
 threads.start(function () {
     while (true) {
