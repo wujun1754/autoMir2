@@ -1162,8 +1162,9 @@ var tools = {
                 if (arr != null && arr.length > 0) {
                     var p = config.zuobiao.按钮集合[fbl].好友;
                     var 顺序p = config.zuobiao.好友顺序[fbl];
+                    sleep(666);
                     tools.click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]))
-                    sleep(1500);
+                    sleep(999);
                     var x = 顺序p.x;
                     var y = 0;
                     for (var index = 0; index < arr.length; index++) {
@@ -1172,6 +1173,7 @@ var tools = {
                         var Id = item.Id;
                         y = 顺序p.y[顺序 - 1];
                         tools.click(x + random(-50, 20), y + random(-5, 5));
+                        sleep(333);
                         var r = tools.findImageForWaitClick(文字图枚举.组, {
                             maxTries: 10,
                             interval: 200
@@ -2576,9 +2578,7 @@ var tools = {
                 tools.悬浮球描述("检测验证码开始");
                 var r = tools.验证码认证.检测是否有认证();
                 if (r.status) {
-                    if (挂机参数.认证自动识别 == 1) {
-                        tools.验证码认证.处理认证(r.value);
-                    }
+                    tools.验证码认证.处理认证(r.value);
                 }
                 认证自检时间 = new Date().getTime();
                 tools.悬浮球描述("检测验证码结束");
@@ -3234,8 +3234,8 @@ var tools = {
                     if (精英怪 == null || !精英怪.status) {
                         tools.执行时间戳.检测武器衣服包袱();
                     }
-
-                    tools.悬浮球描述("(" + ((timeout - (时间戳)) / 1000).toFixed(2) + ") (" + 锁定的怪物 + ") (" + 左面板怪物 != null && 左面板怪物.status ? 左面板怪物.value.name : "null" + ") (" + isChange + ") (" + 宝宝身边怪物 + ")");
+                    var 左面板Str = (左面板怪物 != null && 左面板怪物.status ? 左面板怪物.value.name : "null");
+                    tools.悬浮球描述("(" + ((timeout - (时间戳)) / 1000).toFixed(2) + ") (" + 锁定的怪物 + ") (" + 左面板Str + ") (" + isChange + ") (" + 宝宝身边怪物 + ")");
                 } else {
                     if (new Date().getTime() >= 禁止拾取时间) {
                         tools.拾取.点击(1);
@@ -3708,15 +3708,12 @@ var tools = {
         },
         是否逃跑: () => {
             var result = false;
+            var p = config.找色[fbl].逃跑;
             var img = captureScreen();
-            var r = images.findMultiColors(img, "#FF4246", [[0, -43, "#A5060D"]], {
-                region: [365, 590, 3, 100],
+            var r = images.findMultiColors(img, p.c0, [[p.x1, p.y1, p.c1]], {
+                region: p.p,
                 threshold: 15
             });
-            // var r = images.findMultiColors(img, "#FF4246", [[0, -32, "#B80918"]], {
-            //     region: [365, 600, 3, 45],
-            //     threshold: 15
-            // });
             utils.recycleNull(img);
             if (r == null || r.x <= 0 || r.y <= 0) {
                 if (tools.常用操作.检测是否在游戏画面()) {
@@ -4824,6 +4821,7 @@ var tools = {
             });
             utils.recycleNull(img);
             if (r && (r.x > 0 || r.y > 0)) {
+                tools.悬浮球临时描述("发现拾取");
                 var isok = true;
                 var 限制p = config.zuobiao.扫描拾取限制范围[fbl];
                 if (r.x >= 限制p.x1 && r.x <= 限制p.x2 && r.y >= 限制p.y1 && r.y <= 限制p.y2) {
@@ -6497,22 +6495,12 @@ var tools = {
                         }
                     }
                     else if (item.pic == 装备枚举.凝霜) {
-                        r = tools.补给操作.背包选中按钮中找字图(文字图枚举.凝, btn)
+                        r = tools.补给操作.背包选中按钮中找字图(文字图枚举.凝, btn, 0.55)
                         if (r.status) {
                             return {
                                 status: true,
                                 pic: item.pic,
                                 物品名称: item.name
-                            }
-                        }
-                        else {
-                            r = tools.补给操作.背包选中按钮中找字图(文字图枚举.霜, btn)
-                            if (r.status) {
-                                return {
-                                    status: true,
-                                    pic: item.pic,
-                                    物品名称: item.name
-                                }
                             }
                         }
                     }
@@ -6547,7 +6535,7 @@ var tools = {
                         }
                     }
                     else if (item.pic == 装备枚举.重盔男 || item.pic == 装备枚举.重盔女) {
-                        r = tools.补给操作.背包选中按钮中找字图(文字图枚举.盔, btn)
+                        r = tools.补给操作.背包选中按钮中找字图(文字图枚举.盔, btn, 0.55)
                         return {
                             status: true,
                             pic: item.pic,
@@ -6729,7 +6717,10 @@ var tools = {
                 msg: ""
             }
         },
-        背包选中按钮中找字图: (字图, btn) => {
+        背包选中按钮中找字图: (字图, btn, t) => {
+            if (t == null) {
+                t = 0.7;
+            }
             if (btn && btn.status) {
                 var p = btn.img;
                 var 装备属性明细 = config.zuobiao.人物面板[fbl].装备属性明细;
@@ -8086,7 +8077,7 @@ var tools = {
             //    tools.click(r.x + random(12, 20), r.y + random(-3, 3))
             //     isFind = true;
             // }
-            tools.click(认证P.x + random(-5, 5), 认证P.y - random(7, 15));
+            tools.click(认证P.x + random(-5, 5), 认证P.y - random(20, 25));
             var btn = tools.findImageForWait("renzhengtuodongtiao.png", {
                 maxTries: 10,
                 interval: 200
