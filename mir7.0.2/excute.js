@@ -3727,9 +3727,10 @@ var tools = {
         },
         是否自愈: () => {
             var result = false;
+            var p = config.找色[fbl].自愈;
             var img = captureScreen();
-            var r = images.findMultiColors(img, "#FF4246", [[0, -63, "#660611"]], {
-                region: [365, 570, 3, 100],
+            var r = images.findMultiColors(img, p.c0, [[p.x1, p.y1, p.c1]], {
+                region: p.p,
                 threshold: 15
             });
             utils.recycleNull(img);
@@ -3745,9 +3746,10 @@ var tools = {
         },
         是否小退: () => {
             var result = false;
+            var p = config.找色[fbl].自愈;
             var img = captureScreen();
-            var r = images.findMultiColors(img, "#FF4246", [[0, -23, "#BF0712"]], {
-                region: [365, 610, 3, 50],
+            var r = images.findMultiColors(img, p.c0, [[p.x1, p.y1, p.c1]], {
+                region: p.p,
                 threshold: 15
             });
             utils.recycleNull(img);
@@ -3758,19 +3760,6 @@ var tools = {
                         result = true;
                     }
                 }
-            }
-            return result;
-        },
-        获取人物血量是否隐身: () => {
-            var result = false;
-            var img = captureScreen();
-            var r = images.findMultiColors(img, "#FF4246", [[0, -69, "#79030C"]], {
-                region: [365, 560, 3, 85],
-                threshold: 35
-            });
-            utils.recycleNull(img);
-            if (r == null || r.x <= 0 || r.y <= 0) {
-                result = true;
             }
             return result;
         },
@@ -3788,16 +3777,6 @@ var tools = {
                 if (r) {
                     break;
                 }
-                // var color = "#FFFFFF"
-                // var img = captureScreen();
-                // var r = images.findMultiColors(img, color, [[0, 18, color], [12, 17, color]], {
-                //     region: [隐身P.x[0], 隐身P.y[0], 隐身P.x[1] - 隐身P.x[0], 隐身P.y[1] - 隐身P.y[0]],
-                //     threshold: 10
-                // });
-                // utils.recycleNull(img);
-                // if (r && (r.x > 0 || r.y > 0)) {
-                //     break;
-                // }
             }
         },
         打符: () => {
@@ -4176,188 +4155,19 @@ var tools = {
                 sleep(100);
             }
         },
-        地图箭头: () => {
-            var closeImg = null;
-            var closeBtn = tools.findImageForWait("closeBtn.png", {
-                maxTries: 10,
-                interval: 100
-            })
-            if (closeBtn.status) {
-                closeImg = closeBtn.img;
-            } else {
-                toastLog("未找到关闭按钮")
-                return {
-                    status: false
-                }
-            }
-            var x = closeImg.x - 1033;
-            var widthX = 816;
-            var y = closeImg.y + 40;
-            var widthY = 523;
-            tools.click(x, y)
-            var img = captureScreen();
-            var r = images.findMultiColors(img, "#FEE96E", [[0, 12, "#FDDE6B"]], {
-                region: [x, y, widthX, widthY],
-                threshold: 10
-            });
-            utils.recycleNull(img);
-            return r;
-        },
         大地图箭头: (closeBtn) => {
             var closeImg = closeBtn.img;;
             var result = {
                 status: false
             };
-            var arr = [
-                {
-                    方向: "正上",
-                    箭头: "#FEEA6E",
-                    尾1: {
-                        x: -5,
-                        y: 16,
-                        color: "#FEEA6E"
-                    },
-                    中间: {
-                        x: 0,
-                        y: 13,
-                        color: "#FDDD6E"
-                    },
-                    尾2: {
-                        x: 6,
-                        y: 16,
-                        color: "#FEEA6E"
-                    }
-                }, {
-                    方向: "左上",
-                    箭头: "#FEEA6E",
-                    尾1: {
-                        x: 7,
-                        y: 15,
-                        color: "#FEEA6E"
-                    },
-                    中间: {
-                        x: 9,
-                        y: 9,
-                        color: "#FDDD6E"
-                    },
-                    尾2: {
-                        x: 15,
-                        y: 7,
-                        color: "#FEEA6E"
-                    }
-                }, {
-                    方向: "正左",
-                    箭头: "#FEEA6E",
-                    中间: {
-                        x: 13,
-                        y: 0,
-                        color: "#FDDF6E"
-                    },
-                    尾1: {
-                        x: 15,
-                        y: -5,
-                        color: "#FEEA6E"
-                    },
-                    尾2: {
-                        x: 15,
-                        y: 6,
-                        color: "#FEEA6E"
-                    }
-                }, {
-                    方向: "左下",
-                    箭头: "#FEEA6E",
-                    尾1: {
-                        x: 7,
-                        y: -14,
-                        color: "#FEEA6E"
-                    },
-                    中间: {
-                        x: 8,
-                        y: -9,
-                        color: "#FDDD6E"
-                    },
-                    尾2: {
-                        x: 15,
-                        y: -7,
-                        color: "#FEEA6E"
-                    }
-                }, {
-                    方向: "正下",
-                    箭头: "#FEEA6E",
-                    尾1: {
-                        x: -5,
-                        y: -15,
-                        color: "#FEEA6E"
-                    },
-                    中间: {
-                        x: 0,
-                        y: -12,
-                        color: "#FDDD6E"
-                    },
-                    尾2: {
-                        x: 5,
-                        y: -15,
-                        color: "#FEEA6E"
-                    }
-                }, {
-                    方向: "右下",
-                    箭头: "#FEEA6E",
-                    尾1: {
-                        x: -13,
-                        y: -6,
-                        color: "#FEEA6E"
-                    },
-                    中间: {
-                        x: -7,
-                        y: -8,
-                        color: "#FDDC6E"
-                    },
-                    尾2: {
-                        x: -6,
-                        y: -13,
-                        color: "#FEEA6E"
-                    }
-                }, {
-                    方向: "正右",
-                    箭头: "#FEEA6E",
-                    中间: {
-                        x: -12,
-                        y: 0,
-                        color: "#FDDD6E"
-                    },
-                    尾1: {
-                        x: -15,
-                        y: -6,
-                        color: "#FEEA6E"
-                    },
-                    尾2: {
-                        x: -15,
-                        y: 6,
-                        color: "#FEEA6E"
-                    }
-                }, {
-                    方向: "右上",
-                    箭头: "#FEEA6E",
-                    中间: {
-                        x: -7,
-                        y: 9,
-                        color: "#FDDD6E"
-                    },
-                    尾1: {
-                        x: -14,
-                        y: 6,
-                        color: "#FEEA6E"
-                    },
-                    尾2: {
-                        x: -6,
-                        y: 14,
-                        color: "#FEEA6E"
-                    }
-                }]
-            var x = closeImg.x - 1033;
-            var widthX = 816;
-            var y = closeImg.y + 40;
+            var arr = config.找色[fbl].大地图箭头;
+            var x = 0;
+            var y = closeImg.y;
+            var widthX = closeImg.x; 
             var widthY = 523;
+            if(fbl=="1080_2248"){
+                widthY = 900;
+            }
             var img = captureScreen();
             for (var i = 0; i < arr.length; i++) {
                 var p = arr[i];
