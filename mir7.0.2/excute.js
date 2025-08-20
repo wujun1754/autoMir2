@@ -594,7 +594,7 @@ let windowCommon = floaty.window(
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="7.0.3" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="7.0.5" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -1866,7 +1866,12 @@ var tools = {
             if (!r.status) {
                 return;
             }
-            tools.click(random(420, 430), random(142, 150));
+            if (fbl == "1080_2248") {
+                tools.click(random(775, 820), random(213, 228));
+            }
+            else {
+                tools.click(random(420, 430), random(142, 150));
+            }
             var r = tools.findImageAreaForWait("setting_select.png", 随机保护.x[0], 随机保护.y[0], 随机保护.x[1], 随机保护.y[1], {
                 maxTries: 5,
                 interval: 200
@@ -1968,12 +1973,16 @@ var tools = {
                 interval: 500
             });
             if (closeBtn.status) {
+                var h = 481;
+                if (fbl == "1080_2248") {
+                    h = 800;
+                }
                 var closeImg = closeBtn.img;
                 var p = {
-                    x1: closeImg.x - 42,
-                    x2: closeImg.x - 7,
-                    y1: closeImg.y + 43,
-                    y2: closeImg.y + 481
+                    x1: closeImg.x - 150,
+                    x2: closeImg.x,
+                    y1: closeImg.y,
+                    y2: closeImg.y + h
                 }
                 r = tools.findImageAreaForWaitClick("dituyoujiantou.png", p.x1, p.y1, p.x2, p.y2, {
                     maxTries: 5,
@@ -3876,10 +3885,11 @@ var tools = {
             }
         },
         是否技能冷确中: (范围) => {
+            tools.悬浮球临时描述(JSON.stringify(范围))
             var 技能冷却 = config.zuobiao.按钮集合[fbl].技能冷却;
             var img = captureScreen();
             var r = images.findMultiColors(img, 技能冷却.c1, [[技能冷却.x2, 技能冷却.y2, 技能冷却.c2], [技能冷却.x3, 技能冷却.y3, 技能冷却.c3]], {
-                region: [范围.x[0], 范围.y[0], 范围.x[1] - 范围.x[0], 范围.y[1] - 范围.y[0]],
+                region: [范围.x[0] - 50, 范围.y[0] - 50, 范围.x[1] - 范围.x[0] + 100, 范围.y[1] - 范围.y[0] + 100],
                 threshold: 10
             });
             utils.recycleNull(img);
@@ -4163,9 +4173,9 @@ var tools = {
             var arr = config.找色[fbl].大地图箭头;
             var x = 0;
             var y = closeImg.y;
-            var widthX = closeImg.x; 
+            var widthX = closeImg.x;
             var widthY = 523;
-            if(fbl=="1080_2248"){
+            if (fbl == "1080_2248") {
                 widthY = 900;
             }
             var img = captureScreen();
@@ -4194,20 +4204,19 @@ var tools = {
                 status: false,
                 r: null
             };
-            var regions = [
-                [0, 0, 617, 720],
-                [663, 0, 617, 720],
-                [617, 0, 43, 240],
-                [617, 250, 43, 470],
-            ]
+            var regions = config.找色[fbl].扫描宝宝;
             for (let index = 0; index < regions.length; index++) {
                 var reg = regions[index];
                 var r = images.findMultiColors(img, color, [[8, 0, color]], {
                     region: reg,
                     threshold: 15
                 });
+                var 血量中心偏移 = 20;
+                if (fbl == "1080_2248") {
+                    血量中心偏移 = 31;
+                }
                 if (r && (r.x > 0 || r.y > 0)) {
-                    r.x = r.x + 20; //返回宝宝中心血量的
+                    r.x = r.x + 血量中心偏移; //返回宝宝中心血量的
                     result = {
                         status: true,
                         r: r
@@ -4216,33 +4225,6 @@ var tools = {
                 }
             }
             utils.recycleNull(img);
-            return result;
-        },
-        扫描其他玩家: () => {
-            var color = "#DB0000";
-            var result = {
-                status: false,
-                r: null
-            };
-            var reg = [240, 53, 820, 500];
-            var img = captureScreen();
-            var r = images.findMultiColors(img, color, [[18, 0, "#DB0000"], [18, -7, "#E4E3E2"], [19, -9, "#F1F0F0"], [20, -12, "#F7F6F6"]], {
-                region: reg,
-                threshold: 25
-            });
-            utils.recycleNull(img);
-            if (r && (r.x > 0 || r.y > 0)) {
-                tools.常用操作.点击左面板人物()
-                sleep(500);
-                r = tools.挂机打怪.找非满血怪();
-                if (r && (r.x > 0 || r.y > 0)) {
-                    result = {
-                        status: true,
-                        r: r
-                    }
-                }
-                tools.常用操作.点击左面板怪物()
-            }
             return result;
         },
         向宝宝移动: () => {
@@ -4625,7 +4607,8 @@ var tools = {
             if (p == null || p.x1 <= 0) {
                 p = config.zuobiao.扫描拾取全屏范围[fbl];
             }
-            var r = images.findMultiColors(img, "#FFFF68", [[0, 40, "#FFFFFF"], [0, 60, "#FFFFFF"]], {
+            var c = config.找色[fbl].扫描拾取;
+            var r = images.findMultiColors(img, c.c0, [[c.x1, c.y1, c.c1], [c.x2, c.y2, c.c2]], {
                 threshold: 35,
                 region: [p.x1, p.y1, p.x2 - p.x1, p.y2 - p.y1],
             });
@@ -5436,16 +5419,20 @@ var tools = {
             var routes = null;
 
             if (下一层 && 下一层.入口 && 箭头P.status) {
-                if (Math.abs(箭头P.r.x - 下一层.入口.x) > 50 || Math.abs(箭头P.r.y - 下一层.入口.y) > 50) {
-                    var x = closeImg.x + (下一层.入口.x - 偏移.x) + random(-5, 5);
-                    var y = closeImg.y + (下一层.入口.y - 偏移.y) + random(-5, 5);
+                var 入口 = {
+                    x: 下一层.入口[fbl].x - 偏移.x + closeImg.x,
+                    y: 下一层.入口[fbl].y - 偏移.y + closeImg.x,
+                }
+                if (Math.abs(箭头P.r.x - 入口.x) > 50 || Math.abs(箭头P.r.y - 入口.y) > 50) {
+                    var x = 入口.x + random(-5, 5);
+                    var y = 入口.y + random(-5, 5);
                     tools.click(x, y);
                     tools.常用操作.关闭所有窗口(false, 0, true);
                     是否强制跑图 = false;
                     return;
                 }
             }
-            if (下一层 && 下一层.进门) {
+            if (下一层 && 下一层.进门 && 下一层.进门.length > 0) {
                 routes = 下一层.进门;
             }
             else {
@@ -5462,6 +5449,7 @@ var tools = {
                     标识 = 路由[0];
                 }
                 var info = config.地图标识[标识];
+                var 范围p = info.范围[fbl];
                 var x = 0;
                 var y = 0;
                 if (Array.isArray(r.x)) {
@@ -5484,10 +5472,10 @@ var tools = {
                 tools.click(x, y)
                 if (i < routes.length - 1) {
                     if (info && info.pic && info.pic.length > 0) {
-                        var px1 = closeImg.x + (info.范围.x1 - 偏移.x);
-                        var px2 = closeImg.x + (info.范围.x2 - 偏移.x);
-                        var py1 = closeImg.y + (info.范围.y1 - 偏移.y);
-                        var py2 = closeImg.y + (info.范围.y2 - 偏移.y);
+                        var px1 = closeImg.x + (范围p.x1 - 偏移.x);
+                        var px2 = closeImg.x + (范围p.x2 - 偏移.x);
+                        var py1 = closeImg.y + (范围p.y1 - 偏移.y);
+                        var py2 = closeImg.y + (范围p.y2 - 偏移.y);
                         var r = tools.findImageAreaForWait(info.pic, px1, py1, px2, py2, {
                             maxTries: 10,
                             interval: 300,
