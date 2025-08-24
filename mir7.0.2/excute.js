@@ -290,6 +290,22 @@ var 持久提示枚举 = {
 var 左怪物文字枚举 = {
     蜈蚣洞: [
         {
+            精英怪: true,
+            name: "邪恶蚶虫",
+            pic: "wenzhi_zuomianban_xiee.png",
+            怪物显示图: "wenzi_wugongdong_xiee.png",
+            左上血条偏移: {
+                '720_1280': {
+                    x: 10,
+                    y: -51
+                },
+                '1080_2248': {
+                    x: 17,
+                    y: -65
+                }
+            }
+        },
+        {
             精英怪: false,
             name: "钳虫",
             pic: "wenzhi_zuomianban_wugong_qian.png",
@@ -1067,7 +1083,13 @@ var tools = {
         },
         获取好友Id: () => {
             var result = [];
-            var arr = 挂机参数.组队.split(",");
+            var arr = [];
+            try {
+                arr = 挂机参数.组队.split(",");
+            } catch (error) {
+                arr = null;
+                tools.常用方法.发送提醒("获取好友Id字符串异常(" + 挂机参数.组队 + ")");
+            }
             if (arr != null && arr.length > 0) {
                 for (var index = 0; index < arr.length; index++) {
                     result.push(arr[index].split("|")[1])
@@ -1077,7 +1099,13 @@ var tools = {
         },
         获取好友: () => {
             var result = [];
-            var arr = 挂机参数.组队.replace(".", "").split(",");
+            var arr = [];
+            try {
+                arr = 挂机参数.组队.split(",");
+            } catch (error) {
+                arr = null;
+                tools.常用方法.发送提醒("获取组队字符串异常(" + 挂机参数.组队 + ")");
+            }
             if (arr != null && arr.length > 0) {
                 for (var index = 0; index < arr.length; index++) {
                     var info = arr[index].split("|");
@@ -3085,10 +3113,14 @@ var tools = {
                             }
                         }
                     }
-                    本次扫描的怪物名 = tools.挂机打怪.扫描身边怪物名(左面板怪物);
-                    if (本次扫描的怪物名.length > 0) {
-                        锁定的怪物 = 本次扫描的怪物名;
+                    var 扫描R = tools.挂机打怪.扫描身边怪物名(左面板怪物);
+                    本次扫描的怪物名 = 扫描R.name;
+                    if (扫描R.status) {
+                        锁定的怪物 = 扫描R.name;
                         上一次怪物身边时间 = new Date().getTime();
+                        if (扫描R.是否精英) {
+                            精英怪 = 扫描R;
+                        }
                     }
                     if (锁定的怪物.length > 0 && (!是否隐身等待 || 是否强制攻击) && (new Date().getTime() - 上一次怪物身边时间) >= (1000 * 1.8)) {
                         r = tools.挂机打怪.向怪物移动(左面板怪物);
@@ -3097,7 +3129,7 @@ var tools = {
                         }
                         else if (挂机参数.隐身走动 == 0) {
                             //锁定失败次数++;
-                            //tools.挂机打怪.打符();
+                            tools.挂机打怪.打符();
                             上一次怪物身边时间 = new Date().getTime();
                             toastLog("1.8:" + r.msg);
                         }
@@ -3250,16 +3282,16 @@ var tools = {
                             是否强制攻击 = true;
                         }
                     }
-                    if (精英怪 == null || !精英怪.status) {
-                        精英怪 = tools.挂机打怪.寻找精英怪();
-                        if (精英怪.status) {
-                            toastLog("扫描到精英怪")
-                            //tools.挂机打怪.打符();
-                            锁定的怪物 = "";
-                            上一次攻击 = new Date().getTime() - (60 * 1000);
-                            continue;
-                        }
-                    }
+                    // if (精英怪 == null || !精英怪.status) {
+                    //     精英怪 = tools.挂机打怪.寻找精英怪();
+                    //     if (精英怪.status) {
+                    //         toastLog("扫描到精英怪")
+                    //         //tools.挂机打怪.打符();
+                    //         锁定的怪物 = "";
+                    //         上一次攻击 = new Date().getTime() - (60 * 1000);
+                    //         continue;
+                    //     }
+                    // }
                     if (tools.补给操作.检测聊天框持久提示()) {
                         tools.执行时间戳.检测武器衣服包袱(true);
                     }
@@ -3432,8 +3464,8 @@ var tools = {
         判断是否强制攻击: () => {
             var 怪物数 = 0;
             var p = config.zuobiao.左攻击面板[fbl].怪物集合;
-            var 寻人 = tools.挂机打怪.找非满血怪();//注意这里必须提前切换左面板选怪人物
-            if (寻人 && (寻人.x > 0 || 寻人.y > 0)) {
+            var isOk = tools.挂机打怪.找非满血怪(0);//注意这里必须提前切换左面板选怪人物
+            if (isOk) {
                 var nan = tools.findImageAreaForWait("renwu_nan.png", p.x[0], p.y[0], p.x[1], p.y[1], {
                     maxTries: 3,
                     interval: 100,
@@ -3931,8 +3963,28 @@ var tools = {
         是否技能冷确中: (范围) => {
             var 技能冷却 = config.zuobiao.按钮集合[fbl].技能冷却;
             var img = captureScreen();
+            var x1 = 范围.x[0] - 50;
+            var y1 = 范围.y[0] - 50;
+            var width = 范围.x[1] - 范围.x[0] + 100
+            var height = 范围.y[1] - 范围.y[0] + 100;
+            if (fbl == "1080_2248") {
+                if (x1 + width > 2248) {
+                    width = 2248 - x1;
+                }
+                if (y1 + height > 1080) {
+                    height = 1080 - y1;
+                }
+            }
+            else {
+                if (x1 + width > 1280) {
+                    width = 1280 - x1;
+                }
+                if (y1 + height > 720) {
+                    height = 720 - y1;
+                }
+            }
             var r = images.findMultiColors(img, 技能冷却.c1, [[技能冷却.x2, 技能冷却.y2, 技能冷却.c2], [技能冷却.x3, 技能冷却.y3, 技能冷却.c3]], {
-                region: [范围.x[0] - 50, 范围.y[0] - 50, 范围.x[1] - 范围.x[0] + 100, 范围.y[1] - 范围.y[0] + 100],
+                region: [x1, y1, width, height],
                 threshold: 10
             });
             utils.recycleNull(img);
@@ -4350,7 +4402,7 @@ var tools = {
             var 人物中心 = config.zuobiao.人物中心[fbl];
             var p = config.zuobiao.大范围扫描怪物名[fbl];
             var 按钮集合 = config.zuobiao.按钮集合[fbl];
-            var 怪物P = tools.挂机打怪.扫描怪物名图片(左面板怪物.value, p);
+            var 怪物P = tools.挂机打怪.扫描怪物名图片(左面板怪物.value, p, true);
             if (怪物P.status) {
                 r = tools.挂机打怪.扫描怪物空位(怪物P.血量左上);
                 if (r && r.status) {
@@ -4566,12 +4618,30 @@ var tools = {
         扫描身边怪物名: (左面板怪物) => {
             var 身边范围P = config.zuobiao.身边怪物范围[fbl];
             if (左面板怪物 && 左面板怪物.status) {
-                r = tools.挂机打怪.扫描怪物名图片(左面板怪物.value, 身边范围P);
+                r = tools.挂机打怪.扫描怪物名图片(左面板怪物.value, 身边范围P, true);
                 if (r.status) {
-                    return r.name;
+                    return {
+                        status: true,
+                        name: r.name,
+                        是否精英: r.value.精英怪,
+                        value: r.value
+                    }
                 }
             }
-            return tools.挂机打怪.扫描怪物名文字();
+            var str = tools.挂机打怪.扫描怪物名文字();
+            if (str != null && str.length > 0) {
+                return {
+                    status: true,
+                    name: str,
+                    是否精英: false
+                }
+            }
+            else {
+                return {
+                    status: false,
+                    是否精英: false
+                }
+            }
         },
         扫描怪物名文字: () => { //只扫描身边
             var p = config.zuobiao.身边怪物范围[fbl];
@@ -4589,49 +4659,41 @@ var tools = {
             var t = 0.5;
             var 怪物集合 = [];
             怪物集合.push(文字枚举);
-            var r = tools.findImageArea(文字枚举.怪物显示图, p.x1, p.y1, p.x2, p.y2, t);
-            if (r.status) {
-                var x = r.img.x + 文字枚举.左上血条偏移[fbl].x;
-                var y = r.img.y + 文字枚举.左上血条偏移[fbl].y;
-                return {
-                    status: true,
-                    name: 文字枚举.name,
-                    血量左上: {
-                        x: x,
-                        y: y,
+            if (是否额外) {
+                var arr = [];
+                if (挂机参数.挂机地图大 == "蜈蚣洞") {
+                    arr = 左怪物文字枚举.蜈蚣洞
+                }
+                else if (挂机参数.挂机地图大 == "骷髅洞") {
+                    arr = 左怪物文字枚举.骷髅洞
+                }
+                else if (挂机参数.挂机地图大 == "牛魔洞") {
+                    arr = 左怪物文字枚举.牛魔洞
+                }
+                for (var index = 0; index < arr.length; index++) {
+                    var item = arr[index];
+                    if (item.name != 文字枚举.name) {
+                        怪物集合.push(item);
                     }
                 }
             }
-
-            if (是否额外) {
-                var 怪物集合 = [];
-                if (挂机参数.挂机地图大 == "蜈蚣洞") {
-                    怪物集合 = 左怪物文字枚举.蜈蚣洞
-                }
-                else if (挂机参数.挂机地图大 == "骷髅洞") {
-                    怪物集合 = 左怪物文字枚举.骷髅洞
-                }
-                else if (挂机参数.挂机地图大 == "牛魔洞") {
-                    怪物集合 = 左怪物文字枚举.牛魔洞
-                }
-                for (var index = 0; index < 怪物集合.length; index++) {
-                    var item = 怪物集合[index];
-                    var r = tools.findImageArea(文字枚举.怪物显示图, p.x1, p.y1, p.x2, p.y2, t);
-                    if (r.status) {
-                        var x = r.img.x + 文字枚举.左上血条偏移[fbl].x;
-                        var y = r.img.y + 文字枚举.左上血条偏移[fbl].y;
-                        return {
-                            status: true,
-                            name: 文字枚举.name,
-                            血量左上: {
-                                x: x,
-                                y: y,
-                            }
+            for (var index = 0; index < 怪物集合.length; index++) {
+                var item = 怪物集合[index];
+                var r = tools.findImageArea(item.怪物显示图, p.x1, p.y1, p.x2, p.y2, t);
+                if (r.status) {
+                    var x = r.img.x + item.左上血条偏移[fbl].x;
+                    var y = r.img.y + item.左上血条偏移[fbl].y;
+                    return {
+                        status: true,
+                        name: item.name,
+                        value: item,
+                        血量左上: {
+                            x: x,
+                            y: y,
                         }
                     }
                 }
             }
-          
             return {
                 status: false
             }
