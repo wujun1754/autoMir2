@@ -287,7 +287,7 @@ var 持久提示枚举 = {
     凝霜: "wenzhi_zhuangbeitishi_ningshuang.png",
     重盔: "wenzhi_zhuangbeitishi_zhongkui.png",
 }
-var 左怪物文字枚举 = {
+var 左怪物文字枚举 = {//不要随便动顺序，精英怪枚举有写死
     蜈蚣洞: [
         {
             精英怪: true,
@@ -370,21 +370,6 @@ var 左怪物文字枚举 = {
             name: "巨型蠕虫",
             pic: "wenzhi_zuomianban_wugong_ru.png",
             怪物显示图: "wenzi_wugongdong_ju.png",
-            左上血条偏移: {
-                '720_1280': {
-                    x: 10,
-                    y: -51
-                },
-                '1080_2248': {
-                    x: 17,
-                    y: -65
-                }
-            }
-        }, {
-            精英怪: true,
-            name: "邪恶蚶虫",
-            pic: "wenzhi_zuomianban_xiee.png",
-            怪物显示图: "wenzi_wugongdong_xiee.png",
             左上血条偏移: {
                 '720_1280': {
                     x: 10,
@@ -541,6 +526,7 @@ var 精英怪枚举 = {
     牛魔法师: {
         name: "牛魔法师",
         pic: "wenzhi_zuomianban_fashi.png",
+        左怪物文字:左怪物文字枚举.牛魔洞[3],
         是否隐身: false,
         是否施毒: false,
         是否打防: false,
@@ -552,6 +538,7 @@ var 精英怪枚举 = {
     牛魔将军: {
         name: "牛魔将军",
         pic: "wenzhi_zuomianban_jiangjun.png",
+        左怪物文字:左怪物文字枚举.牛魔洞[4],
         是否隐身: true,
         是否施毒: true,
         是否打防: true,
@@ -563,6 +550,7 @@ var 精英怪枚举 = {
     邪恶蚶虫: {
         name: "邪恶蚶虫",
         pic: "wenzhi_zuomianban_xiee.png",
+        左怪物文字:左怪物文字枚举.蜈蚣洞[0],
         是否隐身: true,
         是否施毒: true,
         是否打防: true,
@@ -574,6 +562,7 @@ var 精英怪枚举 = {
     巨型蠕虫: {
         name: "巨型蠕虫",
         pic: "wenzhi_zuomianban_wugong_ru.png",
+        左怪物文字:左怪物文字枚举.蜈蚣洞[5],
         是否隐身: false,
         是否施毒: false,
         是否打防: false,
@@ -585,6 +574,7 @@ var 精英怪枚举 = {
     宝箱: {
         name: "宝箱",
         pic: "wenzhi_zuomianban_baoxiang.png",
+        左怪物文字:左怪物文字枚举.蜈蚣洞[4],
         是否隐身: false,
         是否施毒: false,
         是否打防: false,
@@ -3042,10 +3032,10 @@ var tools = {
             var 隐身时间戳 = 1000 * 15;
             var 上一次隐身 = new Date().getTime() - (60 * 1000);
 
-            var 施毒时间戳 = 1000 * 30;
+            var 施毒时间戳 = 1000 * 45;
             var 上一次施毒 = new Date().getTime() - (60 * 1000);
 
-            var 上一次怪物身边时间 = new Date().getTime() - (60 * 1000);
+            var 上一次怪物身边时间 = new Date().getTime();
 
             var start = new Date().getTime();
             var 怪物 = [];
@@ -3113,23 +3103,29 @@ var tools = {
                             }
                         }
                     }
+
                     var 扫描R = tools.挂机打怪.扫描身边怪物名(左面板怪物);
                     本次扫描的怪物名 = 扫描R.name;
                     if (扫描R.status) {
                         锁定的怪物 = 扫描R.name;
                         上一次怪物身边时间 = new Date().getTime();
                         if (扫描R.是否精英) {
-                            精英怪 = 扫描R;
+                            精英怪 = {
+                                status: true,
+                                value: 精英怪枚举[扫描R.name]
+                            }
                         }
                     }
+
+
                     if (锁定的怪物.length > 0 && (!是否隐身等待 || 是否强制攻击) && (new Date().getTime() - 上一次怪物身边时间) >= (1000 * 1.8)) {
                         r = tools.挂机打怪.向怪物移动(左面板怪物);
                         if (r.status) {
                             continue; //这里continue是为了快速再次执行该方法，避免等移动时间戳
                         }
                         else if (挂机参数.隐身走动 == 0) {
-                            //锁定失败次数++;
-                            tools.挂机打怪.打符();
+                            锁定失败次数++;
+                            //tools.挂机打怪.打符();
                             上一次怪物身边时间 = new Date().getTime();
                             toastLog("1.8:" + r.msg);
                         }
@@ -3151,6 +3147,8 @@ var tools = {
                     }
                     if (挂机参数.隐身数量 > 0) {
                         怪物 = tools.挂机打怪.获取人物身边怪物数据();
+                    }
+                    if (挂机参数.寻找宝宝数 > 0) {
                         扫描宝宝 = tools.挂机打怪.扫描宝宝();
                         if (扫描宝宝.status) {
                             宝宝最后位置信息 = {
@@ -3212,7 +3210,8 @@ var tools = {
                         }
                     }
                     if (精英怪 && 精英怪.status && 精英怪.value.是否施毒) {
-                        if (new Date().getTime() - 上一次施毒 >= 施毒时间戳 || (new Date().getTime() - 上一次怪物身边时间) >= (1000 * 3)) {
+                        //if (new Date().getTime() - 上一次施毒 >= 施毒时间戳 || (new Date().getTime() - 上一次怪物身边时间) >= (1000 * 3)) {
+                        if (new Date().getTime() - 上一次施毒 >= 施毒时间戳) {
                             tools.挂机打怪.施毒();
                             上一次施毒 = new Date().getTime();
                         }
@@ -3282,16 +3281,15 @@ var tools = {
                             是否强制攻击 = true;
                         }
                     }
-                    // if (精英怪 == null || !精英怪.status) {
-                    //     精英怪 = tools.挂机打怪.寻找精英怪();
-                    //     if (精英怪.status) {
-                    //         toastLog("扫描到精英怪")
-                    //         //tools.挂机打怪.打符();
-                    //         锁定的怪物 = "";
-                    //         上一次攻击 = new Date().getTime() - (60 * 1000);
-                    //         continue;
-                    //     }
-                    // }
+                    if (精英怪 == null || !精英怪.status) {
+                        精英怪 = tools.挂机打怪.寻找精英怪();
+                        if (精英怪.status) {
+                            toastLog("扫描到精英怪")
+                            锁定的怪物 = "";
+                            上一次攻击 = new Date().getTime() - (60 * 1000);
+                            continue;
+                        }
+                    }
                     if (tools.补给操作.检测聊天框持久提示()) {
                         tools.执行时间戳.检测武器衣服包袱(true);
                     }
@@ -3308,7 +3306,7 @@ var tools = {
                         tools.执行时间戳.检测武器衣服包袱();
                     }
                     var 左面板Str = (左面板怪物 != null && 左面板怪物.status ? 左面板怪物.value.name : "null");
-                    tools.悬浮球描述("(" + ((timeout - (时间戳)) / 1000).toFixed(2) + ") (" + 锁定的怪物 + ") (" + 左面板Str + ") (" + isChange + ") (" + 宝宝身边怪物 + ")");
+                    tools.悬浮球描述("(" + ((timeout - (时间戳)) / 1000).toFixed(2) + ") (" + 锁定的怪物 + ") (" + 左面板Str + ") (" + isChange + ") (" + 怪物.length + ") (" + 宝宝身边怪物 + ")");
                 } else {
                     tools.悬浮球临时描述("怪物消失")
                     if (挂机参数.提前拾取 == 0) {
@@ -3327,7 +3325,7 @@ var tools = {
                         锁定失败次数++;
                         toastLog("锁定失败(" + 锁定失败次数 + ")")
                     }
-                    // 精英怪 = null;
+                    精英怪 = null;
                     // 左面板怪物 = null;
                     // 锁定的怪物 = "";
                     // 是否锁定危险怪 = false;
@@ -3426,19 +3424,9 @@ var tools = {
                     var r = tools.findImageArea(item.pic, p.x[0], p.y[0], p.x[1], p.y[1], 0.85);
                     if (r.status) {
                         if (item.只攻击满血) {
-                            var 血条范围 = {
-                                x: p.x[0],
-                                y: r.img.y,
-                                w: p.x[1] - p.x[0],
-                                h: 35,
-                            }
-                            var img = captureScreen();
-                            var 满血条 = images.findMultiColors(img, p.找色[0].color, [[p.找色[1].x, p.找色[1].y, p.找色[1].color], [p.找色[2].x, p.找色[2].y, p.找色[2].color]], {
-                                region: [血条范围.x, 血条范围.y, 血条范围.w, 血条范围.h],
-                                threshold: 15
-                            });
-                            utils.recycleNull(img);
-                            if (满血条 == null || 满血条.x <= 0 || 满血条.y <= 0) {
+                            var 顺序p = tools.挂机打怪.获取锁定怪物顺序(r.img.y)
+                            var isOk = tools.挂机打怪.找满血怪(顺序p.index)
+                            if (!isOk) {
                                 continue;
                             }
                         }
@@ -3450,6 +3438,8 @@ var tools = {
                             sleep(222)
                             tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                         }
+
+                        //左怪物文字枚举.骷髅洞;
                         return {
                             status: true,
                             value: item
@@ -4618,7 +4608,7 @@ var tools = {
         扫描身边怪物名: (左面板怪物) => {
             var 身边范围P = config.zuobiao.身边怪物范围[fbl];
             if (左面板怪物 && 左面板怪物.status) {
-                r = tools.挂机打怪.扫描怪物名图片(左面板怪物.value, 身边范围P, true);
+                r = tools.挂机打怪.扫描怪物名图片(左面板怪物.value, 身边范围P, false);
                 if (r.status) {
                     return {
                         status: true,
@@ -4630,10 +4620,20 @@ var tools = {
             }
             var str = tools.挂机打怪.扫描怪物名文字();
             if (str != null && str.length > 0) {
-                return {
-                    status: true,
-                    name: str,
-                    是否精英: false
+                if (str.indexOf("邪") >= 0) {
+                    return {
+                        status: true,
+                        name: "邪恶蚶虫",
+                        是否精英: true,
+                        value: 左怪物文字枚举.蜈蚣洞[0]
+                    }
+                }
+                else {
+                    return {
+                        status: true,
+                        name: str,
+                        是否精英: false
+                    }
                 }
             }
             else {
@@ -4656,7 +4656,7 @@ var tools = {
             return r;
         },
         扫描怪物名图片: (文字枚举, p, 是否额外) => {
-            var t = 0.5;
+            var t = 0.4;
             var 怪物集合 = [];
             怪物集合.push(文字枚举);
             if (是否额外) {
