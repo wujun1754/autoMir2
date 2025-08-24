@@ -92,6 +92,7 @@ let 跑图时间戳 = 1.3 * 1000;
 var 上次所在地图 = "";
 var 上次坐标截图 = null;
 var 锁定怪物截图 = null;
+var 锁定怪物顺序 = 1;
 var 是否用过备用衣服 = false;
 var 是否用过备用武器 = false;
 var 是否截图传回服务端 = false;
@@ -2922,6 +2923,28 @@ var tools = {
                     }
                     utils.recycleNull(img);
                 }
+                else if (挂机参数.只打满血怪 == 1) {
+                    var r = tools.挂机打怪.找满血怪();
+                    if (r && (r.x > 0 || r.y > 0)) {
+                        tools.click(r.x + random(12, 20), r.y + random(-3, 3))
+                        isFind = true;
+                        坐标 = {
+                            x: r.x,
+                            y: r.y
+                        }
+                    }
+                }
+                else {
+                    var r = tools.挂机打怪.找非满血怪();
+                    if (r && (r.x > 0 || r.y > 0)) {
+                        tools.click(random(选择怪物攻击.x[0], 选择怪物攻击.x[1]), random(选择怪物攻击.y[0], 选择怪物攻击.y[1]))
+                        isFind = true;
+                        坐标 = {
+                            x: r.x,
+                            y: r.y
+                        }
+                    }
+                }
             }
             else {
                 var 其他玩家 = false;
@@ -3013,7 +3036,29 @@ var tools = {
                 }
             }
             if (截图P.y1 > 0 && 截图P.y2 > 0) {
+                锁定怪物顺序 = (index + 1);
                 锁定怪物截图 = tools.截屏裁剪(null, 截图P.x1, 截图P.y1, 截图P.x2, 截图P.y2);
+            }
+        },
+        获取锁定怪物顺序: (坐标) => {
+            var r = {
+                status: false,
+                y1: 0,
+                y2: 0,
+                index: 0
+            }
+            var p = config.zuobiao.左攻击面板[fbl];//config.左攻击面板[fbl];
+            if (坐标 && 坐标.y > 0) {
+                for (var index = 0; index < p.Y轴顺序.length; index++) {
+                    var item = p.Y轴顺序[index];
+                    if (坐标.y >= item.y1 && 坐标.y <= item.y2) {
+                        r.y1 = item.y1;
+                        r.y2 = item.y2;
+                        r.index = index;
+                        r.status = true;
+                        break;
+                    }
+                }
             }
         },
         攻击怪物: (打怪次数) => {
@@ -3119,13 +3164,13 @@ var tools = {
                             continue; //这里continue是为了快速再次执行该方法，避免等移动时间戳
                         }
                         else if (挂机参数.隐身走动 == 0) {
-                            锁定失败次数++;
-                            tools.挂机打怪.打符();
+                            //锁定失败次数++;
+                            //tools.挂机打怪.打符();
                             上一次怪物身边时间 = new Date().getTime();
-                            toastLog(r.msg);
+                            toastLog("1.8:" + r.msg);
                         }
                         else {
-                            toastLog(r.msg);
+                            toastLog("1.8:" + r.msg);
                             sleep(120);
                         }
                     }
@@ -3244,14 +3289,22 @@ var tools = {
                                     continue; //这里continue是为了快速再次执行该方法，避免等移动时间戳
                                 }
                                 else if (挂机参数.隐身走动 == 0) {
-                                    锁定失败次数++;
-                                    tools.挂机打怪.关闭中间怪物();
-                                    toastLog(r.msg);
-                                    return false;
+                                    var 怪物文字 = tools.挂机打怪.扫描怪物名文字();
+                                    if (怪物文字 == null || 怪物文字.length <= 0) {
+                                        锁定失败次数++;
+                                        tools.挂机打怪.关闭中间怪物();
+                                        toastLog("移动" + r.msg);
+                                        return false;
+                                    }
+                                    else {
+                                        锁定的怪物 = 怪物文字;
+                                        上一次怪物身边时间 = new Date().getTime();
+                                        continue;
+                                    }
                                 }
                                 else {
                                     tools.人物移动.随机走一步(random(777, 999));
-                                    toastLog(r.msg);
+                                    toastLog("移动" + r.msg);
                                 }
                             }
                         }
@@ -3293,7 +3346,7 @@ var tools = {
                     var 左面板Str = (左面板怪物 != null && 左面板怪物.status ? 左面板怪物.value.name : "null");
                     tools.悬浮球描述("(" + ((timeout - (时间戳)) / 1000).toFixed(2) + ") (" + 锁定的怪物 + ") (" + 左面板Str + ") (" + isChange + ") (" + 宝宝身边怪物 + ")");
                 } else {
-                    toastLog("怪物消失")
+                    tools.悬浮球临时描述("怪物消失")
                     if (挂机参数.提前拾取 == 0) {
                         tools.拾取.点击(1);
                     }
@@ -3301,7 +3354,7 @@ var tools = {
                         tools.拾取.点击(1);
                     }
                     else {
-                        toastLog("取消被动拾取")
+                        tools.悬浮球临时描述("取消被动拾取")
                     }
                     if (isChange) {
                         锁定失败次数 = 0;
@@ -3338,6 +3391,7 @@ var tools = {
                                 else {
                                     是否强制攻击 = false;
                                 }
+                                sleep(266)
                                 continue;
                             }
                         }
@@ -3545,12 +3599,12 @@ var tools = {
                 var 按钮集合 = config.zuobiao.按钮集合[fbl];
                 var r = result[0].value;
                 tools.click(r.x + random(10, 20), r.y + random(5, 10));
-                if (是否攻击) {
-                    sleep(random(111, 222));
-                    tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                    sleep(random(111, 222));
-                    tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                }
+                // if (是否攻击) {
+                //     sleep(random(111, 222));
+                //     tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                //     sleep(random(111, 222));
+                //     tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                // }
                 return true;
             }
             return false;
@@ -3564,13 +3618,13 @@ var tools = {
                 tryCount = 1;
             }
             if (tryCount <= 0) {
-                return tools.findImageArea("zhongjianguaiwuBtn.png", p.x1, p.y1, p.x2, p.y2, 0.7)
+                return tools.findImageArea("zhongjianguaiwuBtn.png", p.x1, p.y1, p.x2, p.y2, 0.8)
             }
             else {
                 return tools.findImageAreaForWait("zhongjianguaiwuBtn.png", p.x1, p.y1, p.x2, p.y2, {
                     maxTries: tryCount,
                     interval: interval,
-                    threshold: 0.7
+                    threshold: 0.8
                 })
             }
         },
