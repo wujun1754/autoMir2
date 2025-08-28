@@ -526,7 +526,7 @@ var 精英怪枚举 = {
     牛魔法师: {
         name: "牛魔法师",
         pic: "wenzhi_zuomianban_fashi.png",
-        左怪物文字:左怪物文字枚举.牛魔洞[3],
+        左怪物枚举: 左怪物文字枚举.牛魔洞[3],
         是否隐身: false,
         是否施毒: false,
         是否打防: false,
@@ -535,22 +535,10 @@ var 精英怪枚举 = {
         只攻击满血: false,
         攻击中扫描拾取: true
     },
-    牛魔将军: {
-        name: "牛魔将军",
-        pic: "wenzhi_zuomianban_jiangjun.png",
-        左怪物文字:左怪物文字枚举.牛魔洞[4],
-        是否隐身: true,
-        是否施毒: true,
-        是否打防: true,
-        是否打魔: false,
-        是否攻击: false,
-        只攻击满血: true,
-        攻击中扫描拾取: true
-    },
     邪恶蚶虫: {
         name: "邪恶蚶虫",
         pic: "wenzhi_zuomianban_xiee.png",
-        左怪物文字:左怪物文字枚举.蜈蚣洞[0],
+        左怪物枚举: 左怪物文字枚举.蜈蚣洞[0],
         是否隐身: true,
         是否施毒: true,
         是否打防: true,
@@ -562,24 +550,13 @@ var 精英怪枚举 = {
     巨型蠕虫: {
         name: "巨型蠕虫",
         pic: "wenzhi_zuomianban_wugong_ru.png",
-        左怪物文字:左怪物文字枚举.蜈蚣洞[5],
+        左怪物枚举: 左怪物文字枚举.蜈蚣洞[5],
         是否隐身: false,
         是否施毒: false,
         是否打防: false,
         是否打魔: false,
         是否攻击: true,
         只攻击满血: true,
-        攻击中扫描拾取: true
-    },
-    宝箱: {
-        name: "宝箱",
-        pic: "wenzhi_zuomianban_baoxiang.png",
-        左怪物文字:左怪物文字枚举.蜈蚣洞[4],
-        是否隐身: false,
-        是否施毒: false,
-        是否打防: false,
-        是否打魔: false,
-        是否攻击: true,
         攻击中扫描拾取: true
     }
 }
@@ -972,7 +949,6 @@ var tools = {
         是否申请过组队: false,
         队长是否初始化: false,
         是否有队员申请: false,
-        申请组队队员: [],
         socket: null,
         input: null,
         output: null,
@@ -1025,17 +1001,6 @@ var tools = {
                         tools.悬浮球临时描述("确定组队")
                     }
                     else if (j.type == 4) {//队员申请组队
-                        var 队员Id = parseInt(j.msg);
-                        let 队员 = tools.Socket.申请组队队员.find(item => item.队员Id == 队员Id);
-                        if (队员 && 队员.Id > 0) {
-                            队员.是否完成 = false;
-                        }
-                        else {
-                            tools.Socket.申请组队队员.push({
-                                Id: 队员Id,
-                                是否完成: false
-                            })
-                        }
                         tools.悬浮球临时描述("队员申请")
                         tools.Socket.是否有队员申请 = true;
                     }
@@ -1107,33 +1072,6 @@ var tools = {
             }
             return result;
         },
-        获取组队队员: () => {
-            var result = [];
-            var 申请队员 = tools.Socket.申请组队队员;
-            var 好友 = tools.组队.获取好友();
-            if (申请队员 && 申请队员.length > 0) {
-                for (var i = 0; i < 申请队员.length; i++) {
-                    var 队员 = 申请队员[i];
-                    if (!队员.是否完成) {
-                        let obj = 好友.find(x => x.Id == 队员.Id);
-                        result.push({
-                            Id: 队员.Id,
-                            index: obj.index
-                        })
-                    }
-                }
-            }
-            return result;
-        },
-        更新队员组队完成: (Id) => {
-            var 申请队员 = tools.Socket.申请组队队员;
-            if (申请队员 && 申请队员.length > 0) {
-                var 队员 = 申请队员.find(x => x.Id == Id);
-                if (队员 && 队员.Id > 0) {
-                    队员.是否完成 = true;
-                }
-            }
-        },
         申请组队: () => {
             if (挂机参数.组队 && 挂机参数.组队.length > 0) {
                 tools.组队.开启组队();
@@ -1199,8 +1137,7 @@ var tools = {
             // },
             组队: () => {
                 tools.常用操作.关闭所有窗口();
-                var arr = tools.组队.获取组队队员();
-                toastLog(JSON.stringify(arr))
+                var arr = tools.组队.获取好友();
                 if (arr != null && arr.length > 0) {
                     var p = config.zuobiao.按钮集合[fbl].好友;
                     var 顺序p = config.zuobiao.好友顺序[fbl];
@@ -1228,7 +1165,6 @@ var tools = {
                                     msg: Id
                                 }));
                             });
-                            tools.组队.更新队员组队完成(Id)
                         }
                         toastLog("已完成" + 顺序 + "号好友组队");
                         sleep(1000);
@@ -1661,11 +1597,11 @@ var tools = {
                 tools.组队.确定组队()
                 tools.Socket.是否确定组队 = false;
             }
-            if (!tools.Socket.是否申请过组队 && 挂机参数.是否队长 == 0 && 是否检测组队) {
+            if (当前总状态 == 总状态.已启动 && !tools.Socket.是否申请过组队 && 挂机参数.是否队长 == 0 && 是否检测组队) {
                 tools.执行时间戳.申请组队(false);
             }
 
-            if (挂机参数.是否队长 == 1 && 是否检测组队) {
+            if (当前总状态 == 总状态.已启动 && 挂机参数.是否队长 == 1 && 是否检测组队) {
                 if (!tools.Socket.队长是否初始化) {
                     tools.组队.队长.初始化队员();
                 }
@@ -2225,12 +2161,11 @@ var tools = {
                         x: item.point.x + random(5, 10),
                         y: item.point.y + random(2, 8),
                     }
-                    sleep(555)
+                    sleep(999)
                     tools.click(点击P.x, 点击P.y);
-                    sleep(555)
                     var r = tools.补给操作.获取操作按钮(["穿戴"], "寻找装备", false, false);
                     if (!r.status) {
-                        sleep(555)
+                        sleep(666)
                         tools.常用操作.点击左面板怪物();
                         continue;
                     }
@@ -2245,6 +2180,7 @@ var tools = {
                     }
                     var result = tools.补给操作.背包选中按钮中找字图(文字图, r.value)
                     if (result.status) {
+                        sleep(666)
                         var btn = r.value;
                         var x = btn.img.x + btn.size.w / 2 + random(5, 10);
                         var y = btn.img.y + btn.size.h / 2 + random(4, 8);
@@ -2758,9 +2694,9 @@ var tools = {
         },
         队长组人: () => {
             if (new Date().getTime() - 上一次队长组人时间 > 队长组人时间戳) {
+                上一次队长组人时间 = new Date().getTime();
                 tools.组队.队长.组队();
                 tools.Socket.是否有队员申请 = false;
-                上一次队长组人时间 = new Date().getTime();
             }
         },
         检测人物血条是否存在: () => {
@@ -3285,6 +3221,10 @@ var tools = {
                         精英怪 = tools.挂机打怪.寻找精英怪();
                         if (精英怪.status) {
                             toastLog("扫描到精英怪")
+                            左面板怪物 = {
+                                status: true,
+                                value: 精英怪.value.左怪物枚举
+                            }
                             锁定的怪物 = "";
                             上一次攻击 = new Date().getTime() - (60 * 1000);
                             continue;
@@ -3333,6 +3273,7 @@ var tools = {
                     上一次移动 = new Date().getTime();
                     上一次攻击 = new Date().getTime() - (60 * 1000);
                     start = new Date().getTime();
+                    上一次怪物身边时间 = new Date().getTime();
                     if (挂机参数.攻击宝宝身边 > 0) {
                         var t1 = new Date().getTime();
                         r = tools.挂机打怪.获取宝宝身边怪物数据(1);
@@ -3421,7 +3362,7 @@ var tools = {
             if (arr && arr.length > 0) {
                 for (var index = 0; index < arr.length; index++) {
                     var item = arr[index];
-                    var r = tools.findImageArea(item.pic, p.x[0], p.y[0], p.x[1], p.y[1], 0.85);
+                    var r = tools.findImageArea(item.pic, p.x[0], p.y[0], p.x[1], p.y[1], 0.9);
                     if (r.status) {
                         if (item.只攻击满血) {
                             var 顺序p = tools.挂机打怪.获取锁定怪物顺序(r.img.y)
@@ -3560,13 +3501,18 @@ var tools = {
                 var 按钮集合 = config.zuobiao.按钮集合[fbl];
                 var r = result[0].value;
                 tools.click(r.x + random(10, 20), r.y + random(5, 10));
-                // if (是否攻击) {
-                //     sleep(random(111, 222));
-                //     tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                //     sleep(random(111, 222));
-                //     tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                // }
-                return true;
+
+                r = tools.挂机打怪.找正上锁定怪物(3, 100);
+                if (r.status) {
+                    if (是否攻击) {
+                        sleep(random(111, 222));
+                        tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                        sleep(random(111, 222));
+                        tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                    }
+                    return true;
+                }
+
             }
             return false;
         },
@@ -3738,7 +3684,7 @@ var tools = {
                 }
             }
             else {
-                if (挂机点跑图顺序 >= 挂机坐标s.result.length) {
+                if (挂机点跑图顺序 >= 挂机坐标s.result.length - 1) {
                     挂机点跑图顺序 = 0;
                 }
             }
@@ -4679,20 +4625,23 @@ var tools = {
             }
             for (var index = 0; index < 怪物集合.length; index++) {
                 var item = 怪物集合[index];
-                var r = tools.findImageArea(item.怪物显示图, p.x1, p.y1, p.x2, p.y2, t);
-                if (r.status) {
-                    var x = r.img.x + item.左上血条偏移[fbl].x;
-                    var y = r.img.y + item.左上血条偏移[fbl].y;
-                    return {
-                        status: true,
-                        name: item.name,
-                        value: item,
-                        血量左上: {
-                            x: x,
-                            y: y,
+                if (item && item.怪物显示图) {
+                    var r = tools.findImageArea(item.怪物显示图, p.x1, p.y1, p.x2, p.y2, t);
+                    if (r.status) {
+                        var x = r.img.x + item.左上血条偏移[fbl].x;
+                        var y = r.img.y + item.左上血条偏移[fbl].y;
+                        return {
+                            status: true,
+                            name: item.name,
+                            value: item,
+                            血量左上: {
+                                x: x,
+                                y: y,
+                            }
                         }
                     }
                 }
+
             }
             return {
                 status: false
@@ -6096,6 +6045,8 @@ var tools = {
             }
 
 
+
+            sleep(1666)
             tryCount = 0;
             while (true) {
                 if (tryCount >= 5) {
@@ -6722,29 +6673,33 @@ var tools = {
                     interval: 333,
                     threshold: 0.9
                 })
-                if (!r.status) {
-                    toastLog("未找到分身（派遣）按钮");
-                    tools.click(random(左上箭头.x[0], 左上箭头.x[1]), random(左上箭头.y[0], 左上箭头.y[1]));
-                    tools.常用操作.关闭所有窗口();
-                    return false;
-                }
 
-                sleep(random(1500, 2000));
+                if (r) {
+                    sleep(random(1500, 2000));
+                }
+                // if (!r.status) {
+                //     toastLog("未找到分身（派遣）按钮");
+                //     tools.click(random(左上箭头.x[0], 左上箭头.x[1]), random(左上箭头.y[0], 左上箭头.y[1]));
+                //     tools.常用操作.关闭所有窗口();
+                //     return false;
+                // }
+
 
                 r = tools.findImageAreaForWaitClick("fenshenquedingxiulianBtn.png", 修炼p.x[0], 修炼p.y[0], 修炼p.x[1], 修炼p.y[1], {
                     maxTries: 10,
                     interval: 333,
                     threshold: 0.9
                 })
-
-                if (!r.status) {
-                    toastLog("未找到分身修炼（确定）按钮");
-                    tools.click(random(左上箭头.x[0], 左上箭头.x[1]), random(左上箭头.y[0], 左上箭头.y[1]));
-                    tools.常用操作.关闭所有窗口();
-                    return false;
+                if (r.status) {
+                    sleep(random(1500, 2000));
                 }
+                // if (!r.status) {
+                //     toastLog("未找到分身修炼（确定）按钮");
+                //     tools.click(random(左上箭头.x[0], 左上箭头.x[1]), random(左上箭头.y[0], 左上箭头.y[1]));
+                //     tools.常用操作.关闭所有窗口();
+                //     return false;
+                // }
 
-                sleep(random(1500, 2000));
 
                 while (true) {
                     tools.常用操作.及时执行事件(true);
@@ -8899,7 +8854,17 @@ ui.run(() => {
         toast("保存成功")
     })
     win.btnRenZheng.click(() => {
-        //shell("su -c id", true);
+        setTimeout(() => {
+            if (挂机参数.是否队长 == 1) {
+                tools.Socket.队长是否初始化 = false;
+            }
+            else {
+                tools.Socket.是否申请过组队 = false;
+                上一次申请组队时间 = new Date().getTime() - 1000 * 60 * 24;
+                //tools.执行时间戳.申请组队(true);
+            }
+        }, 100);
+
     });
 
 
