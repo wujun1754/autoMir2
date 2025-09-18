@@ -45,7 +45,7 @@ let 上一次检测人物血条时间 = new Date().getTime();
 let 检测人物血条时间时间戳 = 60 * 1000 * 5;
 
 let 认证自检时间 = new Date().getTime();
-let 认证自检时间戳 = 30 * 1000;
+let 认证自检时间戳 = 20 * 1000;
 
 let 画面自检时间 = new Date().getTime();
 let 画面自检时间戳 = 60 * 1000 * 3;
@@ -1133,7 +1133,7 @@ var tools = {
             tools.click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]))
 
             tools.findImageForWaitClick("zuduicloseBtn.png", {
-                maxTries: 12,
+                maxTries: 5,
                 interval: 100
             }, 0.9);
 
@@ -1143,7 +1143,7 @@ var tools = {
         确定组队: () => {
             tools.Socket.是否申请过组队 = true;
             tools.findImageForWaitClick("queBtn.png", {
-                maxTries: 8,
+                maxTries: 5,
                 interval: 100
             })
         },
@@ -2881,24 +2881,6 @@ var tools = {
             var now = new Date().getTime();
             if (now - 上次跑图时间 > 跑图时间戳 && 当前总状态 == 总状态.已启动) {
                 开启寻怪 = true;
-                // if (是否需要拾取动作 && (new Date().getTime() - 上一次激活拾取时间) > 激活拾取时间戳) {
-                //     if (new Date().getTime() >= 禁止拾取时间) {
-                //         tools.拾取.点击(1, "拾取(启动)");
-                //     }
-                //     else {
-                //         toastLog("禁止拾取时间未过")
-                //     }
-                //     是否需要拾取动作 = false;
-                // }
-
-                if (
-                    是否需要拾取动作
-                    && now >= 禁止拾取时间
-                    && (now - 上一次激活拾取时间) > 激活拾取时间戳
-                ) {
-                    tools.拾取.点击(1, "拾取(锁怪)");
-                    是否需要拾取动作 = false;
-                }
                 var 当前地图 = tools.常用操作.获取人物地图();
 
                 if ((当前地图 == 挂机参数.挂机地图 || 挂机参数.挂机地图 == "比奇野外")) {
@@ -2948,12 +2930,6 @@ var tools = {
                         if (!r && 挂机参数.只打满血怪 == 0) {
                             r = tools.挂机打怪.找非满血怪(顺序p.index)
                         }
-                        // if (挂机参数.只打满血怪 == 1) {
-                        //     r = tools.挂机打怪.找满血怪(顺序p.index)
-                        // }
-                        // else {
-                        //     r = tools.挂机打怪.找非满血怪(顺序p.index)
-                        // }
                         if (r) {
                             锁定怪物顺序 = 顺序p.index;
                             tools.click(顺序p.x中心 + random(-10, 10), 顺序p.y1 + ((顺序p.y2 - 顺序p.y1) / 2) + random(-5, 5))
@@ -2964,10 +2940,13 @@ var tools = {
                 }
             }
             else if (挂机参数.挂机地图大 == "蜈蚣洞") {
-                var arr = tools.matchTemplateForArea(精英怪枚举.巨型蠕虫.pic, 5, 0.6,
-                    [文字p.x1, 文字p.y1, 文字p.x2 - 文字p.x1, 文字p.y2 - 文字p.y1]
-                )
-                if (arr.count > 0) {
+                var arr = null;
+                if (挂机参数.不打邪恶 == 0) {
+                    arr = tools.matchTemplateForArea(精英怪枚举.巨型蠕虫.pic, 5, 0.6,
+                        [文字p.x1, 文字p.y1, 文字p.x2 - 文字p.x1, 文字p.y2 - 文字p.y1]
+                    )
+                }
+                if (arr && arr.count > 0) {
                     arr.r.sort((a, b) => a.point.y - b.point.y);
                     for (var index = 0; index < arr.count; index++) {
                         var item = arr.r[index];
@@ -3059,7 +3038,7 @@ var tools = {
                 now >= 禁止拾取时间
                 && (now - 上一次激活拾取时间) > 激活拾取时间戳
                 && 是否需要拾取动作) {
-                tools.拾取.点击(1, "拾取(锁怪)");
+                tools.拾取.点击(1, "指令");
                 是否需要拾取动作 = false;
             }
             tools.拾取.激活后操作();
@@ -3077,7 +3056,7 @@ var tools = {
                     now >= 禁止拾取时间
                     && (now - 上一次激活拾取时间) > 激活拾取时间戳
                     && (是否需要拾取动作 || tools.拾取.扫描拾取(null, false))) {
-                    tools.拾取.点击(1, "拾取(锁怪)");
+                    tools.拾取.点击(1, "扫描");
                     是否需要拾取动作 = false;
                 }
                 if ((new Date().getTime() - 上次打怪时间) >= 1000 * 60 * 5) {
@@ -3086,6 +3065,53 @@ var tools = {
                 }
             }
             return isFind;
+        },
+        匹配指定怪物: (pic, threshold, 是否满血, 是否攻击) => {
+            var 文字p = config.zuobiao.左攻击面板[fbl].文字区域; 
+            var 按钮集合 = config.zuobiao.按钮集合[fbl];
+            var arr = tools.matchTemplateForArea(pic, 5, threshold,
+                [文字p.x1, 文字p.y1, 文字p.x2 - 文字p.x1, 文字p.y2 - 文字p.y1]
+            );
+            var result = {
+                status: false,
+                index: -1,
+                顺序p: null
+            }
+            if (arr && arr.count > 0) {
+                arr.r.sort((a, b) => a.point.y - b.point.y);
+                if (是否满血) {
+                    for (var index = 0; index < arr.count; index++) {
+                        var item = arr.r[index];
+                        var 顺序p = tools.挂机打怪.获取锁定怪物顺序(item.point.y)
+                        var r = tools.挂机打怪.找满血怪(顺序p.index);
+                        if (r.status) {
+                            result = {
+                                status: true,
+                                index: 顺序p.index,
+                                顺序p: 顺序p
+                            }
+                        }
+                        break;
+                    }
+                }
+                else {
+                    var item = arr.r[0];
+                    var 顺序p = tools.挂机打怪.获取锁定怪物顺序(item.point.y)
+                    result = {
+                        status: true,
+                        index: 顺序p.index,
+                        顺序p: 顺序p
+                    }
+                }
+            }
+
+            if (result.status && 是否攻击) {
+                var 顺序p = result.顺序p;
+                tools.click(顺序p.x中心 + random(-8, 8), 顺序p.y1 + ((顺序p.y2 - 顺序p.y1) / 2) + random(-3, 3));
+                sleep(222)
+                tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+            }
+            return result
         },
         截图锁定怪物: (锁定怪物顺序) => {
             if (锁定怪物顺序 >= 0) {
@@ -3184,6 +3210,7 @@ var tools = {
                     toastLog("锁定失败(" + 锁定失败次数 + "),强制跑图")
                     锁定失败次数 = 0;
                     sleep(1000 * 10);
+                    tools.挂机打怪.宝宝是否存在("攻击", true);
                     break;
                 }
                 r = tools.挂机打怪.找正上锁定怪物(0, 0);
@@ -3191,12 +3218,11 @@ var tools = {
                     if (!是否发现不能拾取 && new Date().getTime() >= 禁止拾取时间 && (new Date().getTime() - 上一次激活拾取时间) > 激活拾取时间戳) {
                         if (精英怪 == null || !精英怪.status || 精英怪.攻击中扫描拾取) {
                             if (tools.拾取.扫描拾取(拾取范围P, false)) {
-                                tools.挂机打怪.关闭中间怪物();
-                                tools.拾取.点击(1, "拾取(打怪)");
+                                //tools.挂机打怪.关闭中间怪物();
+                                tools.拾取.点击(1, "攻击怪物");
                                 是否触发拾取 = true;
                                 主动拾取时间 = new Date().getTime();
-                                sleep(666)
-                                return;//这里直接return防止有点击事件和跑动事件
+                                sleep(1200)
                             }
                         }
                     }
@@ -3237,13 +3263,20 @@ var tools = {
                         r = tools.挂机打怪.找正上锁定怪物(0, 0);
                         if (r.status) {
                             r = tools.挂机打怪.向怪物移动(左面板怪物);
-                            if (!r.status) {
+                            if (r.status) {
+                                sleep(200)
+                                continue;
+                            }
+                            else {
+                                tools.挂机打怪.关闭中间怪物();
+                                tools.挂机打怪.强制跑图();
+                                上次跑图时间 = new Date().getTime();
+                                tools.悬浮球临时描述("跑图哦")
+                                sleep(666)
                                 锁定失败次数++;
-                                toastLog("怪名失踪(" + 锁定失败次数 + ")");
                                 break;
                             }
                         }
-
                     }
                     if (挂机参数.隐身走动 == 1 && !是否强制攻击 && (new Date().getTime() - 发现其他玩家时间) <= 发现其他玩家时间等待) { //二分钟内发现玩家需要强制攻击
                         toastLog((new Date().getTime() - 发现其他玩家时间) / 1000 + "秒前发现玩家,强制攻击")
@@ -3305,15 +3338,17 @@ var tools = {
                         }
                     }
                     //if ((挂机参数.隐身走动 == 0 || 是否强制攻击) && !是否正在攻击宝宝身边怪 && isChange && 锁定的怪物.length <= 0) {
-                    if (挂机参数.只打满血怪 == 1 && !是否正在攻击宝宝身边怪 && isChange && 锁定的怪物.length <= 0) {
+                    if (挂机参数.只打满血怪 == 1 && isChange && 锁定的怪物.length <= 0) {
                         if (是否强制攻击 && 切换左面板人物) {
                             切换左面板人物 = false;
                             tools.常用操作.点击左面板怪物();
                             sleep(100);
                         }
                         tools.挂机打怪.关闭中间怪物();
+                        是否需要拾取动作 = true;
+                        禁止拾取时间 = new Date().getTime() - 1000 * 60 * 24;
                         toastLog("放弃归属")
-                        break;
+                        return;
                     }
                     if (挂机参数.隐身数量 > 0 && 怪物 && 怪物.length > 0 && (new Date().getTime() - 上一次隐身 >= 隐身时间戳)) {
                         if (怪物.length >= parseInt(挂机参数.隐身数量) || (精英怪 && 精英怪.status && 精英怪.value.是否隐身)) {
@@ -3361,12 +3396,16 @@ var tools = {
                             if ((!是否隐身等待 || 是否强制攻击) && 锁定的怪物.length <= 0) {
                                 if (挂机参数.隐身走动 == 0) {
                                     r = tools.挂机打怪.向怪物移动(左面板怪物);
-                                    if (!r.status) {
+                                    if (r.status) {
+                                        sleep(200)
+                                        continue;
+                                    }
+                                    else {
                                         tools.挂机打怪.关闭中间怪物();
                                         tools.挂机打怪.强制跑图();
                                         上次跑图时间 = new Date().getTime();
                                         tools.悬浮球临时描述("跑图哦")
-                                        sleep(888)
+                                        sleep(666)
                                         锁定失败次数++;
                                         break;
                                     }
@@ -3515,36 +3554,41 @@ var tools = {
             var arr = [];
             var 按钮集合 = config.zuobiao.按钮集合[fbl];
             var p = config.zuobiao.左攻击面板[fbl].怪物集合;
+            var 文字p = config.zuobiao.左攻击面板[fbl].文字区域;
             if (挂机参数.挂机地图.indexOf("牛魔") >= 0) {
                 // arr.push(精英怪枚举.牛魔将军)
                 // arr.push(精英怪枚举.牛魔法师)
                 // arr.push(精英怪枚举.宝箱)
             }
             else if (挂机参数.挂机地图.indexOf("骨魔") >= 0) {
-                arr.push(精英怪枚举.宝箱)
+                // arr.push({
+                //     pic: 精英怪枚举.宝箱,
+                //     threshold: 0.7
+                // })
             }
             else if (挂机参数.挂机地图大.indexOf("蜈蚣洞") >= 0) {
-                arr.push(精英怪枚举.邪恶蚶虫)
-                arr.push(精英怪枚举.巨型蠕虫)
+                arr.push({
+                    info: 精英怪枚举.邪恶蚶虫,
+                    threshold: 0.7
+                })
+                arr.push({
+                    info: 精英怪枚举.巨型蠕虫,
+                    threshold: 0.7
+                })
             }
             else if (挂机参数.挂机地图大.indexOf("石墓阵") >= 0) {
-                arr.push(精英怪枚举.白野猪)
+                arr.push({
+                    info: 精英怪枚举.白野猪,
+                    threshold: 0.85
+                })
             }
             if (arr && arr.length > 0) {
                 for (var index = 0; index < arr.length; index++) {
                     var item = arr[index];
-                    var r = tools.findImageArea(item.pic, p.x[0], p.y[0], p.x[1], p.y[1], 0.9);
+                    var r = tools.挂机打怪.匹配指定怪物(item.info.pic, item.threshold, item.info.只攻击满血, item.info.是否攻击);
                     if (r.status) {
-                        if (item.只攻击满血) {
-                            var 顺序p = tools.挂机打怪.获取锁定怪物顺序(r.img.y)
-                            var isOk = tools.挂机打怪.找满血怪(顺序p.index)
-                            if (!isOk) {
-                                continue;
-                            }
-                        }
-                        var x = r.img.x + r.size.w / 2 + random(5, 10);
-                        var y = r.img.y + r.size.h / 2 + random(5, 10);
-                        tools.click(x, y);
+                        var 顺序p = r.顺序p;
+                        tools.click(顺序p.x中心 + random(-10, 10), 顺序p.y1 + ((顺序p.y2 - 顺序p.y1) / 2) + random(-5, 5));
                         if (item.是否攻击) {
                             tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                             sleep(222)
@@ -3554,7 +3598,7 @@ var tools = {
                         //左怪物文字枚举.骷髅洞;
                         return {
                             status: true,
-                            value: item
+                            value: item.info
                         };
                     }
                 }
@@ -3619,27 +3663,33 @@ var tools = {
             };
         },
         找满血怪: (顺序) => {
-            var item = config.zuobiao.左攻击面板[fbl].血量坐标[顺序];
             var img = captureScreen();
-            var isOk = images.detectsColor(img, item.c2, item.x2, item.y2, 8, "diff")
+            var result = {
+                status: false,
+                index: -1
+            }
+            if (顺序 >= 0) {
+                var item = config.zuobiao.左攻击面板[fbl].血量坐标[顺序];
+                var isOk = images.detectsColor(img, item.c2, item.x2, item.y2, 8, "diff")
+                if (isOk) {
+                    result.status = true;
+                }
+                result.index = 顺序;
+            }
+            else {
+                for (var index = 0; index < 5; index++) {
+                    var item = config.zuobiao.左攻击面板[fbl].血量坐标[index];
+                    var isOk = images.detectsColor(img, item.c2, item.x2, item.y2, 8, "diff")
+                    if (isOk) {
+                        result.status = true;
+                        result.index = index;
+                        break;
+                    }
+                }
+            }
+
             utils.recycleNull(img);
-            return isOk;
-            // var arr = config.zuobiao.左攻击面板[fbl].血量坐标;
-            // var img = captureScreen();
-            // var result = null;
-            // for (let index = 0; index < arr.length; index++) {
-            //     var item = arr[index];
-            //     var isC2 = images.detectsColor(img, item.c2, item.x2, item.y2, 3, "diff")
-            //     if (isC2) {
-            //         result = {
-            //             x: item.x1 + random(30, 90),
-            //             y: item.y1 + random(-5, 5),
-            //         }
-            //         break;
-            //     }
-            // }
-            // utils.recycleNull(img);
-            // return result;
+            return result;
         },
         找非满血怪: (顺序) => {
             var item = config.zuobiao.左攻击面板[fbl].血量坐标[顺序];
@@ -4547,7 +4597,6 @@ var tools = {
                         }
                     }
                 }
-                sleep(222);
                 tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                 return {
                     status: true
@@ -4879,6 +4928,7 @@ var tools = {
             var 拾取 = config.zuobiao.按钮集合[fbl].拾取;
             var 是否激活状态 = tools.拾取.状态();
             if (type == 1) {
+                toastLog("拾取(" + 来源 + ")")
                 if (是否激活状态) {
                     toastLog("激活中禁止重复")
                     return;
@@ -4886,7 +4936,6 @@ var tools = {
                 上次坐标截图 = tools.常用操作.截图当前坐标();
                 上一次激活拾取时间 = new Date().getTime();
             } else {
-                toastLog("取消拾取(" + 来源 + ")")
                 if (!是否激活状态) {
                     return;
                 }
@@ -5000,6 +5049,7 @@ var tools = {
                     break;
                 }
                 if (发现精品装备) {
+                    tools.挂机打怪.关闭中间怪物();
                     sleep(100);
                     tools.悬浮球描述("精品装备(" + parseInt((拾取时长 - (new Date().getTime() - start)) / 1000) + ")");
                     continue;
@@ -5118,11 +5168,11 @@ var tools = {
                         continue;
                     }
                     var 拾取明细 = tools.挂机打怪.需要拾取明细();
-                    if (拾取明细 && 拾取明细.count >= 2 && 不能拾取次数 <= 3) {
+                    if (拾取明细 && 拾取明细.count >= 1 && 不能拾取次数 <= 3) {
                         tools.拾取.点击(0, "激活拾取数(" + 拾取明细.count + ")");
-                        sleep(1500);
+                        sleep(1000);
                         tools.拾取.点击(1, "激活拾取数(" + 拾取明细.count + ")");
-                        sleep(1500);
+                        sleep(1000);
                         continue;
                     }
                     else {
@@ -5937,7 +5987,7 @@ var tools = {
                 for (let index = 0; index < arrClick.length; index++) {
                     tools.常用操作.及时执行事件(true);
                     var item = arrClick[index];
-                    sleep(999);
+                    sleep(666);
                     tools.click(item.x, item.y);
                     var r = tools.补给操作.获取操作按钮(["使用"], "喝蓝_背包", false, false, true);
                     if (r.status) {
@@ -5945,7 +5995,7 @@ var tools = {
                         if (isFind.status) {
                             var x = r.value.img.x + r.value.size.w / 2 + random(5, 10);
                             var y = r.value.img.y + r.value.size.h / 2 + random(4, 8);
-                            sleep(888);
+                            sleep(222);
                             tools.click(x, y)
                             count++;
                         }
@@ -6611,7 +6661,8 @@ var tools = {
                 name: "组队卷",
                 pic: 补给枚举.组队卷,
                 验证文字: false,
-                是否提醒: 挂机参数.挂机地图大 == "石墓阵" ? true : false,
+                //是否提醒: 挂机参数.挂机地图大 == "石墓阵" ? true : false,
+                是否提醒: false,
                 同时验证: false,
             }, {
                 name: "祈祷之刃",
