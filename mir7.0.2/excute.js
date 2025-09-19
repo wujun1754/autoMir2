@@ -2921,6 +2921,7 @@ var tools = {
             if (r) {
                 tools.挂机打怪.攻击怪物(false);
             }
+            tools.悬浮球临时描述("" + r);
             return r;
         },
         锁定怪物: () => {
@@ -2943,10 +2944,16 @@ var tools = {
                     }
                     其他玩家 = new Date().getTime() - 发现其他玩家时间 <= 发现其他玩家时间等待 ? true : false;
                 }
-                var r = tools.挂机打怪.找满血怪(-1, img, true, true);
-                if (!r.status && 挂机参数.只打满血怪 == 0 && !其他玩家) {
+                var r = null;
+                if (挂机参数.只打满血怪 == 1) {
+                    r = tools.挂机打怪.找满血怪(-1, img, true, true);
+                }
+                else {
                     r = tools.挂机打怪.找非满血怪(img, true, true)
                 }
+                // if (!r.status && 挂机参数.只打满血怪 == 0 && !其他玩家) {
+
+                // }
                 if (r.status) {
                     锁定怪物顺序 = r.index;
                     isFind = true;
@@ -3121,7 +3128,20 @@ var tools = {
                     tools.挂机打怪.宝宝是否存在("攻击", true);
                     break;
                 }
+                if (new Date().getTime() >= 禁止拾取时间 && (new Date().getTime() - 上一次激活拾取时间) > 激活拾取时间戳) {
+                    var isShiQu = tools.挂机打怪.判断经验增加();
+                    if (!isShiQu) {
+                        isShiQu = tools.拾取.扫描拾取(拾取范围P, false)
+                    }
+                    if (isShiQu) {
+                        tools.拾取.点击(1, "攻击扫描");
+                        tools.拾取.等待();
+                    }
+                }
+
+
                 r = tools.挂机打怪.找正上锁定怪物(0, 0);
+
                 if (r.status) {
                     if (!是否发现不能拾取 && new Date().getTime() >= 禁止拾取时间 && (new Date().getTime() - 上一次激活拾取时间) > 激活拾取时间戳) {
                         if (精英怪 == null || !精英怪.status || 精英怪.攻击中扫描拾取) {
@@ -3421,6 +3441,10 @@ var tools = {
                 tools.常用操作.点击左面板怪物();
             }
         },
+        判断经验增加: () => {
+            var r = tools.findImageArea("jingyanzhengjia.png", 525, 670, 581, 692, 0.85);
+            return r.status;
+        },
         关闭中间怪物: () => {
             if (fbl == "1080_2248") {
                 tools.click(random(1250, 1260), random(37, 48));
@@ -3599,12 +3623,16 @@ var tools = {
             var Y顺序Arr = config.zuobiao.左攻击面板[fbl].Y轴顺序;
             var X血量中心 = config.zuobiao.左攻击面板[fbl].X血量中心;
             var 按钮集合 = config.zuobiao.按钮集合[fbl];
-            var item = config.zuobiao.左攻击面板[fbl].血量坐标[0];
-            var isOk = images.detectsColor(img, item.c1, item.x1, item.y1, 8, "diff")
-            if (isOk) {
-                result.status = true;
+
+            for (var index = 0; index < 3; index++) {
+                var item = config.zuobiao.左攻击面板[fbl].血量坐标[index];
+                var isOk = images.detectsColor(img, item.c2, item.x2, item.y2, 8, "diff")
+                if (isOk) {
+                    result.status = true;
+                    result.index = index;
+                    break;
+                }
             }
-            result.index = 0;
             if (result.status) {
                 var 顺序p = Y顺序Arr[result.index];
                 if (是否锁定) {
@@ -3942,13 +3970,8 @@ var tools = {
                     toastLog("超过打符时间戳,强制结束");
                     break;
                 }
-                var r = tools.挂机打怪.找正上锁定怪物(0, 0);
-                if (!r.status) {
-                    toastLog("怪物消失,强制结束");
-                    break;
-                }
                 tools.click(random(范围.x[0], 范围.x[1]), random(范围.y[0], 范围.y[1]));
-                r = tools.挂机打怪.是否技能冷确中(范围);
+                var r = tools.挂机打怪.是否技能冷确中(范围);
                 if (r) {
                     break;
                 }
@@ -3963,13 +3986,8 @@ var tools = {
                     toastLog("超过施毒时间戳,强制结束");
                     break;
                 }
-                var r = tools.挂机打怪.找正上锁定怪物(0, 0);
-                if (!r.status) {
-                    toastLog("怪物消失,强制结束");
-                    break;
-                }
                 tools.click(random(范围.x[0], 范围.x[1]), random(范围.y[0], 范围.y[1]));
-                r = tools.挂机打怪.是否技能冷确中(范围);
+                var r = tools.挂机打怪.是否技能冷确中(范围);
                 if (r) {
                     break;
                 }
@@ -3984,13 +4002,8 @@ var tools = {
                     toastLog("超过打防时间戳,强制结束");
                     break;
                 }
-                var r = tools.挂机打怪.找正上锁定怪物(0, 0);
-                if (!r.status) {
-                    toastLog("怪物消失,强制结束");
-                    break;
-                }
                 tools.click(random(范围.x[0], 范围.x[1]), random(范围.y[0], 范围.y[1]));
-                r = tools.挂机打怪.是否技能冷确中(范围);
+                var r = tools.挂机打怪.是否技能冷确中(范围);
                 if (r) {
                     break;
                 }
@@ -4005,13 +4018,8 @@ var tools = {
                     toastLog("超过打魔时间戳,强制结束");
                     break;
                 }
-                var r = tools.挂机打怪.找正上锁定怪物(0, 0);
-                if (!r.status) {
-                    toastLog("怪物消失,强制结束");
-                    break;
-                }
                 tools.click(random(范围.x[0], 范围.x[1]), random(范围.y[0], 范围.y[1]));
-                r = tools.挂机打怪.是否技能冷确中(范围);
+                var r = tools.挂机打怪.是否技能冷确中(范围);
                 if (r) {
                     break;
                 }
@@ -4026,13 +4034,8 @@ var tools = {
                     toastLog("超过自愈时间戳,强制结束");
                     break;
                 }
-                var r = tools.挂机打怪.找正上锁定怪物(0, 0);
-                if (!r.status) {
-                    toastLog("怪物消失,强制结束");
-                    break;
-                }
                 tools.click(random(范围.x[0], 范围.x[1]), random(范围.y[0], 范围.y[1]));
-                r = tools.挂机打怪.是否技能冷确中(范围);
+                var r = tools.挂机打怪.是否技能冷确中(范围);
                 if (r) {
                     break;
                 }
@@ -4293,15 +4296,15 @@ var tools = {
                 tools.挂机打怪.向宝宝移动();
                 return true;
             }
-            if (宝宝最后位置信息.p && 宝宝最后位置信息.p.x > 0 && (start - 宝宝最后位置信息.time) <= (30 * 1000)) {
-                toastLog("原路返回找宝宝");
-                tools.人物移动.指定像素移动(宝宝最后位置信息.p.x, 宝宝最后位置信息.p.y);
-                r = tools.挂机打怪.扫描宝宝();
-                if (r.status) {
-                    tools.挂机打怪.向宝宝移动();
-                    return true;
-                }
-            }
+            // if (宝宝最后位置信息.p && 宝宝最后位置信息.p.x > 0 && (start - 宝宝最后位置信息.time) <= (30 * 1000)) {
+            //     toastLog("原路返回找宝宝");
+            //     tools.人物移动.指定像素移动(宝宝最后位置信息.p.x, 宝宝最后位置信息.p.y);
+            //     r = tools.挂机打怪.扫描宝宝();
+            //     if (r.status) {
+            //         tools.挂机打怪.向宝宝移动();
+            //         return true;
+            //     }
+            // }
             if (挂机点跑图顺序 <= 0) {
                 挂机点跑图顺序++;
             }
@@ -4930,6 +4933,15 @@ var tools = {
             }
             return {
                 status: false
+            }
+        },
+        等待: () => {
+            var t1 = new Date().getTime();
+            while (当前总状态 == 总状态.已启动) {
+                var r = tools.findImageArea("shiquzhanwu.png", 490, 670, 529, 692, 0.85);
+                if (r.status || new Date().getTime() - t1 > 666) {
+                    break;
+                }
             }
         },
         攻击激活后操作: () => {
@@ -6676,61 +6688,55 @@ var tools = {
                 验证文字: true,
                 是否提醒: true,
                 同时验证: false,
-            },{
+            }, {
                 name: "无极棍",
                 wenPic: 存仓库枚举.无极棍,
                 验证文字: true,
                 是否提醒: true,
                 同时验证: false,
-            },{
+            }, {
                 name: "召唤神兽",
                 wenPic: 存仓库枚举.召唤神兽,
                 验证文字: true,
                 是否提醒: true,
                 同时验证: false,
-            },{
+            }, {
                 name: "天珠项链",
                 wenPic: 存仓库枚举.天珠项链,
                 验证文字: true,
                 是否提醒: true,
                 同时验证: false,
-            },{
+            }, {
                 name: "红宝石",
                 wenPic: 存仓库枚举.红宝石,
                 验证文字: true,
                 是否提醒: true,
                 同时验证: false,
-            },{
+            }, {
                 name: "绿色项链",
                 wenPic: 存仓库枚举.绿色项链,
                 验证文字: true,
                 是否提醒: true,
                 同时验证: false,
-            },{
+            }, {
                 name: "龙纹",
                 wenPic: 存仓库枚举.龙纹,
                 验证文字: true,
                 是否提醒: true,
                 同时验证: false,
-            },{
+            }, {
                 name: "井中月",
                 wenPic: 存仓库枚举.井中月,
                 验证文字: true,
                 是否提醒: true,
                 同时验证: false,
-            },{
-                name: "无极棍",
-                wenPic: 存仓库枚举.无极棍,
+            }, {
+                name: "铃铛",
+                wenPic: 存仓库枚举.铃铛,
                 验证文字: true,
                 是否提醒: true,
                 同时验证: false,
-            },{
-                name: "无极棍",
-                wenPic: 存仓库枚举.无极棍,
-                验证文字: true,
-                是否提醒: true,
-                同时验证: false,
-            },];
+            }];
             if (挂机参数.存万年 == 1) {
                 arr.push({
                     name: "万年雪霜",
