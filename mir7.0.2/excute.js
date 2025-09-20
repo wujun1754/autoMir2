@@ -51,7 +51,7 @@ let 画面自检时间 = new Date().getTime();
 let 画面自检时间戳 = 60 * 1000 * 3;
 
 
-
+var 宝宝模式 = "";
 var 检查蓝药时间戳 = 1000 * 60;
 var 上次检查蓝药时间 = new Date().getTime(); // 减去 20 分钟; 
 
@@ -697,6 +697,7 @@ var isStart = true
 var isShowConfig = false;
 var 跑图错误次数 = 0;
 var 锁定失败次数 = 0;
+var 是否正在攻击宝宝身边怪 = false;
 var 宝宝最后位置信息 = {
     p: null,
     time: null
@@ -2759,7 +2760,7 @@ var tools = {
         检测宝宝: (强制检测) => {
             if ((new Date().getTime() - 上次检查宝宝时间 > 检查宝宝时间戳 || 强制检测) && 挂机参数.召唤宝宝 == 1) {
                 tools.悬浮球描述("检查宝宝开始");
-                tools.挂机打怪.宝宝是否存在("攻击", true);
+                tools.挂机打怪.宝宝是否存在("攻击", true, false);
                 上次检查宝宝时间 = new Date().getTime();
                 tools.悬浮球描述("检查宝宝结束");
             }
@@ -2882,7 +2883,7 @@ var tools = {
                 } catch (e) {
                     r = false;
                     let msg = typeof e === "object" && e.stack ? e.stack + "\n" + e.toString() : e.toString()
-                    tools.悬浮球临时描述("打怪异常");
+                    tools.悬浮球临时描述("打怪异常" + msg);
                     //toastLog("打怪异常: \n" + msg);
                 }
                 if (r) {
@@ -2921,7 +2922,6 @@ var tools = {
             if (r) {
                 tools.挂机打怪.攻击怪物(false);
             }
-            tools.悬浮球临时描述("" + r);
             return r;
         },
         锁定怪物: () => {
@@ -2945,15 +2945,22 @@ var tools = {
                     其他玩家 = new Date().getTime() - 发现其他玩家时间 <= 发现其他玩家时间等待 ? true : false;
                 }
                 var r = null;
-                if (挂机参数.只打满血怪 == 1) {
+                if (挂机参数.只打满血怪 == 1 || 其他玩家) {
                     r = tools.挂机打怪.找满血怪(-1, img, true, true);
+                    if (!r.status && 挂机参数.攻击宝宝身边 > 0) {
+                        var 宝宝身边 = tools.挂机打怪.获取宝宝身边怪物数据(1);
+                        if (宝宝身边.status && 宝宝身边.value && 宝宝身边.value.length > 挂机参数.攻击宝宝身边) {
+                            var 是否成功 = tools.挂机打怪.攻击宝宝身边怪物(r, false);
+                            if (是否成功) {
+                                isFind = true;
+                                锁定怪物顺序 = 0;
+                            }
+                        }
+                    }
                 }
                 else {
                     r = tools.挂机打怪.找非满血怪(img, true, true)
                 }
-                // if (!r.status && 挂机参数.只打满血怪 == 0 && !其他玩家) {
-
-                // }
                 if (r.status) {
                     锁定怪物顺序 = r.index;
                     isFind = true;
@@ -2965,21 +2972,20 @@ var tools = {
             }
             else {
                 tools.悬浮球描述("未发现怪物");
-                if ((new Date().getTime() - 上次打怪时间) >= 1000 * 60 * 5) {
+                var now = new Date().getTime();
+                if (now >= 禁止拾取时间 && now - 上一次激活拾取时间 > 激活拾取时间戳 && tools.拾取.扫描拾取(null, false)) {
+                    tools.拾取.点击(1, "锁怪");
+                    tools.拾取.等待();
+                    tools.拾取.激活后操作();
+                }
+                if (now - 上次打怪时间 >= 1000 * 60 * 5) {
                     tools.常用操作.初始化攻击面板loops();
                     上次打怪时间 = new Date().getTime();
                 }
-            }
-            tools.拾取.激活后操作();
-            var now = new Date().getTime();
-            if (now >= 禁止拾取时间 && now - 上一次激活拾取时间 > 激活拾取时间戳 && (是否需要拾取动作 || tools.拾取.扫描拾取(null, false))) {
-                if (是否需要拾取动作) {
-                    tools.拾取.点击(1, "命令");
+                if (宝宝模式 != "休息") {
+                    tools.挂机打怪.宝宝是否存在("休息", true, false);
+                    上次检查宝宝时间 = new Date().getTime();
                 }
-                else {
-                    tools.拾取.点击(1, "锁怪扫描");
-                }
-                是否需要拾取动作 = false;
             }
             utils.recycleNull(img);
             return isFind;
@@ -3057,7 +3063,7 @@ var tools = {
             }
             return r;
         },
-        攻击怪物: (是否正在攻击宝宝身边怪) => {
+        攻击怪物: () => {
             上次打怪时间 = new Date().getTime();
             上一次启动执行时间 = new Date().getTime();
             var 按钮集合 = config.zuobiao.按钮集合[fbl];
@@ -3092,9 +3098,6 @@ var tools = {
             var 是否强制攻击 = false;
             var 切换左面板人物 = false;
             var 左面板怪物 = null;
-            var 是否触发拾取 = false;
-            var 是否发现不能拾取 = false;
-            var 主动拾取时间 = null;
             var 扫描宝宝 = {
                 status: false
             };
@@ -3109,7 +3112,6 @@ var tools = {
                     sleep(1000 * 15);
                     break;
                 }
-
                 if (锁定失败次数 >= 3 || (挂机参数.不打邪恶 == 1 && (锁定的怪物.indexOf("邪") >= 0 || 左面板Str.indexOf("邪") >= 0))) {
                     tools.挂机打怪.关闭中间怪物();
                     tools.挂机打怪.强制跑图();
@@ -3118,45 +3120,47 @@ var tools = {
                     }
                     if (锁定的怪物.indexOf("邪") >= 0) {
                         toastLog("不打邪恶");
-                        tools.挂机打怪.宝宝是否存在("跟随", true);
+                        tools.挂机打怪.宝宝是否存在("跟随", true, false);
                     }
                     else {
                         toastLog("锁定失败(" + 锁定失败次数 + "),强制跑图")
                     }
                     锁定失败次数 = 0;
                     sleep(1000 * 10);
-                    tools.挂机打怪.宝宝是否存在("攻击", true);
+                    tools.挂机打怪.宝宝是否存在("攻击", true, false);
                     break;
                 }
                 if (new Date().getTime() >= 禁止拾取时间 && (new Date().getTime() - 上一次激活拾取时间) > 激活拾取时间戳) {
-                    var isShiQu = tools.挂机打怪.判断经验增加();
-                    if (!isShiQu) {
-                        isShiQu = tools.拾取.扫描拾取(拾取范围P, false)
-                    }
-                    if (isShiQu) {
-                        tools.拾取.点击(1, "攻击扫描");
-                        tools.拾取.等待();
-                    }
-                }
-
-
-                r = tools.挂机打怪.找正上锁定怪物(0, 0);
-
-                if (r.status) {
-                    if (!是否发现不能拾取 && new Date().getTime() >= 禁止拾取时间 && (new Date().getTime() - 上一次激活拾取时间) > 激活拾取时间戳) {
-                        if (精英怪 == null || !精英怪.status || 精英怪.攻击中扫描拾取) {
-                            if (tools.拾取.扫描拾取(拾取范围P, false)) {
-                                //tools.挂机打怪.关闭中间怪物();
-                                tools.拾取.点击(1, "攻击扫描");
-                                是否触发拾取 = true;
-                                主动拾取时间 = new Date().getTime();
-                                sleep(1200)
-                            }
+                    var 是否允许拾取 = true;
+                    if (精英怪 && 精英怪.status && !精英怪.攻击中扫描拾取) {
+                        r = tools.挂机打怪.找正上锁定怪物(0, 0);
+                        if (r.status) {
+                            是否允许拾取 = false;
                         }
                     }
-                    if (是否触发拾取) {
-                        是否发现不能拾取 = tools.拾取.攻击激活后操作();
+                    if (是否允许拾取) {
+                        var msg = "经验"
+                        var isShiQu = tools.挂机打怪.判断经验增加();
+                        if (!isShiQu) {
+                            isShiQu = tools.拾取.扫描拾取(拾取范围P, false)
+                            msg = "攻击";
+                        }
+                        if (isShiQu) {
+                            //tools.click(643, 350);//点击人物脚的位置，防止有怪乱跑
+                            tools.拾取.点击(1, msg);
+                            tools.拾取.等待();
+                            tools.拾取.激活后操作();
+                            // var 血量为0 = tools.挂机打怪.判断中间血量是否为0();
+                            // if (血量为0) {
+                            //     toastLog("血量为0")
+                            //     break;
+                            // }
+                        }
                     }
+
+                }
+                r = tools.挂机打怪.找正上锁定怪物(0, 0);
+                if (r.status) {
                     if ((左面板怪物 == null || !左面板怪物.status) && 锁定怪物截图 != null) {
                         左面板怪物 = tools.挂机打怪.分析左面板怪物()
                         if (左面板怪物 != null && 左面板怪物.status && 左面板怪物.value.精英怪) {
@@ -3166,15 +3170,20 @@ var tools = {
                             }
                         }
                     }
-
                     var 扫描R = tools.挂机打怪.扫描身边怪物名(左面板怪物);
                     本次扫描的怪物名 = 扫描R.name;
-                    if (扫描R.status) {
+                    if (扫描R.status && 扫描R.name.length > 0) {
                         if (!是否触发攻击) {
                             tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                             sleep(133);
                             tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                             是否触发攻击 = true;
+                        }
+                        if (宝宝模式 != "攻击") {
+                            // toastLog(扫描R.name)
+                            // tools.挂机打怪.设置宝宝模式("攻击")
+                            tools.挂机打怪.宝宝是否存在("攻击", true, false);
+                            上次检查宝宝时间 = new Date().getTime();
                         }
                         锁定的怪物 = 扫描R.name;
                         上一次怪物身边时间 = new Date().getTime();
@@ -3185,13 +3194,14 @@ var tools = {
                             }
                         }
                     }
-
-
                     if (锁定的怪物.length > 0 && (!是否隐身等待 || 是否强制攻击) && (new Date().getTime() - 上一次怪物身边时间) >= 移动时间戳) {
                         r = tools.挂机打怪.找正上锁定怪物(0, 0);
                         if (r.status) {
+                            var t1 = new Date().getTime();
                             r = tools.挂机打怪.向怪物移动(左面板怪物);
+                            var t2 = new Date().getTime();
                             if (r.status) {
+                                tools.悬浮球临时描述("移动2(" + ((t2 - t1) / 1000).toFixed(2) + ")")
                                 sleep(200)
                                 continue;
                             }
@@ -3199,7 +3209,8 @@ var tools = {
                                 tools.挂机打怪.关闭中间怪物();
                                 tools.挂机打怪.强制跑图();
                                 上次跑图时间 = new Date().getTime();
-                                tools.悬浮球临时描述("跑图哦")
+                                tools.悬浮球临时描述("强制跑图2(" + ((t2 - t1) / 1000).toFixed(2) + ")")
+                                //tools.悬浮球临时描述("跑图哦")
                                 sleep(666)
                                 锁定失败次数++;
                                 break;
@@ -3220,18 +3231,18 @@ var tools = {
                     if (挂机参数.隐身数量 > 0) {
                         怪物 = tools.挂机打怪.获取人物身边怪物数据();
                     }
-                    if (挂机参数.寻找宝宝数 > 0) {
-                        扫描宝宝 = tools.挂机打怪.扫描宝宝();
-                        if (扫描宝宝.status) {
-                            宝宝最后位置信息 = {
-                                p: {
-                                    x: 扫描宝宝.r.x,
-                                    y: 扫描宝宝.r.y,
-                                },
-                                time: new Date().getTime()
-                            }
-                        }
-                    }
+                    // if (挂机参数.寻找宝宝数 > 0) {
+                    //     扫描宝宝 = tools.挂机打怪.扫描宝宝();
+                    //     if (扫描宝宝.status) {
+                    //         宝宝最后位置信息 = {
+                    //             p: {
+                    //                 x: 扫描宝宝.r.x,
+                    //                 y: 扫描宝宝.r.y,
+                    //             },
+                    //             time: new Date().getTime()
+                    //         }
+                    //     }
+                    // }
                     if (挂机参数.不打邪恶 == 0 && 精英怪 && 精英怪.status && !是否锁定危险怪) {
                         if (精英怪.value.是否施毒) {
                             tools.挂机打怪.施毒();
@@ -3274,7 +3285,6 @@ var tools = {
                         }
                         tools.挂机打怪.关闭中间怪物();
                         是否需要拾取动作 = true;
-                        禁止拾取时间 = new Date().getTime() - 1000 * 60 * 24;
                         toastLog("放弃归属")
                         return;
                     }
@@ -3292,6 +3302,7 @@ var tools = {
                         }
                     }
                     if (挂机参数.寻找宝宝数 > 0 && 怪物.length >= 挂机参数.寻找宝宝数) {
+                        扫描宝宝 = tools.挂机打怪.扫描宝宝();
                         if (!扫描宝宝.status) {
                             tools.挂机打怪.寻找宝宝();
                         }
@@ -3323,8 +3334,11 @@ var tools = {
                         else {
                             if ((!是否隐身等待 || 是否强制攻击) && 锁定的怪物.length <= 0) {
                                 if (挂机参数.隐身走动 == 0) {
+                                    var t1 = new Date().getTime()
                                     r = tools.挂机打怪.向怪物移动(左面板怪物);
+                                    var t2 = new Date().getTime()
                                     if (r.status) {
+                                        tools.悬浮球临时描述("移动1(" + ((t2 - t1) / 1000).toFixed(2) + ")")
                                         sleep(200)
                                         continue;
                                     }
@@ -3332,7 +3346,7 @@ var tools = {
                                         tools.挂机打怪.关闭中间怪物();
                                         tools.挂机打怪.强制跑图();
                                         上次跑图时间 = new Date().getTime();
-                                        tools.悬浮球临时描述("跑图哦")
+                                        tools.悬浮球临时描述("强制跑图1(" + ((t2 - t1) / 1000).toFixed(2) + ")")
                                         sleep(666)
                                         锁定失败次数++;
                                         break;
@@ -3395,9 +3409,6 @@ var tools = {
                 } else {
                     break;
                 }
-            }
-            if (主动拾取时间 == null || (new Date().getTime() - 主动拾取时间) > 1000) {
-                是否需要拾取动作 = true;
             }
             if (isChange) {
                 锁定失败次数 = 0;
@@ -3626,7 +3637,7 @@ var tools = {
 
             for (var index = 0; index < 3; index++) {
                 var item = config.zuobiao.左攻击面板[fbl].血量坐标[index];
-                var isOk = images.detectsColor(img, item.c2, item.x2, item.y2, 8, "diff")
+                var isOk = images.detectsColor(img, item.c1, item.x1, item.y1, 8, "diff")
                 if (isOk) {
                     result.status = true;
                     result.index = index;
@@ -3643,6 +3654,19 @@ var tools = {
                     tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                 }
             }
+            return result;
+        },
+        判断中间血量是否为0: () => {
+            var result = false;
+            let img = captureScreen();
+            var v1 = images.detectsColor(img, "#FFFFFF", 629, 38, 6, "diff")
+            var v2 = images.detectsColor(img, "#FFFFFF", 636, 38, 6, "diff")
+            var v3 = images.detectsColor(img, "#FFFFFF", 640, 38, 6, "diff")
+            var v4 = images.detectsColor(img, "#FFFFFF", 652, 44, 6, "diff")
+            if (v1 && v2 && v3 && v4) {
+                result = true;
+            }
+            utils.recycleNull(img);
             return result;
         },
         攻击宝宝身边怪物: (宝宝身边怪物, 是否攻击) => {
@@ -4169,10 +4193,12 @@ var tools = {
                 result: r
             }
         },
-        宝宝是否存在: (模式, 是否召唤) => {
-            var r = tools.挂机打怪.扫描宝宝();
-            if (r.status) {
-                return true;
+        宝宝是否存在: (模式, 是否召唤, 是否扫描) => {
+            if (是否扫描) {
+                var r = tools.挂机打怪.扫描宝宝();
+                if (r.status) {
+                    return true;
+                }
             }
             else {
                 var r = tools.挂机打怪.设置宝宝模式(模式);
@@ -4184,6 +4210,7 @@ var tools = {
             }
         },
         设置宝宝模式: (模式) => {
+            宝宝模式 = 模式;
             if (挂机参数.召唤宝宝 == 0) {
                 return false;
             }
@@ -4277,7 +4304,7 @@ var tools = {
                     }
                     if (clickNums > 0) {
                         for (let index = 0; index < clickNums; index++) {
-                            sleep(365);
+                            sleep(50);
                             tools.click(random(按钮.x[0], 按钮.x[1]), random(按钮.y[0], 按钮.y[1]));
                         }
                     }
@@ -4290,12 +4317,13 @@ var tools = {
             return isOk;
         },
         寻找宝宝: () => {
+
             let start = new Date().getTime();
-            var r = tools.挂机打怪.扫描宝宝();
-            if (r.status) {
-                tools.挂机打怪.向宝宝移动();
-                return true;
-            }
+            // var r = tools.挂机打怪.扫描宝宝();
+            // if (r.status) {
+            //     tools.挂机打怪.向宝宝移动();
+            //     return true;
+            // }
             // if (宝宝最后位置信息.p && 宝宝最后位置信息.p.x > 0 && (start - 宝宝最后位置信息.time) <= (30 * 1000)) {
             //     toastLog("原路返回找宝宝");
             //     tools.人物移动.指定像素移动(宝宝最后位置信息.p.x, 宝宝最后位置信息.p.y);
@@ -4348,7 +4376,7 @@ var tools = {
             }
             let start = new Date().getTime();
             tools.挂机打怪.强制跑图();
-            tools.挂机打怪.宝宝是否存在("跟随", true);
+            tools.挂机打怪.宝宝是否存在("跟随", true, false);
             tools.悬浮球描述("血量预警，开始逃跑")
             while (当前总状态 == 总状态.已启动) {
                 var 时间戳 = new Date().getTime() - start;
@@ -4639,16 +4667,16 @@ var tools = {
                 var color = "#DB0000";
                 var value = [];
                 var regions = [
-                    [p.x - 2, p.y - 50, 50, 15], // 正上方
-                    [p.x - 67, p.y - 50, 50, 15], // 左上方
-                    [p.x + 61, p.y - 50, 50, 15], // 右上方
+                    [p.x - 2, p.y - 50, 50, 20], // 正上方
+                    [p.x - 67, p.y - 50, 50, 20], // 左上方
+                    [p.x + 61, p.y - 50, 50, 20], // 右上方
 
-                    [p.x - 2, p.y + 50, 50, 15], // 正下方
-                    [p.x - 67, p.y + 50, 50, 15], // 左下方
-                    [p.x + 61, p.y + 50, 50, 15], // 右下方
+                    [p.x - 2, p.y + 50, 50, 20], // 正下方
+                    [p.x - 67, p.y + 50, 50, 20], // 左下方
+                    [p.x + 61, p.y + 50, 50, 20], // 右下方
 
-                    [p.x - 67, p.y - 8, 50, 16], // 正左方
-                    [p.x + 61, p.y - 8, 50, 16], // 正右方
+                    [p.x - 67, p.y - 8, 50, 20], // 正左方
+                    [p.x + 61, p.y - 8, 50, 20], // 正右方
                 ]
                 if (fbl == "1080_2248") {
                     regions = [
@@ -4792,7 +4820,7 @@ var tools = {
                 }
                 for (var index = 0; index < arr.length; index++) {
                     var item = arr[index];
-                    if (item.name != 文字枚举.name) {
+                    if (item && item.name && item.name != 文字枚举.name) {
                         怪物集合.push(item);
                     }
                 }
@@ -4866,9 +4894,9 @@ var tools = {
             var 拾取 = config.zuobiao.按钮集合[fbl].拾取;
             var 是否激活状态 = tools.拾取.状态();
             if (type == 1) {
-                toastLog("拾取(" + 来源 + ")")
+                tools.悬浮球临时描述("拾取(" + 来源 + ")")
                 if (是否激活状态) {
-                    toastLog("激活中禁止重复")
+                    tools.悬浮球临时描述("激活中(" + 来源 + ")")
                     return;
                 }
                 上次坐标截图 = tools.常用操作.截图当前坐标();
@@ -4944,105 +4972,6 @@ var tools = {
                 }
             }
         },
-        攻击激活后操作: () => {
-            var 累计未移动次数 = 0;
-            var 移动时间戳 = 1000 * 1.8;
-            var 上一次移动 = new Date().getTime();
-            var p = config.zuobiao.聊天框最后一行[fbl];
-            var p1 = config.zuobiao.聊天框面板[fbl];
-            let start = new Date().getTime();
-            var 拾取时长 = 1000 * 150;
-            var 禁止拾取时间戳 = 1000 * 15;
-            var 发现精品装备 = false;
-            var 是否发现不能拾取 = false;
-            while (当前总状态 == 总状态.已启动) {
-                var 是否激活状态 = tools.拾取.状态();
-                if (new Date().getTime() - 上次装备已满喝药时间 > (1000 * 60 * 1)) {
-                    var 是否已满 = tools.findImageArea(文字图枚举.已满, p1.x1, p1.y1, p1.x2, p1.y2, 0.85);
-                    if (是否已满.status) {
-                        var count = tools.补给操作.喝蓝_背包(null, true);
-                        if (count > 0) {
-                            tools.常用方法.错误日志("成功喝蓝(" + count + ")", 2);
-                            上次装备已满喝药时间 = new Date().getTime();
-                            if (是否激活状态) {
-                                tools.拾取.点击(0, "攻击激活喝药");
-                                sleep(1000);
-                                tools.拾取.点击(1, "攻击激活喝药");
-
-                            }
-                            else {
-                                tools.拾取.点击(1, "攻击激活喝药");
-                            }
-                        }
-                        else {
-                            toastLog("文字识别装备已满");
-                            tools.挂机打怪.回城补给在挂机("文字识别装备已满");
-                            break;
-                        }
-                    }
-                }
-                // if (是否激活状态) {
-                //     tools.挂机打怪.关闭中间怪物();
-                // }
-                if (!是否激活状态 && !发现精品装备) {
-                    break;
-                }
-                是否强制跑图 = true;
-                上次跑图时间 = new Date().getTime() - (60 * 1000);
-                if (new Date().getTime() - start > 拾取时长) {
-                    if (是否激活状态) {
-                        tools.拾取.点击(0, "攻击激活超时");
-                    }
-                    是否发现不能拾取 = true;
-                    禁止拾取时间 = new Date().getTime() + 禁止拾取时间戳;
-                    break;
-                }
-                if (发现精品装备) {
-                    tools.挂机打怪.关闭中间怪物();
-                    sleep(100);
-                    tools.悬浮球描述("精品装备(" + parseInt((拾取时长 - (new Date().getTime() - start)) / 1000) + ")");
-                    continue;
-                }
-                var 不能拾取 = tools.findImageArea(文字图枚举.不能拾取, p.x1, p.y1, p.x2, p.y2, 0.85);
-                tools.悬浮球描述("拾取[" + 不能拾取.status + "](" + parseInt((拾取时长 - (new Date().getTime() - start)) / 1000) + ")");
-                if (不能拾取.status) {
-                    var 精品装备 = tools.拾取.是否精品装备();
-                    if (精品装备.status) {
-                        发现精品装备 = true;
-                        sleep(100);
-                        continue;
-                    }
-                    是否发现不能拾取 = true;
-                    禁止拾取时间 = new Date().getTime() + 禁止拾取时间戳;
-                    tools.拾取.点击(0, "攻击激活不能拾取");
-                    break;
-                }
-                if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
-                    var 是否静止 = tools.人物移动.是否跑图并截图坐标(false);
-                    if (是否静止) {
-                        累计未移动次数++;
-                        if (累计未移动次数 >= 4) {
-                            tools.拾取.点击(0, "攻击激活未移动(" + 累计未移动次数 + ")");
-                            禁止拾取时间 = new Date().getTime() + 禁止拾取时间戳;
-                            是否发现不能拾取 = true;
-                            break;
-                        }
-                        else {
-                            if (是否激活状态 && 累计未移动次数 >= 2) {
-                                if (tools.拾取.扫描拾取(null, false)) {
-                                    tools.拾取.点击(0, "攻击激活未移动(" + 累计未移动次数 + ")");
-                                    sleep(1200);
-                                    tools.拾取.点击(1, "攻击激活未移动(" + 累计未移动次数 + ")");
-                                    sleep(1200)
-                                }
-                            }
-                        }
-                    }
-                    上一次移动 = new Date().getTime();
-                }
-            }
-            return 是否发现不能拾取;
-        },
         激活后操作: () => {
             var 累计未移动次数 = 0;
             var 移动时间戳 = 1000 * 2;
@@ -5109,6 +5038,9 @@ var tools = {
 
                 var 不能拾取 = tools.findImageArea(文字图枚举.不能拾取, p.x1, p.y1, p.x2, p.y2, 0.85);
                 if (不能拾取.status) {
+                    if (不能拾取次数 <= 0) {
+                        toastLog("不能拾取")
+                    }
                     不能拾取次数++;
                     var 精品装备 = tools.拾取.是否精品装备();
                     if (精品装备.status) {
@@ -5700,8 +5632,8 @@ var tools = {
                     y = closeImg.y + random(r.y[0], r.y[1]);
                 }
                 else {
-                    x = closeImg.x + (r.x - 偏移.x) + random(-5, 5);
-                    y = closeImg.y + (r.y - 偏移.y) + random(-5, 5);
+                    x = closeImg.x + (r.x - 偏移.x) + random(-1, 1);
+                    y = closeImg.y + (r.y - 偏移.y) + random(-1, 1);
                 }
                 if (i == 0) {
                     sleep(333);
@@ -5768,7 +5700,7 @@ var tools = {
                         if (当前地图 == 挂机参数.挂机地图 || 挂机参数.挂机地图 == "比奇野外") {
                             tools.常用操作.点击人物();
                             tools.挂机打怪.启动隐身();
-                            tools.挂机打怪.宝宝是否存在("跟随", true);
+                            tools.挂机打怪.宝宝是否存在("跟随", true, false);
                             sleep(random(2500, 3000));
                             tools.挂机打怪.初始化挂机();
                             break;
@@ -6766,6 +6698,9 @@ var tools = {
                     var r = null;
                     if (item.验证文字) {
                         r = tools.补给操作.背包选中按钮中找字图(item.wenPic, btn)
+                        if (r.status && item.name == "井中月") {
+                            r = tools.补给操作.背包选中按钮中找字图("wenzi_zhuangbei_jingzhongyue1.png", btn)
+                        }
                     }
                     else {
                         r = tools.补给操作.背包选中格子中找图(item.pic, zhengliBtn, index1, index2)
@@ -9378,6 +9313,7 @@ threads.start(() => {
 })
 // 开一个线程周期性更新 UI
 threads.start(function () {
+    var 打怪提醒 = false;
     while (true) {
         let currentDirection = context.getResources().getConfiguration().orientation;
         var 分钟 = 0;
@@ -9399,8 +9335,9 @@ threads.start(function () {
             lastDirection = currentDirection;
             updateWindowPosition()
         }
-        if (当前总状态 == 总状态.已启动 && (new Date().getTime() - 上一次启动执行时间) > (1000 * 60 * 30)) {
+        if (当前总状态 == 总状态.已启动 && !打怪提醒 && (new Date().getTime() - 上一次启动执行时间) > (1000 * 60 * 30)) {
             tools.常用方法.发送提醒("30分钟以上未执行打怪");
+            打怪提醒 = true;
         }
         sleep(1000 * 3); // 每秒更新一次
     }
