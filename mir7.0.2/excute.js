@@ -2949,11 +2949,10 @@ var tools = {
             }
             if (是否继续寻找) {
                 var 宝宝身边 = tools.挂机打怪.获取宝宝身边怪物数据(1, 锁物Img);
-                tools.悬浮球描述("宝宝(" + 宝宝身边.value.length + ")")
                 if (宝宝身边.status && 宝宝身边.value && 宝宝身边.value.length > 挂机参数.攻击宝宝身边) {
-                    var 是否成功 = tools.挂机打怪.攻击宝宝身边怪物(r, false, 锁物Img);
+                    var 是否成功 = tools.挂机打怪.攻击宝宝身边怪物(宝宝身边, true, 锁物Img);
                     if (是否成功) {
-                        toastLog("宝宝身边(" + 宝宝身边.value.length + ")")
+                        toastLog("宝宝(" + 宝宝身边.value.length + ")")
                         是否正在攻击宝宝身边怪 = true;
                         isFind = true;
                         锁定怪物顺序 = 0;
@@ -3087,7 +3086,7 @@ var tools = {
             var 宝宝身边怪物 = 0;
             var r = null;
             var timeout = 挂机参数.打怪等待 * 1000;
-            var 移动时间戳 = 1000 * 1.4;
+            var 移动时间戳1 = 1000 * 1.4;
             var 上一次移动 = new Date().getTime();
 
             var 攻击时间戳 = 1000 * 2;
@@ -3144,8 +3143,16 @@ var tools = {
                     sleep(1000 * 10);
                     break;
                 }
-                if (new Date().getTime() >= 禁止拾取时间 && (new Date().getTime() - 上一次激活拾取时间) > 激活拾取时间戳) {
+                //if (new Date().getTime() >= 禁止拾取时间 && (new Date().getTime() - 上一次激活拾取时间) > 激活拾取时间戳) {
+                if (new Date().getTime() >= 禁止拾取时间) {
                     var 是否允许拾取 = true;
+                    var 血量是否为0 = tools.挂机打怪.判断中间血量是否为0();
+                    if (血量是否为0) {
+                        tools.拾取.点击(1, "血量0");
+                        tools.拾取.等待();
+                        tools.拾取.激活后操作();
+                        break;
+                    }
                     if (精英怪 && 精英怪.status && !精英怪.攻击中扫描拾取) {
                         r = tools.挂机打怪.判断中间血量是否存在();
                         if (r) {
@@ -3160,15 +3167,9 @@ var tools = {
                             msg = "攻击";
                         }
                         if (isShiQu) {
-                            //tools.click(643, 350);//点击人物脚的位置，防止有怪乱跑
                             tools.拾取.点击(1, msg);
                             tools.拾取.等待();
                             tools.拾取.激活后操作();
-                            // var 血量为0 = tools.挂机打怪.判断中间血量是否为0();
-                            // if (血量为0) {
-                            //     toastLog("血量为0")
-                            //     break;
-                            // }
                         }
                     }
 
@@ -3206,7 +3207,9 @@ var tools = {
                             }
                         }
                     }
-                    if (锁定的怪物.length > 0 && (!是否隐身等待 || 是否强制攻击) && (new Date().getTime() - 上一次怪物身边时间) >= 移动时间戳) {
+                    var 宝宝身边 = tools.挂机打怪.获取宝宝身边怪物数据(1);
+                    tools.悬浮球描述("宝宝(" + 宝宝身边.value.length + ")")
+                    if (锁定的怪物.length > 0 && (!是否隐身等待 || 是否强制攻击) && (new Date().getTime() - 上一次怪物身边时间) >= 移动时间戳1) {
                         r = tools.挂机打怪.找正上锁定怪物(0, 0);
                         if (r.status) {
                             var t1 = new Date().getTime();
@@ -3330,7 +3333,7 @@ var tools = {
                             sleep(222);
                         }
                     }
-                    if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
+                    if (new Date().getTime() - 上一次移动 >= 移动时间戳1) {
                         var 是否跑图 = tools.人物移动.是否跑图并截图坐标(false);
                         if (!是否跑图) {
                             tools.悬浮球描述("隐身时间归0");
@@ -3384,10 +3387,6 @@ var tools = {
                         tools.执行时间戳.检测武器衣服包袱();
                     }
 
-                    tools.常用操作.及时执行事件(false);
-
-                    tools.执行时间戳.检测画面();
-
                     if (精英怪 != null && 精英怪.status && new Date().getTime() - 上次检查宝宝时间 > 检查宝宝时间戳) {
                         var r = tools.挂机打怪.扫描宝宝();
                         if (!r.status) {
@@ -3395,6 +3394,11 @@ var tools = {
                             上次检查宝宝时间 = new Date().getTime();
                         }
                     }
+
+                    tools.常用操作.及时执行事件(false);
+
+                    tools.执行时间戳.检测画面();
+
                     // else {
                     //     tools.执行时间戳.检测宝宝(false);
                     // }
@@ -3592,7 +3596,7 @@ var tools = {
             utils.recycleNull(img);
             return result;
         },
-        攻击宝宝身边怪物: (宝宝身边怪物, 是否攻击, img) => {
+        攻击宝宝身边怪物: (宝宝身边怪物, 是否攻击, 锁物Img) => {
             if (宝宝身边怪物.status && 宝宝身边怪物.value && 宝宝身边怪物.value.length > 0) {
                 var 人物中心 = config.zuobiao.人物血量中心[fbl];
                 var result = [];
@@ -3608,22 +3612,27 @@ var tools = {
                 var 按钮集合 = config.zuobiao.按钮集合[fbl];
                 for (var index = 0; index < result.length; index++) {
                     var r = result[index].value;
-                    tools.click(r.x + random(10, 20), r.y + random(5, 10));
-                    sleep(222);
-                    r = tools.挂机打怪.找正上锁定怪物(0, 0, img);
-                    if (r.status) {
-                        if (是否攻击) {
-                            tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                            sleep(random(111, 222));
-                            tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                    if (r.x >= 245 && r.x <= 915 && r.y >= 60 && r.y <= 556) {
+                        tools.click(r.x + random(10, 20), r.y + random(5, 10));
+                        sleep(222);
+                        r = tools.挂机打怪.找正上锁定怪物(0, 0, 锁物Img);
+                        if (r.status) {
+                            if (是否攻击) {
+                                tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                                sleep(random(111, 222));
+                                tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                            }
+                            return true;
                         }
-                        return true;
+                    }
+                    else{
+                        toastLog("(攻击宝宝身边)超出点击范围");
                     }
                 }
             }
             return false;
         },
-        找正上锁定怪物: (tryCount, interval, img) => {
+        找正上锁定怪物: (tryCount, interval, 锁物Img) => {
             var p = config.zuobiao.中间怪物Btn范围[fbl];
             if (interval == null || interval <= 0) {
                 interval = 10;
@@ -3632,7 +3641,7 @@ var tools = {
                 tryCount = 1;
             }
             if (tryCount <= 0) {
-                return tools.findImageArea("zhongjianguaiwuBtn.png", p.x1, p.y1, p.x2, p.y2, 0.8, img)
+                return tools.findImageArea("zhongjianguaiwuBtn.png", p.x1, p.y1, p.x2, p.y2, 0.8, 锁物Img)
             }
             else {
                 return tools.findImageAreaForWait("zhongjianguaiwuBtn.png", p.x1, p.y1, p.x2, p.y2, {
@@ -4357,21 +4366,21 @@ var tools = {
             utils.recycleNull(img);
             return result;
         },
-        扫描宝宝: (img) => {
-            var 是否释放 = false;
-            if (img == null) {
-                img = captureScreen();
-                是否释放 = true;
-            }
+        扫描宝宝: (锁物Img) => {
             var color = "#00BF00";
+            var 是否释放 = false;
             var result = {
                 status: false,
                 r: null
             };
+            if (锁物Img == null) {
+                锁物Img = captureScreen();
+                是否释放 = true;
+            }
             var regions = config.找色[fbl].扫描宝宝;
             for (var index = 0; index < regions.length; index++) {
                 var reg = regions[index];
-                var r = images.findMultiColors(img, color, [[8, 0, color]], {
+                var r = images.findMultiColors(锁物Img, color, [[8, 0, color]], {
                     region: reg,
                     threshold: 15
                 });
@@ -4389,7 +4398,7 @@ var tools = {
                 }
             }
             if (是否释放) {
-                utils.recycleNull(img);
+                utils.recycleNull(锁物Img);
             }
             return result;
         },
@@ -4588,8 +4597,13 @@ var tools = {
             utils.recycleNull(img);
             return result;
         },
-        获取宝宝身边怪物数据: (status, img) => {
-            var r = tools.挂机打怪.扫描宝宝(img);
+        获取宝宝身边怪物数据: (status, 锁物Img) => {
+            var 是否释放 = false;
+            if (锁物Img == null) {
+                锁物Img = captureScreen();
+                是否释放 = true;
+            }
+            var r = tools.挂机打怪.扫描宝宝(锁物Img);
             var result = {
                 status: false,
                 value: []
@@ -4600,16 +4614,27 @@ var tools = {
                 var color = "#DB0000";
                 var value = [];
                 var regions = [
-                    [p.x - 2, p.y - 50, 50, 20], // 正上方
-                    [p.x - 67, p.y - 50, 50, 20], // 左上方
-                    [p.x + 61, p.y - 50, 50, 20], // 右上方
+                    // [p.x - 2, p.y - 50, 50, 20], // 正上方
+                    // [p.x - 67, p.y - 50, 50, 20], // 左上方
+                    // [p.x + 61, p.y - 50, 50, 20], // 右上方
 
-                    [p.x - 2, p.y + 50, 50, 20], // 正下方
-                    [p.x - 67, p.y + 50, 50, 20], // 左下方
-                    [p.x + 61, p.y + 50, 50, 20], // 右下方
+                    // [p.x - 2, p.y + 50, 50, 20], // 正下方
+                    // [p.x - 67, p.y + 50, 50, 20], // 左下方
+                    // [p.x + 61, p.y + 50, 50, 20], // 右下方
 
-                    [p.x - 67, p.y - 8, 50, 20], // 正左方
-                    [p.x + 61, p.y - 8, 50, 20], // 正右方
+                    // [p.x - 67, p.y - 8, 50, 20], // 正左方
+                    // [p.x + 61, p.y - 8, 50, 20], // 正右方
+
+                    [p.x - 2, p.y - 50, 50, 15], // 正上方
+                    [p.x - 67, p.y - 50, 50, 15], // 左上方
+                    [p.x + 61, p.y - 50, 50, 15], // 右上方
+
+                    [p.x - 2, p.y + 39, 50, 15], // 正下方
+                    [p.x - 67, p.y + 39, 50, 15], // 左下方
+                    [p.x + 61, p.y + 39, 50, 15], // 右下方
+
+                    [p.x - 67, p.y - 8, 50, 16], // 正左方
+                    [p.x + 61, p.y - 8, 50, 16], // 正右方
                 ]
                 if (fbl == "1080_2248") {
                     regions = [
@@ -4628,7 +4653,7 @@ var tools = {
                 regions.forEach((reg, index) => {
                     var r = null;
                     try {
-                        r = images.findColor(img, color, {
+                        r = images.findColor(锁物Img, color, {
                             region: reg, // 正上方
                             threshold: 6
                         });
@@ -4654,6 +4679,9 @@ var tools = {
                     value: value,
                     p: p
                 }
+            }
+            if (是否释放) {
+                utils.recycleNull(锁物Img);
             }
             return result;
         },
@@ -9185,7 +9213,10 @@ function showWinConfig() {
     win.btnRenZheng.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
 
 }
-// sleep(2100)
+// while(true){
+//     var 宝宝身边 = tools.挂机打怪.获取宝宝身边怪物数据(1);
+//     tools.悬浮球描述(JSON.stringify(宝宝身边))
+// }
 // var r  = tools.findImage("wenzhi_zuomianban_shimu_zhu.png",0.3);
 // toastLog(JSON.stringify(r))
 // //  var 衣服 = tools.常用操作.获取装备持久(config.zuobiao.人物面板[fbl].衣服);
