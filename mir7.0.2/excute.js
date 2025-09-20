@@ -2000,6 +2000,19 @@ var tools = {
                 status: false
             };
         },
+        更换衣服: () => {
+            var isSuccess = false;
+            var zhengliBtn = tools.补给操作.整理背包(true);
+            if (!是否用过备用衣服) {
+                if (挂机参数.备用男重盔 == 1) {
+                    isSuccess = tools.常用操作.使用备用装备(装备枚举.重盔男, zhengliBtn);
+                }
+                else if (挂机参数.备用女重盔 == 1) {
+                    isSuccess = tools.常用操作.使用备用装备(装备枚举.重盔女, zhengliBtn);
+                }
+            }
+            return isSuccess
+        },
         设置内挂: () => {
             var 随机保护 = config.zuobiao.设置面板[fbl].随机保护;
             //sleep(555)
@@ -3143,37 +3156,37 @@ var tools = {
                     sleep(1000 * 10);
                     break;
                 }
-                //if (new Date().getTime() >= 禁止拾取时间 && (new Date().getTime() - 上一次激活拾取时间) > 激活拾取时间戳) {
-                if (new Date().getTime() >= 禁止拾取时间) {
-                    var 是否允许拾取 = true;
-                    var 血量是否为0 = tools.挂机打怪.判断中间血量是否为0();
-                    if (血量是否为0) {
-                        tools.拾取.点击(1, "血量0");
-                        tools.拾取.等待();
-                        tools.拾取.激活后操作();
-                        break;
+                var 血量是否为0 = tools.挂机打怪.判断中间血量是否为0();
+                if (血量是否为0) {
+                    tools.拾取.点击(1, "血量0");
+                    tools.拾取.等待();
+                    tools.拾取.激活后操作();
+                    break;
+                }
+                var 是否允许拾取 = true;
+                if (精英怪 && 精英怪.status && !精英怪.攻击中扫描拾取) {
+                    r = tools.挂机打怪.判断中间血量是否存在();
+                    if (r) {
+                        是否允许拾取 = false;
                     }
-                    if (精英怪 && 精英怪.status && !精英怪.攻击中扫描拾取) {
-                        r = tools.挂机打怪.判断中间血量是否存在();
-                        if (r) {
-                            是否允许拾取 = false;
-                        }
-                    }
-                    if (是否允许拾取) {
-                        var msg = "经验"
-                        var isShiQu = tools.挂机打怪.判断经验增加();
-                        if (!isShiQu) {
+                }
+                if (是否允许拾取) {
+                    var msg = "经验"
+                    var isShiQu = tools.挂机打怪.判断经验增加();
+                    if (!isShiQu) {
+                        //if (new Date().getTime() >= 禁止拾取时间 && (new Date().getTime() - 上一次激活拾取时间) > 激活拾取时间戳) {
+                        if (new Date().getTime() >= 禁止拾取时间) {
                             isShiQu = tools.拾取.扫描拾取(拾取范围P, false)
                             msg = "攻击";
                         }
-                        if (isShiQu) {
-                            tools.拾取.点击(1, msg);
-                            tools.拾取.等待();
-                            tools.拾取.激活后操作();
-                        }
                     }
-
+                    if (isShiQu) {
+                        tools.拾取.点击(1, msg);
+                        tools.拾取.等待();
+                        tools.拾取.激活后操作();
+                    }
                 }
+
                 r = tools.挂机打怪.判断中间血量是否存在();
                 if (r) {
                     if ((左面板怪物 == null || !左面板怪物.status) && 锁定怪物截图 != null) {
@@ -3207,8 +3220,8 @@ var tools = {
                             }
                         }
                     }
-                    var 宝宝身边 = tools.挂机打怪.获取宝宝身边怪物数据(1);
-                    tools.悬浮球描述("宝宝(" + 宝宝身边.value.length + ")")
+                    // var 宝宝身边 = tools.挂机打怪.获取宝宝身边怪物数据(1);
+                    // tools.悬浮球描述("宝宝(" + 宝宝身边.value.length + ")")
                     if (锁定的怪物.length > 0 && (!是否隐身等待 || 是否强制攻击) && (new Date().getTime() - 上一次怪物身边时间) >= 移动时间戳1) {
                         r = tools.挂机打怪.找正上锁定怪物(0, 0);
                         if (r.status) {
@@ -3380,12 +3393,16 @@ var tools = {
                             continue;
                         }
                     }
-                    if ((精英怪 == null || !精英怪.status) && tools.补给操作.检测聊天框持久提示()) {
+                    if ((精英怪 == null || !精英怪.status)) {
+                        var 是否持久提醒 = tools.补给操作.检测聊天框持久提示();
+                        if (是否持久提醒.status) {
+
+                        }
                         tools.执行时间戳.检测武器衣服包袱(true);
                     }
-                    if (精英怪 == null || !精英怪.status) {
-                        tools.执行时间戳.检测武器衣服包袱();
-                    }
+                    // if (精英怪 == null || !精英怪.status) {
+                    //     tools.执行时间戳.检测武器衣服包袱();
+                    // }
 
                     if (精英怪 != null && 精英怪.status && new Date().getTime() - 上次检查宝宝时间 > 检查宝宝时间戳) {
                         var r = tools.挂机打怪.扫描宝宝();
@@ -3625,7 +3642,7 @@ var tools = {
                             return true;
                         }
                     }
-                    else{
+                    else {
                         toastLog("(攻击宝宝身边)超出点击范围");
                     }
                 }
@@ -7990,20 +8007,29 @@ var tools = {
             return r.msg;
         },
         检测聊天框持久提示: () => {
-            if ((new Date().getTime() - 上一次持久提示时间) >= 1000 * 60 * 2) {
+            if ((new Date().getTime() - 上一次持久提示时间) >= 1000 * 60) {
                 var p = config.zuobiao.聊天框面板[fbl];
                 var r = tools.findImageArea(持久提示枚举.凝霜, p.x1, p.y1, p.x2, p.y2, 0.85);
                 if (r.status) {
                     上一次持久提示时间 = new Date().getTime();
-                    return true;
+                    return {
+                        status: true,
+                        type: "凝霜"
+                    };
                 }
                 r = tools.findImageArea(持久提示枚举.重盔, p.x1, p.y1, p.x2, p.y2, 0.85);
                 if (r.status) {
                     上一次持久提示时间 = new Date().getTime();
-                    return true;
+                    return {
+                        status: true,
+                        type: "重盔"
+                    };
+                    //return true;
                 }
             }
-            return false;
+            return {
+                status: false
+            };
         },
     },
     验证码认证: {
