@@ -52,7 +52,7 @@ let 画面自检时间戳 = 60 * 1000 * 3;
 
 
 var 宝宝模式 = "";
-var 检查蓝药时间戳 = 1000 * 60;
+var 检查蓝药时间戳 = 1000 * 15;
 var 上次检查蓝药时间 = new Date().getTime(); // 减去 20 分钟; 
 
 // var 检查武器衣服时间戳 = 1000 * 60 * 6;
@@ -2949,7 +2949,7 @@ var tools = {
             }
             if (是否继续寻找) {
                 var 宝宝身边 = tools.挂机打怪.获取宝宝身边怪物数据(1, 锁物Img);
-                tools.悬浮球描述(JSON.stringify(宝宝身边))
+                tools.悬浮球描述("宝宝(" + 宝宝身边.value.length + ")")
                 if (宝宝身边.status && 宝宝身边.value && 宝宝身边.value.length > 挂机参数.攻击宝宝身边) {
                     var 是否成功 = tools.挂机打怪.攻击宝宝身边怪物(r, false, 锁物Img);
                     if (是否成功) {
@@ -3147,8 +3147,8 @@ var tools = {
                 if (new Date().getTime() >= 禁止拾取时间 && (new Date().getTime() - 上一次激活拾取时间) > 激活拾取时间戳) {
                     var 是否允许拾取 = true;
                     if (精英怪 && 精英怪.status && !精英怪.攻击中扫描拾取) {
-                        r = tools.挂机打怪.找正上锁定怪物(0, 0);
-                        if (r.status) {
+                        r = tools.挂机打怪.判断中间血量是否存在();
+                        if (r) {
                             是否允许拾取 = false;
                         }
                     }
@@ -3173,8 +3173,8 @@ var tools = {
                     }
 
                 }
-                r = tools.挂机打怪.找正上锁定怪物(0, 0);
-                if (r.status) {
+                r = tools.挂机打怪.判断中间血量是否存在();
+                if (r) {
                     if ((左面板怪物 == null || !左面板怪物.status) && 锁定怪物截图 != null) {
                         左面板怪物 = tools.挂机打怪.分析左面板怪物()
                         if (左面板怪物 != null && 左面板怪物.status && 左面板怪物.value.精英怪) {
@@ -3223,7 +3223,6 @@ var tools = {
                                 上次跑图时间 = new Date().getTime();
                                 toastLog("强制跑图2(" + ((t2 - t1) / 1000).toFixed(2) + ")")
                                 sleep(666)
-                                锁定失败次数++;
                                 break;
                             }
                         }
@@ -3267,10 +3266,6 @@ var tools = {
                         if (精英怪.value.是否打魔) {
                             tools.挂机打怪.打魔();
                         }
-                        if (精英怪.value.是否隐身) {
-                            tools.挂机打怪.启动隐身();
-                            上一次隐身 = new Date().getTime();
-                        }
                         if (精英怪.value.是否攻击) {
                             是否强制攻击 = true;
                         }
@@ -3284,7 +3279,7 @@ var tools = {
                             tools.挂机打怪.开始逃跑();
                         }
                         else if (tools.挂机打怪.是否自愈()) {
-                            tools.挂机打怪.自愈();
+                            tools.挂机打怪.自愈(true);
                         }
                     }
                     if (!是否正在攻击宝宝身边怪 && 挂机参数.只打满血怪 == 1 && isChange && 锁定的怪物.length <= 0) {
@@ -3299,7 +3294,7 @@ var tools = {
                         return;
                     }
                     if (挂机参数.隐身数量 > 0 && 怪物 && 怪物.length > 0 && (new Date().getTime() - 上一次隐身 >= 隐身时间戳)) {
-                        if (怪物.length >= parseInt(挂机参数.隐身数量) || (精英怪 && 精英怪.status && 精英怪.value.是否隐身)) {
+                        if (怪物.length >= parseInt(挂机参数.隐身数量) || (精英怪 && 精英怪.status && 精英怪.value.是否隐身 && 怪物.length >= 2)) {
                             tools.挂机打怪.启动隐身();
                             上一次隐身 = new Date().getTime();
                         }
@@ -3338,6 +3333,7 @@ var tools = {
                     if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
                         var 是否跑图 = tools.人物移动.是否跑图并截图坐标(false);
                         if (!是否跑图) {
+                            tools.悬浮球描述("隐身时间归0");
                             上一次隐身 = new Date().getTime() - (60 * 1000);
                         }
                         else {
@@ -3357,7 +3353,6 @@ var tools = {
                                         上次跑图时间 = new Date().getTime();
                                         toastLog("强制跑图1(" + ((t2 - t1) / 1000).toFixed(2) + ")")
                                         sleep(666)
-                                        锁定失败次数++;
                                         break;
                                     }
                                 }
@@ -3388,11 +3383,12 @@ var tools = {
                     if (精英怪 == null || !精英怪.status) {
                         tools.执行时间戳.检测武器衣服包袱();
                     }
-                    tools.常用操作.及时执行事件(true);
+
+                    tools.常用操作.及时执行事件(false);
 
                     tools.执行时间戳.检测画面();
 
-                    if (挂机参数.躲避精英 == 0 && new Date().getTime() - 上次检查宝宝时间 > 检查宝宝时间戳) {
+                    if (精英怪 != null && 精英怪.status && new Date().getTime() - 上次检查宝宝时间 > 检查宝宝时间戳) {
                         var r = tools.挂机打怪.扫描宝宝();
                         if (!r.status) {
                             tools.挂机打怪.召唤宝宝();
@@ -3416,7 +3412,7 @@ var tools = {
             }
             else {
                 锁定失败次数++;
-                toastLog("锁定失败isChange(" + 锁定失败次数 + ")")
+                toastLog("锁定失败(" + 锁定失败次数 + ")")
             }
             if (切换左面板人物) {
                 切换左面板人物 = false;
@@ -3585,6 +3581,17 @@ var tools = {
             utils.recycleNull(img);
             return result;
         },
+        判断中间血量是否存在: () => {
+            var result = false;
+            let img = captureScreen();
+            var v1 = images.detectsColor(img, "#BD2422", 731, 20, 6, "diff")
+            var v2 = images.detectsColor(img, "#F0D58A", 731, 29, 6, "diff")
+            if (v1 && v2) {
+                result = true;
+            }
+            utils.recycleNull(img);
+            return result;
+        },
         攻击宝宝身边怪物: (宝宝身边怪物, 是否攻击, img) => {
             if (宝宝身边怪物.status && 宝宝身边怪物.value && 宝宝身边怪物.value.length > 0) {
                 var 人物中心 = config.zuobiao.人物血量中心[fbl];
@@ -3602,7 +3609,8 @@ var tools = {
                 for (var index = 0; index < result.length; index++) {
                     var r = result[index].value;
                     tools.click(r.x + random(10, 20), r.y + random(5, 10));
-                    r = tools.挂机打怪.找正上锁定怪物(2, 100, img);
+                    sleep(222);
+                    r = tools.挂机打怪.找正上锁定怪物(0, 0, img);
                     if (r.status) {
                         if (是否攻击) {
                             tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
@@ -3920,7 +3928,7 @@ var tools = {
         施毒: () => {
             var 范围 = config.zuobiao.按钮集合[fbl].施毒;
             var start = new Date().getTime();
-            while (true) {
+            while (tools.挂机打怪.判断中间血量是否存在()) {
                 var 时间戳 = new Date().getTime() - start;
                 if (时间戳 > (1000 * 4)) {
                     toastLog("超过施毒时间戳,强制结束");
@@ -3936,7 +3944,7 @@ var tools = {
         打防: () => {
             var 范围 = config.zuobiao.按钮集合[fbl].打防;
             var start = new Date().getTime();
-            while (true) {
+            while (tools.挂机打怪.判断中间血量是否存在()) {
                 var 时间戳 = new Date().getTime() - start;
                 if (时间戳 > (1000 * 4)) {
                     toastLog("超过打防时间戳,强制结束");
@@ -3952,7 +3960,7 @@ var tools = {
         打魔: () => {
             var 范围 = config.zuobiao.按钮集合[fbl].打魔;
             var start = new Date().getTime();
-            while (true) {
+            while (tools.挂机打怪.判断中间血量是否存在()) {
                 var 时间戳 = new Date().getTime() - start;
                 if (时间戳 > (1000 * 4)) {
                     toastLog("超过打魔时间戳,强制结束");
@@ -3965,10 +3973,14 @@ var tools = {
                 }
             }
         },
-        自愈: () => {
+        自愈: (验证中间血条) => {
             var 范围 = config.zuobiao.按钮集合[fbl].自愈;
             var start = new Date().getTime();
-            while (true) {
+            var isOk = true;
+            while (isOk) {
+                if (验证中间血条) {
+                    isOk = tools.挂机打怪.判断中间血量是否存在()
+                }
                 var 时间戳 = new Date().getTime() - start;
                 if (时间戳 > (1000 * 6)) {
                     toastLog("超过自愈时间戳,强制结束");
@@ -4000,10 +4012,10 @@ var tools = {
         是否技能冷确中: (范围) => {
             var 技能冷却 = config.zuobiao.按钮集合[fbl].技能冷却;
             var img = captureScreen();
-            var x1 = 范围.x[0] - 50;
-            var y1 = 范围.y[0] - 50;
-            var width = 范围.x[1] - 范围.x[0] + 100
-            var height = 范围.y[1] - 范围.y[0] + 100;
+            var x1 = 范围.x[0] - 30;
+            var y1 = 范围.y[0] - 30;
+            var width = 范围.x[1] - 范围.x[0] + 60
+            var height = 范围.y[1] - 范围.y[0] + 60;
             if (fbl == "1080_2248") {
                 if (x1 + width > 2248) {
                     width = 2248 - x1;
@@ -4307,7 +4319,7 @@ var tools = {
                     break;
                 }
                 else {
-                    tools.挂机打怪.自愈();
+                    tools.挂机打怪.自愈(false);
                 }
                 sleep(100);
             }
@@ -8228,11 +8240,10 @@ var tools = {
             tryCount++;
         }
     },
-    findImageAreaForWait: (fileName, x1, y1, x2, y2, options, img) => {
+    findImageAreaForWait: (fileName, x1, y1, x2, y2, options) => {
         var w = device.width;
         var h = device.height;
         let timeout, interval, maxTries, log, threshold;
-        var 是否释放 = false;
         if (options) {
             timeout = options.timeout !== undefined ? options.timeout : 1000 * 60;
             interval = options.interval !== undefined ? options.interval : 500;
