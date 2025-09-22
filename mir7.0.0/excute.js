@@ -3032,7 +3032,7 @@ var tools = {
                     tools.执行时间戳.检测宝宝();
 
                     tools.执行时间戳.检测蓝药();
-                    
+
                     if (精英怪 == null || !精英怪.status) {
                         tools.执行时间戳.检测武器衣服包袱();
                     }
@@ -5725,23 +5725,34 @@ var tools = {
 
 
             var routes = null;
-
+            toastLog("1");
+            sleep(5000)
             if (下一层 && 下一层.入口 && 箭头P.status) {
+                toastLog("2");
+                sleep(5000)
                 if (Math.abs(箭头P.r.x - 下一层.入口.x) > 50 || Math.abs(箭头P.r.y - 下一层.入口.y) > 50) {
                     var x = closeImg.x + (下一层.入口.x - 偏移.x) + random(-5, 5);
                     var y = closeImg.y + (下一层.入口.y - 偏移.y) + random(-5, 5);
                     tools.click(x, y);
+                    tools.悬浮球描述("x=" + x + " y=" + y)
+                    sleep(15000)
                     tools.常用操作.关闭所有窗口(false, 0, true);
                     是否强制跑图 = false;
                     return;
                 }
             }
             if (下一层 && 下一层.进门) {
+                toastLog("22");
+                sleep(5000)
                 routes = 下一层.进门;
             }
             else {
+                toastLog("222");
+                sleep(5000)
                 routes = config.地图路由[当前地图][目的地][0];
             }
+            toastLog(JSON.stringify(routes));
+            sleep(5000)
             for (var i = 0; i < routes.length; i++) {
                 var 路由 = routes[i];
                 var r = null;
