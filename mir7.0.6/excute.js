@@ -25,18 +25,19 @@ let ocr = new MLKitOCR();
 let ocrPladderOCR = $ocr.create({
     models: 'slim', // 指定精度相对低但速度更快的模型，若不指定则为default模型，精度高一点但速度慢一点
 });
+var 是否完成Socket链接 = false;
 let 存入仓库数量 = 0;
 var 挂机点跑图顺序 = 0;
 var 是否强制跑图 = false;
 var 开启寻怪 = false;
 var 是否需要拾取动作 = false;
-let Socket心跳时间 = new Date().getTime() - 1000 * 60 * 24;
+let Socket心跳时间 = new Date().getTime();
 var 上一次启动执行时间 = new Date().getTime();
-let 上一次申请组队时间 = new Date().getTime() - 1000 * 60 * 24;
-let 申请组队时间戳 = 60 * 1000;
+let 上一次申请组队时间 = new Date().getTime() - 1000 * 60 * 24;;
+let 申请组队时间戳 = 30 * 1000;
 
 let 上一次队长组人时间 = new Date().getTime();
-let 队长组人时间戳 = 60 * 1000 * 2;
+let 队长组人时间戳 = 60 * 1000;
 var 上一次替换手镯 = 0;
 var 上一次替换戒指 = 0;
 
@@ -381,7 +382,7 @@ var 左怪物文字枚举 = {//不要随便动顺序，精英怪枚举有写死
                 }
             }
         }, {
-            精英怪: true,
+            精英怪: false,
             name: "巨型蠕虫",
             pic: "wenzhi_zuomianban_wugong_ru.png",
             怪物显示图: "wenzi_wugongdong_ju.png",
@@ -644,6 +645,10 @@ var 强制拾取排除枚举 = [
     {
         text: "金币3",
         pic: "wenzhi_shiqu_jingbi3.png"
+    },
+    {
+        text: "金币4",
+        pic: "wenzhi_shiqu_jingbi4.png"
     }
 ]
 
@@ -730,10 +735,18 @@ let windowCommon = floaty.window(
     </frame>
 );
 
+let windowTemp = floaty.window(
+    <frame padding="2" id="xuanTempCommon" bg="#000000">
+        <horizontal>
+            <text id="temp1Text" text="" textSize="8sp" textColor="#ffffff" />
+        </horizontal>
+    </frame>
+);
+
 let window = floaty.window(
     <frame padding="2" id="xuanFuPanel" w="wrap_content" h="wrap_content">
         <horizontal>
-            <text id="bbText" text="7.0.5" textSize="8sp" textColor="#ffffff" marginRight="3" />
+            <text id="bbText" text="7.0.6" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="statusText" text="" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="memText" text="内存" textSize="8sp" textColor="#ffffff" marginRight="3" />
             <text id="cangkuText" text="库(0)" textSize="8sp" textColor="#ffffff" marginRight="3" />
@@ -917,15 +930,15 @@ var win = floaty.rawWindow(
                         </horizontal>
                         <horizontal paddingLeft="6sp">
                             <text text="组队好友" textSize="10sp" textColor="#000000" />
-                            <input textSize="10sp" id="t_zudui" focusable="true" w="90sp" text="0" />
+                            <input textSize="10sp" id="t_zudui" focusable="true" w="200sp" text="0" />
                         </horizontal>
                         <horizontal >
-                            <text text="版本号" textSize="10sp" textColor="#000000" />
-                            <input textSize="10sp" id="t_banbenhao" inputType="text" w="48sp" text="0" />
+                            <text text="版本" textSize="10sp" textColor="#000000" />
+                            <input textSize="10sp" id="t_banbenhao" inputType="text" w="30sp" text="0" />
                         </horizontal>
                         <horizontal >
-                            <text text="唯一ID" textSize="10sp" textColor="#000000" />
-                            <input textSize="10sp" id="t_OnlyID" inputType="text" w="48sp" text="0" />
+                            <text text="ID" textSize="10sp" textColor="#000000" />
+                            <input textSize="10sp" id="t_OnlyID" inputType="text" w="30sp" text="0" />
                         </horizontal>
                     </horizontal>
                     <horizontal>
@@ -1115,6 +1128,14 @@ var tools = {
                 tools.常用方法.发送提醒("socket异常_1" + error)
             }
         },
+        心跳: () => {
+            tools.Socket.output.println(JSON.stringify({
+                type: 0,
+                account: 挂机参数.机器标识,
+                isDuiZhang: 挂机参数.是否队长,
+                Id: 挂机参数.唯一ID
+            }));
+        },
         监听: () => {
             while (true) {
                 var msg = "";
@@ -1141,10 +1162,12 @@ var tools = {
                     //     //tools.常用方法.设置背景光(100)
                     // }
                     else if (j.type == 3) {//通知队员确定组队
+                        toastLog("通知确定组队")
                         tools.Socket.是否确定组队 = true;
-                        tools.悬浮球临时描述("确定组队")
+                        tools.悬浮球临时描述("通知确定组队")
                     }
                     else if (j.type == 4) {//队员申请组队
+                        toastLog("队员申请")
                         tools.悬浮球临时描述("队员申请")
                         tools.Socket.是否有队员申请 = true;
                     }
@@ -1174,9 +1197,10 @@ var tools = {
 
         },
         确定组队: () => {
-            tools.Socket.是否申请过组队 = true;
+            toastLog("确定组队")
+            tools.悬浮球临时描述("确定组队")
             tools.findImageForWaitClick("queBtn.png", {
-                maxTries: 5,
+                maxTries: 20,
                 interval: 100
             })
         },
@@ -1254,7 +1278,6 @@ var tools = {
                     });
                     tools.Socket.output.println(msg);
                 }
-                tools.Socket.队长是否初始化 = true;
             },
             // 通知开组: (Ids) => {
             //     threads.start(function () {
@@ -1295,8 +1318,8 @@ var tools = {
                 if (arr != null && arr.length > 0) {
                     var p = config.zuobiao.按钮集合[fbl].组队;
                     var 新建 = {
-                        x: 474,
-                        y: 541
+                        x: 475,
+                        y: 540
                     }
                     var 粘贴 = {
                         x: 578,
@@ -1311,21 +1334,19 @@ var tools = {
                         var item = arr[index];
                         var name = item.name;
                         var Id = item.Id;
-                        sleep(888);
+                        sleep(1680);
                         tools.click(新建.x + random(-3, 3), 新建.y + random(-3, 3))
                         setClip(name);
-                        sleep(666);
+                        sleep(1200);
                         tools.click(粘贴.x + random(-3, 3), 粘贴.y + random(-3, 3))
-                        sleep(666);
+                        sleep(1200);
                         tools.click(确定.x + random(-3, 3), 确定.y + random(-3, 3))
-                        threads.start(function () {
-                            tools.Socket.output.println(JSON.stringify({
-                                type: 3,
-                                account: 挂机参数.机器标识,
-                                msg: Id
-                            }));
-                        });
-                        toastLog("已完成" + name + "组队");
+                        tools.Socket.output.println(JSON.stringify({
+                            type: 3,
+                            account: 挂机参数.机器标识,
+                            msg: Id
+                        }));
+                        toastLog("已完成" + name + "组队Id=" + Id);
                     }
                     tools.常用操作.关闭所有窗口();
                 }
@@ -1755,24 +1776,30 @@ var tools = {
                 tools.组队.确定组队()
                 tools.Socket.是否确定组队 = false;
             }
-            if (当前总状态 == 总状态.已启动 && !tools.Socket.是否申请过组队 && 挂机参数.是否队长 == 0 && 是否检测组队) {
-                tools.执行时间戳.申请组队(false);
+            var msg = "";
+            if (当前总状态 == 总状态.已启动 && 挂机参数.是否队长 == 0) {
+                msg += "队员申请组队=" + tools.Socket.是否申请过组队 + "" + ",是否确定组队=" + tools.Socket.是否确定组队 + ",上次申请=" + ((new Date().getTime() - 上一次申请组队时间) / 1000).toFixed(0)
+                if (!tools.Socket.是否申请过组队) {
+                    tools.执行时间戳.申请组队();
+                }
             }
-
-            if (当前总状态 == 总状态.已启动 && 挂机参数.是否队长 == 1 && 是否检测组队) {
+            if (当前总状态 == 总状态.已启动 && 挂机参数.是否队长 == 1) {
+                msg += "队长初始化=" + tools.Socket.队长是否初始化 + "" + ",队员申请=" + tools.Socket.是否有队员申请 + ",上次组人=" + ((new Date().getTime() - 上一次队长组人时间) / 1000).toFixed(0)
                 if (!tools.Socket.队长是否初始化) {
+                    sleep(1200);
                     tools.组队.队长.初始化队员();
+                    tools.Socket.队长是否初始化 = true;
                 }
                 if (tools.Socket.是否有队员申请) {
                     tools.执行时间戳.队长组人();
                 }
             }
 
-            if (是否检测组队) {
-                tools.执行时间戳.检测人物血条是否存在();
-            }
+            tools.执行时间戳.检测人物血条是否存在();
 
             tools.执行时间戳.检测认证();
+
+            //tools.悬浮球描述Temp(msg);
         },
         检测人物血条是否存在: () => {
             var p = config.zuobiao.人物血条范围[fbl];
@@ -1950,6 +1977,7 @@ var tools = {
         更换衣服: () => {
             var isSuccess = false;
             var zhengliBtn = tools.补给操作.整理背包(true);
+            sleep(888)
             if (!是否用过备用衣服) {
                 if (挂机参数.备用男重盔 == 1) {
                     isSuccess = tools.常用操作.使用备用装备(装备枚举.重盔男, zhengliBtn);
@@ -1963,6 +1991,7 @@ var tools = {
         },
         更换武器: () => {
             var zhengliBtn = tools.补给操作.整理背包(true);
+            sleep(888)
             var isSuccess = tools.补给操作.喝战神油();
             if (isSuccess) {
                 tools.常用操作.关闭所有窗口();
@@ -2791,9 +2820,10 @@ var tools = {
                 tools.悬浮球描述("画面自检结束");
             }
         },
-        申请组队: (强制申请) => {
-            if (new Date().getTime() - 上一次申请组队时间 > 申请组队时间戳 || 强制申请) {
+        申请组队: () => {
+            if (new Date().getTime() - 上一次申请组队时间 > 申请组队时间戳) {
                 tools.组队.申请组队();
+                tools.Socket.是否申请过组队 = true;
                 上一次申请组队时间 = new Date().getTime();
             }
         },
@@ -3061,7 +3091,7 @@ var tools = {
             上一次启动执行时间 = new Date().getTime();
             var 按钮集合 = config.zuobiao.按钮集合[fbl];
             var 拾取范围P = config.zuobiao.扫描拾取身边范围[fbl];
-            var 宝宝身边怪物 = 0;
+            var 向怪物移动次数 = 0;
             var r = null;
             var timeout = 挂机参数.打怪等待 * 1000;
             var 移动时间戳1 = 1000 * 1.4;
@@ -3106,10 +3136,13 @@ var tools = {
                     sleep(1000 * 15);
                     break;
                 }
-                if (锁定失败次数 >= 3 || (挂机参数.躲避精英 == 1 && 精英怪 != null && 精英怪.status)) {
+                if (锁定失败次数 >= 3 || (挂机参数.躲避精英 == 1 && 精英怪 != null && 精英怪.status) || 向怪物移动次数 >= 8) {
                     var msg = "锁定失败(" + 锁定失败次数 + "),强制跑图"
-                    if (挂机参数.躲避精英 == 1) {
+                    if (挂机参数.躲避精英 == 1 && 精英怪 != null && 精英怪.status) {
                         msg = "躲避精英怪,强制跑图";
+                    }
+                    else if (向怪物移动次数 >= 8) {
+                        msg = "向怪物移动(" + 向怪物移动次数 + "),强制跑图";
                     }
                     tools.挂机打怪.关闭中间怪物(msg);
                     tools.挂机打怪.强制跑图();
@@ -3198,6 +3231,7 @@ var tools = {
                             r = tools.挂机打怪.向怪物移动();
                             var t2 = new Date().getTime();
                             if (r.status) {
+                                向怪物移动次数++;
                                 tools.悬浮球临时描述("移动2(" + ((t2 - t1) / 1000).toFixed(2) + ")")
                                 sleep(200)
                                 continue;
@@ -3259,15 +3293,15 @@ var tools = {
                         }
                         是否锁定危险怪 = true;
                     }
-                    if (挂机参数.随机血量 > 0) {
+                    if (tools.挂机打怪.是否自愈()) {
+                        tools.挂机打怪.自愈(true);
+                    }
+                    if (挂机参数.随机血量 >= 0) {
                         if (tools.挂机打怪.是否小退()) {
                             tools.常用操作.小退("血量低于预警")
                         }
                         else if ((精英怪 == null || !精英怪.status) && tools.挂机打怪.是否逃跑()) {
                             tools.挂机打怪.开始逃跑();
-                        }
-                        else if (tools.挂机打怪.是否自愈()) {
-                            tools.挂机打怪.自愈(true);
                         }
                     }
                     if (!是否正在攻击宝宝身边怪 && 挂机参数.只打满血怪 == 1 && isChange && 身边怪物名称.length <= 0) {
@@ -3329,6 +3363,7 @@ var tools = {
                                     r = tools.挂机打怪.向怪物移动();
                                     var t2 = new Date().getTime()
                                     if (r.status) {
+                                        向怪物移动次数++;
                                         tools.悬浮球临时描述("移动1(" + ((t2 - t1) / 1000).toFixed(2) + ")")
                                         sleep(200)
                                         continue;
@@ -3384,7 +3419,7 @@ var tools = {
                         }
                     }
 
-                    tools.常用操作.及时执行事件(false);
+                    tools.常用操作.及时执行事件(true);
 
                     tools.执行时间戳.检测蓝药();
 
@@ -4923,46 +4958,49 @@ var tools = {
             }
         },
         是否排除强制拾取: () => {
-            // var 范围 = {
-            //     x1: 600,
-            //     x2: 670,
-            //     y1: 307,
-            //     y2: 333
-            // }
-            // for (let index = 0; index < 强制拾取排除枚举.length; index++) {
-            //     var item = 强制拾取排除枚举[index];
-            //     var r = tools.findImageAreaForWait(item.pic, 范围.x1, 范围.y1, 范围.x2, 范围.y2, {
-            //         maxTries: 10,
-            //         interval: 100,
-            //         threshold: 0.5
-            //     });
-            //     //tools.常用方法.发送提醒("Test(" + item.text + ")")
-            //     // var img = tools.截屏裁剪(null, 范围.x1, 范围.y1, 范围.x2, 范围.y2)
-            //     // tools.常用方法.保存图片(img)
-            //     if (r.status) {
-            //         return {
-            //             status: true,
-            //             text: item.text
-            //         }
-            //     }
-            // }
-            let img = captureScreen();
-            var v1 = images.detectsColor(img, "#FC2020", 631, 318, 25, "diff")
-            var v2 = images.detectsColor(img, "#F42020", 625, 322, 25, "diff")
-            var v3 = images.detectsColor(img, "#EF2020", 637, 322, 25, "diff")
-            var v4 = images.detectsColor(img, "#FC2020", 631, 326, 25, "diff")
-            var v5 = images.detectsColor(img, "#D32020", 625, 331, 25, "diff")
-            var v6 = images.detectsColor(img, "#D32020", 636, 331, 25, "diff")
-            utils.recycleNull(img);
-            if (v1 && v2 && v3 && v4 && v5 && v6) {
-                return {
-                    status: true,
-                    text: "金币"
+            var 范围 = {
+                x1: 600,
+                x2: 670,
+                y1: 307,
+                y2: 333
+            }
+            for (let index = 0; index < 强制拾取排除枚举.length; index++) {
+                var item = 强制拾取排除枚举[index];
+                var r = tools.findImageAreaForWait(item.pic, 范围.x1, 范围.y1, 范围.x2, 范围.y2, {
+                    maxTries: 10,
+                    interval: 100,
+                    threshold: 0.5
+                });
+                //tools.常用方法.发送提醒("Test(" + item.text + ")")
+                // var img = tools.截屏裁剪(null, 范围.x1, 范围.y1, 范围.x2, 范围.y2)
+                // tools.常用方法.保存图片(img)
+                if (r.status) {
+                    return {
+                        status: true,
+                        text: item.text
+                    }
                 }
             }
             return {
                 status: false
             }
+            // let img = captureScreen();
+            // var v1 = images.detectsColor(img, "#FC2020", 631, 318, 25, "diff")
+            // var v2 = images.detectsColor(img, "#F42020", 625, 322, 25, "diff")
+            // var v3 = images.detectsColor(img, "#EF2020", 637, 322, 25, "diff")
+            // var v4 = images.detectsColor(img, "#FC2020", 631, 326, 25, "diff")
+            // var v5 = images.detectsColor(img, "#D32020", 625, 331, 25, "diff")
+            // var v6 = images.detectsColor(img, "#D32020", 636, 331, 25, "diff")
+            // utils.recycleNull(img);
+            // if (v1 && v2 && v3 && v4 && v5 && v6) {
+            //     return {
+            //         status: true,
+            //         text: "金币"
+            //     }
+            // }
+            // return {
+            //     status: false
+            // }
         },
         等待: () => {
             var t1 = new Date().getTime();
@@ -5062,6 +5100,7 @@ var tools = {
                         tools.拾取.点击(1, "扫描无物品");
                         sleep(2500);
                     }
+                    tools.常用操作.及时执行事件(false);
                     tools.悬浮球描述("强制拾取(" + parseInt((拾取时长 - (new Date().getTime() - start)) / 1000) + ")");
                     continue;
                 }
@@ -8272,6 +8311,13 @@ var tools = {
             });
         }
     },
+    悬浮球描述Temp: (text) => {
+        if (text) {
+            ui.run(() => {
+                windowTemp.temp1Text.setText(text + "(" + new Date().getTime().toString().slice(-6) + ")");
+            });
+        }
+    },
     悬浮球临时描述: (text) => {
         ui.run(() => {
             var now = new Date();
@@ -9143,8 +9189,9 @@ ui.run(() => {
     window.xuanFuPanel.setBackgroundDrawable(gd);
 
 
-    // windowCommon.xuanFuCommon.setBackgroundDrawable(gd);
     windowCommon.setPosition(3, -5)
+
+    windowTemp.setPosition(3, 690)
 
 
     for (let i = 0; i < win.group1_3.getChildCount(); i++) {
@@ -9261,6 +9308,10 @@ window.xuanFuPanel.setOnTouchListener(function (view, event) {
 // 初始化时设置位置
 updateWindowPosition();
 
+
+// sleep(2000)
+// tools.组队.队长.组队();
+// sleep(999999)
 // 监听屏幕方向变化并实时更新位置
 // device.wakeUp();
 // setInterval(() => {
@@ -9359,18 +9410,35 @@ threads.start(function () {
 
 
 threads.start(() => {
-    while (true) {
-        if ((new Date().getTime() - Socket心跳时间) > 1000 * 30) {
-            tools.Socket.链接();
-            threads.start(() => {
-                tools.Socket.监听();
-            })
-            Socket心跳时间 = new Date().getTime()
+    //sleep(6666);//好像高版本的android马上链接容易异常 
+    tools.Socket.链接();
+    threads.start(() => {
+        tools.Socket.监听();
+    })
+    threads.start(() => {
+        while (true) {
+            if ((new Date().getTime() - Socket心跳时间) > 1000 * 30) {
+                var isok = true;
+                try {
+                    tools.Socket.心跳();
+                    Socket心跳时间 = new Date().getTime()
+                } catch (error) {
+                    isok = false;
+                }
+                if (!isok) {
+                    tools.Socket.链接();
+                    threads.start(() => {
+                        tools.Socket.监听();
+                    })
+                    tools.悬浮球描述Temp("心跳异常");
+                }
+            }
+            else {
+                sleep(1000);
+            }
         }
-        else {
-            sleep(1000);
-        }
-    }
+    })
+
 })
 // 开一个线程周期性更新 UI
 threads.start(function () {
