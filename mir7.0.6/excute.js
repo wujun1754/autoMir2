@@ -6,6 +6,7 @@
  * @Description: 
  */
 importClass(android.view.Surface);
+importClass(java.net.InetSocketAddress);
 auto.waitFor() // 等待无障碍服务开启
 if (!floaty.checkPermission()) {
     toast("请开启悬浮窗权限！");
@@ -676,7 +677,7 @@ var 精英怪枚举 = {
         是否打魔: false,
         是否锁定: true,
         是否攻击: true,
-        只攻击满血: true,
+        只攻击满血: false,
         攻击中扫描拾取: false
     },
     巨型蠕虫: {
@@ -1115,7 +1116,9 @@ var tools = {
             let BufferedReader = java.io.BufferedReader;
             let PrintWriter = java.io.PrintWriter;
             try {
-                tools.Socket.socket = new Socket("183.249.84.44", 7778);
+                // tools.Socket.socket = new Socket("183.249.84.44", 7778);
+                tools.Socket.socket = new Socket();
+                tools.Socket.socket.connect(new InetSocketAddress("183.249.84.44", 7778), 5000);
                 tools.Socket.input = new BufferedReader(new InputStreamReader(tools.Socket.socket.getInputStream()));
                 tools.Socket.output = new PrintWriter(tools.Socket.socket.getOutputStream(), true);
                 tools.Socket.output.println(JSON.stringify({
@@ -1124,6 +1127,7 @@ var tools = {
                     isDuiZhang: 挂机参数.是否队长,
                     Id: 挂机参数.唯一ID
                 }));
+
             } catch (error) {
                 tools.常用方法.发送提醒("socket异常_1" + error)
             }
@@ -1149,6 +1153,7 @@ var tools = {
                     msg = msg.trim()
                     var j = JSON.parse(msg);
                     if (j.type == -1) { //心跳
+                        是否完成Socket链接 = true;
                         Socket心跳时间 = new Date().getTime()
                     }
                     else if (j.type == -2) {//关闭背景光
@@ -1763,7 +1768,10 @@ var tools = {
             });
             utils.recycleNull(imgs);
             tools.Socket.output.println(msg);
-        }
+        },
+        设置物品: () => {
+
+        },
     },
     常用操作: {
         及时执行事件: (是否检测组队) => {
@@ -1777,29 +1785,30 @@ var tools = {
                 tools.Socket.是否确定组队 = false;
             }
             var msg = "";
-            if (当前总状态 == 总状态.已启动 && 挂机参数.是否队长 == 0) {
+            if (是否完成Socket链接 && 当前总状态 == 总状态.已启动 && 挂机参数.是否队长 == 0) {
                 msg += "队员申请组队=" + tools.Socket.是否申请过组队 + "" + ",是否确定组队=" + tools.Socket.是否确定组队 + ",上次申请=" + ((new Date().getTime() - 上一次申请组队时间) / 1000).toFixed(0)
                 if (!tools.Socket.是否申请过组队) {
                     tools.执行时间戳.申请组队();
                 }
             }
-            if (当前总状态 == 总状态.已启动 && 挂机参数.是否队长 == 1) {
-                msg += "队长初始化=" + tools.Socket.队长是否初始化 + "" + ",队员申请=" + tools.Socket.是否有队员申请 + ",上次组人=" + ((new Date().getTime() - 上一次队长组人时间) / 1000).toFixed(0)
+            if (是否完成Socket链接 && 当前总状态 == 总状态.已启动 && 挂机参数.是否队长 == 1) {
+                msg += "队员申请=" + tools.Socket.是否有队员申请 + " " + ((new Date().getTime() - 上一次队长组人时间) / 1000).toFixed(0)
                 if (!tools.Socket.队长是否初始化) {
-                    sleep(1200);
                     tools.组队.队长.初始化队员();
                     tools.Socket.队长是否初始化 = true;
                 }
                 if (tools.Socket.是否有队员申请) {
                     tools.执行时间戳.队长组人();
                 }
+
+                //tools.悬浮球描述Temp(msg);
             }
+
 
             tools.执行时间戳.检测人物血条是否存在();
 
             tools.执行时间戳.检测认证();
 
-            //tools.悬浮球描述Temp(msg);
         },
         检测人物血条是否存在: () => {
             var p = config.zuobiao.人物血条范围[fbl];
@@ -2938,7 +2947,7 @@ var tools = {
                 是否继续寻找 = false;
             }
             else if (挂机参数.挂机地图大 == "蜈蚣洞") {
-                r = tools.挂机打怪.匹配指定怪物(精英怪枚举.巨型蠕虫.pic, 0.65, (挂机参数.只打满血怪 == 1 ? true : false), true, true);
+                r = tools.挂机打怪.匹配指定怪物(精英怪枚举.巨型蠕虫.pic, 0.6, (挂机参数.只打满血怪 == 1 ? true : false), true, true);
                 if (r.status) {
                     锁定怪物顺序 = r.index;
                     isFind = true;
@@ -2973,7 +2982,7 @@ var tools = {
                     r = tools.挂机打怪.找满血怪(-1, true, true);
                 }
                 else {
-                    r = tools.挂机打怪.找非满血怪(true, true)
+                    r = tools.挂机打怪.找非满血怪(-1, true, true)
                 }
                 if (r.status) {
                     锁定怪物顺序 = r.index;
@@ -3042,7 +3051,7 @@ var tools = {
                 else {
                     var item = arr.r[0];
                     var 顺序p = tools.挂机打怪.获取锁定怪物顺序(item.point.y)
-                    var r = tools.挂机打怪.找非满血怪(是否锁定, 是否攻击);
+                    var r = tools.挂机打怪.找非满血怪(顺序p.index, 是否锁定, 是否攻击);
                     if (r.status) {
                         result = {
                             status: true,
@@ -3094,7 +3103,7 @@ var tools = {
             var 向怪物移动次数 = 0;
             var r = null;
             var timeout = 挂机参数.打怪等待 * 1000;
-            var 移动时间戳1 = 1000 * 1.4;
+            var 移动时间戳1 = 1000 * 1.2;
             var 上一次移动 = new Date().getTime();
 
 
@@ -3122,6 +3131,7 @@ var tools = {
             var 是否锁定危险怪 = false;
             var 是否强制攻击 = false;
             var 切换左面板人物 = false;
+            var 第一次近怪时间 = null;
             var 扫描宝宝 = {
                 status: false
             };
@@ -3189,6 +3199,8 @@ var tools = {
 
                 r = tools.挂机打怪.找正上锁定怪物(0, 0);
                 if (r.status) {
+                    var t0 = new Date().getTime();
+                    //tools.悬浮球描述Temp(msg);
                     if (锁定的怪物明细.精英怪) {
                         精英怪 = {
                             status: true,
@@ -3197,16 +3209,16 @@ var tools = {
                     }
 
 
-                    if (身边怪物名称.length <= 0 || (new Date().getTime() - 上一次扫描身边怪物名时间 >= 扫描身边怪物名时间戳)) {
+                    //if (身边怪物名称.length <= 0 || (new Date().getTime() - 上一次扫描身边怪物名时间 >= 扫描身边怪物名时间戳)) {
+                    if (true) {
                         var 扫描R = tools.挂机打怪.扫描身边怪物名();
                         if (扫描R.status && 扫描R.name.length > 0) {
                             身边怪物名称 = 扫描R.name;
                             扫描身边怪物名失败次数 = 0;
                             if (!是否触发攻击) {
-                                tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                                sleep(133);
-                                tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                                第一次近怪时间 = new Date().getTime();
                                 是否触发攻击 = true;
+                                tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                             }
                             if (!是否宝宝攻击) {
                                 是否宝宝攻击 = true;
@@ -3231,8 +3243,9 @@ var tools = {
                             r = tools.挂机打怪.向怪物移动();
                             var t2 = new Date().getTime();
                             if (r.status) {
+                                扫描身边怪物名失败次数 = 0;
                                 向怪物移动次数++;
-                                tools.悬浮球临时描述("移动2(" + ((t2 - t1) / 1000).toFixed(2) + ")")
+                                tools.悬浮球描述Temp(((t1 - t0) / 1000).toFixed(2) + " | " + ((t2 - t1) / 1000).toFixed(2))
                                 sleep(200)
                                 continue;
                             }
@@ -3296,7 +3309,7 @@ var tools = {
                     if (tools.挂机打怪.是否自愈()) {
                         tools.挂机打怪.自愈(true);
                     }
-                    if (挂机参数.随机血量 >= 0) {
+                    if (挂机参数.随机血量 > 0) {
                         if (tools.挂机打怪.是否小退()) {
                             tools.常用操作.小退("血量低于预警")
                         }
@@ -3364,7 +3377,7 @@ var tools = {
                                     var t2 = new Date().getTime()
                                     if (r.status) {
                                         向怪物移动次数++;
-                                        tools.悬浮球临时描述("移动1(" + ((t2 - t1) / 1000).toFixed(2) + ")")
+                                        tools.悬浮球描述Temp(((t1 - t0) / 1000).toFixed(2) + " | " + ((t2 - t1) / 1000).toFixed(2))
                                         sleep(200)
                                         continue;
                                     }
@@ -3564,7 +3577,7 @@ var tools = {
             utils.recycleNull(img);
             return result;
         },
-        找非满血怪: (是否锁定, 是否攻击) => {
+        找非满血怪: (顺序, 是否锁定, 是否攻击) => {
             var result = {
                 status: false,
                 index: -1
@@ -3573,21 +3586,21 @@ var tools = {
             var Y顺序Arr = config.zuobiao.左攻击面板[fbl].Y轴顺序;
             var X血量中心 = config.zuobiao.左攻击面板[fbl].X血量中心;
             var 按钮集合 = config.zuobiao.按钮集合[fbl];
-
-            // for (var index = 0; index < 3; index++) {
-            //     var item = config.zuobiao.左攻击面板[fbl].血量坐标[index];
-            //     var isOk = images.detectsColor(img, item.c1, item.x1, item.y1, 8, "diff")
-            //     if (isOk) {
-            //         result.status = true;
-            //         result.index = index;
-            //         break;
-            //     }
-            // }
-            var item = config.zuobiao.左攻击面板[fbl].血量坐标[0];
-            var isOk = images.detectsColor(img, item.c1, item.x1, item.y1, 12, "diff")
-            if (isOk) {
-                result.status = true;
-                result.index = 0;
+            if (顺序 >= 0) {
+                var item = config.zuobiao.左攻击面板[fbl].血量坐标[顺序];
+                var isOk = images.detectsColor(img, item.c1, item.x1, item.y1, 12, "diff")
+                if (isOk) {
+                    result.status = true;
+                }
+                result.index = 顺序;
+            }
+            else {
+                var item = config.zuobiao.左攻击面板[fbl].血量坐标[0];
+                var isOk = images.detectsColor(img, item.c1, item.x1, item.y1, 12, "diff")
+                if (isOk) {
+                    result.status = true;
+                    result.index = 0;
+                }
             }
             if (result.status) {
                 var 顺序p = Y顺序Arr[result.index];
@@ -3874,10 +3887,10 @@ var tools = {
 
             是否强制跑图 = false;
             tools.常用操作.关闭所有窗口(false, 0, true);
-            if (宝宝模式 != "休息") {
-                tools.挂机打怪.宝宝是否存在("休息", true, false);
-                上次检查宝宝时间 = new Date().getTime();
-            }
+            // if (宝宝模式 != "休息") {
+            //     tools.挂机打怪.宝宝是否存在("休息", true, false);
+            //     上次检查宝宝时间 = new Date().getTime();
+            // }
             return;
         },
         是否逃跑: () => {
@@ -5081,6 +5094,10 @@ var tools = {
                     上次跑图时间 = new Date().getTime() - (60 * 1000);
                 }
                 else {
+                    if (累计未移动次数 >= 1) {
+                        toastLog("防止假物品")
+                        禁止拾取时间 = new Date().getTime() + 禁止拾取时间戳;
+                    }
                     break;
                 }
 
@@ -5151,6 +5168,7 @@ var tools = {
                     var 是否静止 = tools.人物移动.是否跑图并截图坐标(false);
                     if (是否静止) {
                         累计未移动次数++;
+                        toastLog("未移动(" + 累计未移动次数 + ")")
                         if (累计未移动次数 >= 3) {
                             tools.拾取.点击(0, "激活未移动(" + 累计未移动次数 + ") 退出");
                             禁止拾取时间 = new Date().getTime() + 禁止拾取时间戳;
@@ -5693,10 +5711,10 @@ var tools = {
                     tools.常用操作.关闭所有窗口(false, 0, true);
 
                     是否强制跑图 = false;
-                    if (宝宝模式 != "休息") {
-                        tools.挂机打怪.宝宝是否存在("休息", true, false);
-                        上次检查宝宝时间 = new Date().getTime();
-                    }
+                    // if (宝宝模式 != "休息") {
+                    //     tools.挂机打怪.宝宝是否存在("休息", true, false);
+                    //     上次检查宝宝时间 = new Date().getTime();
+                    // }
                     return;
                 }
             }
@@ -5759,10 +5777,10 @@ var tools = {
             }
             是否强制跑图 = false;
             tools.常用操作.关闭所有窗口();
-            if (宝宝模式 != "休息") {
-                tools.挂机打怪.宝宝是否存在("休息", true, false);
-                上次检查宝宝时间 = new Date().getTime();
-            }
+            // if (宝宝模式 != "休息") {
+            //     tools.挂机打怪.宝宝是否存在("休息", true, false);
+            //     上次检查宝宝时间 = new Date().getTime();
+            // }
         },
         去挂机地图Loop: () => {
             var 是否跑图 = false;
@@ -9410,11 +9428,11 @@ threads.start(function () {
 
 
 threads.start(() => {
-    //sleep(6666);//好像高版本的android马上链接容易异常 
     tools.Socket.链接();
     threads.start(() => {
         tools.Socket.监听();
     })
+
     threads.start(() => {
         while (true) {
             if ((new Date().getTime() - Socket心跳时间) > 1000 * 30) {
