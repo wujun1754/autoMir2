@@ -210,6 +210,7 @@ var 挂机参数 = {
     跟随几格: 2,
     检查衣服武器时间戳: 600
 }
+var 是否回老兵暂停 = false;
 var 开启强行补给 = false;
 var 总状态 = {
     未启动: "未启动",
@@ -1097,8 +1098,11 @@ var win = floaty.rawWindow(
                 <button id="btnSave" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="保存" />
                 <button id="btnReset" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="重启" />
                 <button id="btnBuJi" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="补给" />
+                <button id="btnLaoBing" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="老兵" />
                 <button id="btnSetFouse" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="焦点" />
                 <button id="btnRenZheng" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="物品" />
+                <button id="btnZuDui" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="组队" />
+                <button id="btnYouXi" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="游戏" />
                 <button id="btnExit" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="退出" />
                 <button id="btnClose" textSize="8sp" style="Widget.AppCompat.Button.Colored" text="关闭" />
             </horizontal>
@@ -1213,7 +1217,7 @@ var tools = {
             toastLog("确定组队")
             tools.悬浮球临时描述("确定组队")
             tools.findImageForWaitClick("queBtn.png", {
-                maxTries: 20,
+                maxTries: 10,
                 interval: 100
             })
         },
@@ -1806,6 +1810,11 @@ var tools = {
                 toastLog("强制回城补给")
                 tools.挂机打怪.回城补给在挂机("强行补给");
             }
+            if (是否回老兵暂停) {
+                是否回老兵暂停 = false;
+                toastLog("强制回老兵")
+                tools.人物移动.回老兵后暂停()
+            }
             if (tools.Socket.是否确定组队) {
                 tools.组队.确定组队()
                 tools.Socket.是否确定组队 = false;
@@ -1892,30 +1901,31 @@ var tools = {
             var y = 287 + random(-5, 5);
             tools.click(x, y);
             当前总状态 = 总状态.小退中;
-            tools.悬浮球描述(msg);
             tools.常用方法.发送提醒(msg)
         },
         小退后开始登录: () => {
             var isok = false;
             let start = new Date().getTime();
             var 铺P = config.zuobiao.按钮集合[fbl].铺范围;
-            while (true) {
-                var 秒 = (new Date().getTime() - start) / 1000;
-                var r = tools.findImageForWaitClick("kaishiyouxi.png", {
-                    maxTries: 5,
-                    interval: 1000
-                });
-                if (r.status) {
+            var r = tools.findImageForWaitClick("kaishiyouxi.png", {
+                maxTries: 60,
+                interval: 1000
+            });
+            if (r.status) {
+                while (true) {
+                    var 秒 = (new Date().getTime() - start) / 1000;
                     tools.悬浮球描述("等待开门(" + parseInt(秒) + ")");
                     r = tools.findImageArea("puBtn.png", 铺P.x[0], 铺P.y[0], 铺P.x[1], 铺P.y[1], 0.75)
                     if (r.status) {
                         isok = true;
                         break;
                     }
+                    sleep(666);
                 }
-                else {
-                    tools.悬浮球描述("未找到开始按钮(" + parseInt(秒) + ")");
-                }
+                当前总状态 = 总状态.已启动
+            }
+            else {
+                tools.悬浮球描述Temp("未找到开始按钮");
             }
             return isok;
         },
@@ -2001,7 +2011,6 @@ var tools = {
                     }
                 }
             }
-
             if (挂机参数.武器持久0回程 == 1 && 武器.status && 武器.持久 && 武器.持久.剩持久 <= 2) {
                 var isSuccess = tools.常用操作.更换武器()
                 if (!isSuccess) {
@@ -2229,25 +2238,12 @@ var tools = {
         },
         获取人物地图: () => {
             var p = config.zuobiao.地点范围[fbl];
-            var t1 = new Date().getTime();
             var result = tools.获取区域文字(p.x1, p.y1, p.x2, p.y2, 60, 255, true, false);
-            var t11 = new Date().getTime();
             if (result != null && result.length > 0) {
 
-                var t2 = new Date().getTime();
                 result = tools.常用操作.处理地图错别字(result[0].text);
-                var t22 = new Date().getTime();
-
-
-
-                var t3 = new Date().getTime();
                 if (上次所在地图 != result) {
                     上次所在地图 = result;
-                    var isok = tools.常用操作.检测是否在游戏画面();
-
-                    if (isok) {
-                        tools.执行时间戳.检测内挂(true);
-                    }
                     if (
                         result.indexOf("土城") >= 0
                         || result.indexOf("盟重省") >= 0
@@ -2262,18 +2258,12 @@ var tools = {
                     ) {
                         tools.常用操作.初始化大地图面板(true);
                         tools.常用操作.初始化攻击面板loops();
-                        //tools.执行时间戳.检测无地牢补给(true);
+                        tools.挂机打怪.自愈(false);
+                        sleep(1200);
+                        tools.执行时间戳.检测内挂(true);
                     }
-
                 }
-
-                var t33 = new Date().getTime();
-                //tools.悬浮球临时描述("t1:" + ((t11 - t1) / 1000).toFixed(3) + " t2:" + ((t22 - t2) / 1000).toFixed(3) + " t3:" + ((t33 - t3) / 1000).toFixed(3))
-
             }
-
-
-
             return result;
         },
         获取人物金币: () => {
@@ -2704,6 +2694,84 @@ var tools = {
             sleep(5000);
             home();
             sleep(5000);
+        },
+        启动游戏: () => {
+            if (currentPackage() != 盛趣包名) {
+                launch(盛趣包名);
+                var r = tools.findImageAreaForWait("start_kaishi.png", 570, 480, 630, 530, {
+                    maxTries: 60,
+                    interval: 2000
+                })
+                if (!r.status) {
+                    tools.悬浮球描述Temp("未找到开始按钮图片");
+                    return;
+                }
+
+                r = tools.findImageAreaForWait("start_tongyiduizhan.png", 420, 380, 480, 430, {
+                    maxTries: 30,
+                    interval: 1000
+                })
+                if (r.status) {
+                    click(693 + random(-5, 5), 406 + random(-5, 5)) //点击同意对战确定按钮
+                    sleep(random(2000, 3000))
+                }
+                click(630 + random(-5, 5), 508 + random(-5, 5)) //点击开始游戏
+                sleep(random(2000, 3000))
+
+                r = tools.findImageAreaForWait("start_jingruyouxi.png", 540, 490, 640, 570, {
+                    maxTries: 30,
+                    interval: 1000
+                })
+                if (r.status) {
+                    click(644 + random(-5, 5), 534 + random(-5, 5)) //点击进入游戏
+                    sleep(random(2000, 3000))
+
+                    r = tools.findImageAreaForWait("start_jixu.png", 440, 410, 520, 480, {
+                        maxTries: 30,
+                        interval: 1000
+                    })
+                    if (r.status) {
+                        click(488 + random(-5, 5), 452 + random(-5, 5)) //点击继续
+                        sleep(random(2000, 3000))
+
+                        click(440 + random(-5, 5), 272 + random(-5, 5)) //点击密码框
+                        sleep(random(2000, 3000))
+
+
+                        Text("huhuan1754");  //输入密码
+                        sleep(random(2000, 3000))
+
+
+                        click(1176 + random(-5, 5), 358 + random(-5, 5)) //点击完成
+                        sleep(random(2000, 3000))
+
+
+                        click(639 + random(-5, 5), 419 + random(-5, 5)) //点击进入游戏
+                        sleep(random(2000, 3000))
+
+
+                        click(496 + random(-5, 5), 451 + random(-5, 5)) //点击同意勾选
+                        sleep(random(2000, 3000))
+
+
+                        click(640 + random(-5, 5), 416 + random(-5, 5)) //点击进入游戏
+                        sleep(random(2000, 3000))
+
+                    }
+                }
+
+
+                r = tools.findImageAreaForWait("start_kaishiend.png", 600, 530, 700, 600, {
+                    maxTries: 30,
+                    interval: 1000
+                })
+                if (r.status) {
+                    click(648 + random(-5, 5), 564 + random(-5, 5)) //点击开始游戏
+                }
+                else {
+                    tools.悬浮球描述Temp("start_kaishiend找不到")
+                }
+            }
         },
         找大地图关闭按钮: () => {
             var p = {
@@ -3221,12 +3289,12 @@ var tools = {
                     }
                 }
                 if (是否允许拾取) {
-                    var msg = "经验"
                     if (new Date().getTime() >= 禁止拾取时间) {
+                        var msg = "经验"
                         var isShiQu = tools.挂机打怪.判断经验增加();
                         if (!isShiQu) {
-                            isShiQu = tools.拾取.扫描拾取(拾取范围P, false)
-                            msg = "攻击";
+                            msg = "攻扫";
+                            isShiQu = tools.拾取.扫描拾取(拾取范围P, true)
                         }
                     }
                     if (isShiQu) {
@@ -3289,10 +3357,9 @@ var tools = {
                                 continue;
                             }
                             else {
-                                tools.挂机打怪.关闭中间怪物("强制跑图2(" + ((t1 - t0) / 1000).toFixed(2) + " | " + ((t2 - t1) / 1000).toFixed(2) + ")");
                                 tools.挂机打怪.强制跑图();
+                                tools.挂机打怪.关闭中间怪物("强制跑图2(" + ((t1 - t0) / 1000).toFixed(2) + " | " + ((t2 - t1) / 1000).toFixed(2) + ")");
                                 上次跑图时间 = new Date().getTime();
-                                sleep(666)
                                 break;
                             }
                         }
@@ -3351,10 +3418,10 @@ var tools = {
                     }
                     if (挂机参数.随机血量 > 0) {
                         if ((精英怪 == null || !精英怪.status) && tools.挂机打怪.是否逃跑()) {
-                            tools.挂机打怪.开始逃跑();
+                            tools.挂机打怪.开始逃跑(false);
                         }
                     }
-                    if (!是否正在攻击宝宝身边怪 && 挂机参数.只打满血怪 == 1 && isChange && 身边怪物名称.length <= 0) {
+                    if (!是否正在攻击宝宝身边怪 && 挂机参数.只打满血怪 == 1 && isChange && 身边怪物名称.length <= 0 && (精英怪 == null || !精英怪.status)) {
                         if (是否强制攻击 && 切换左面板人物) {
                             切换左面板人物 = false;
                             tools.常用操作.点击左面板怪物();
@@ -3419,10 +3486,9 @@ var tools = {
                                         continue;
                                     }
                                     else {
-                                        tools.挂机打怪.关闭中间怪物("强制跑图1(" + ((t1 - t0) / 1000).toFixed(2) + " | " + ((t2 - t1) / 1000).toFixed(2) + ")");
                                         tools.挂机打怪.强制跑图();
+                                        tools.挂机打怪.关闭中间怪物("强制跑图1(" + ((t1 - t0) / 1000).toFixed(2) + " | " + ((t2 - t1) / 1000).toFixed(2) + ")");
                                         上次跑图时间 = new Date().getTime();
-                                        sleep(666)
                                         break;
                                     }
                                 }
@@ -3448,6 +3514,7 @@ var tools = {
                             toastLog("扫描到精英怪")
                             锁定的怪物明细 = 精英怪.value.左怪物枚举;
                             身边怪物名称 = "";
+                            向怪物移动次数 = 0;
                             上一次攻击 = new Date().getTime() - (60 * 1000);
                             continue;
                         }
@@ -3477,7 +3544,7 @@ var tools = {
                         }
                     }
 
-                    tools.常用操作.及时执行事件(true, "攻击怪物", true);
+                    tools.常用操作.及时执行事件(挂机参数.是否队长 == 1 ? false : true, "攻击怪物", true);
 
                     tools.执行时间戳.检测蓝药();
 
@@ -3848,6 +3915,7 @@ var tools = {
             tools.执行时间戳.检测操作模式(true);
 
             //tools.常用操作.初始化大地图面板(true);
+            tools.执行时间戳.检测内挂(true);
 
             tools.常用操作.初始化攻击面板loops();
         },
@@ -3994,7 +4062,6 @@ var tools = {
             }
 
             if (箭头P.status && 箭头P.r && Math.abs(箭头P.r.x - x) <= 50 && Math.abs(箭头P.r.y - y) <= 50) {
-
                 if (挂机参数.反跑地图 == 1) {
                     挂机点跑图顺序--;
                 }
@@ -4135,6 +4202,10 @@ var tools = {
                     toastLog("超过施毒时间戳,强制结束");
                     break;
                 }
+                if (tools.Socket.是否确定组队) {
+                    tools.组队.确定组队()
+                    tools.Socket.是否确定组队 = false;
+                }
                 tools.click(random(范围.x[0], 范围.x[1]), random(范围.y[0], 范围.y[1]));
                 var r = tools.挂机打怪.是否技能冷确中(范围);
                 if (r) {
@@ -4184,6 +4255,10 @@ var tools = {
                     tools.常用操作.小退("自愈小退", false)
                     break;
                 }
+                if (tools.Socket.是否确定组队) {
+                    tools.组队.确定组队()
+                    tools.Socket.是否确定组队 = false;
+                }
                 var 时间戳 = new Date().getTime() - start;
                 if (时间戳 > (1000 * 6)) {
                     toastLog("超过自愈时间戳,强制结束");
@@ -4204,6 +4279,10 @@ var tools = {
                 if (时间戳 > (1000 * 6)) {
                     toastLog("超过召唤宝宝时间戳,强制结束");
                     break;
+                }
+                if (tools.Socket.是否确定组队) {
+                    tools.组队.确定组队()
+                    tools.Socket.是否确定组队 = false;
                 }
                 tools.click(random(范围.x[0], 范围.x[1]), random(范围.y[0], 范围.y[1]));
                 var r = tools.挂机打怪.是否技能冷确中(范围);
@@ -4501,7 +4580,7 @@ var tools = {
                 tools.人物移动.去下一层地图(当前地图, 挂机参数.挂机地图);
             }
         },
-        开始逃跑: () => {
+        开始逃跑: (禁止小退) => {
             if (挂机点跑图顺序 <= 0) {
                 挂机点跑图顺序++;
             }
@@ -4511,7 +4590,7 @@ var tools = {
             let start = new Date().getTime();
             tools.挂机打怪.强制跑图();
             tools.挂机打怪.宝宝是否存在("跟随", true, false);
-            tools.悬浮球描述("血量预警，开始逃跑")
+            tools.悬浮球描述("逃跑中")
             while (当前总状态 == 总状态.已启动) {
                 var 时间戳 = new Date().getTime() - start;
                 if (时间戳 > (1000 * 30)) {
@@ -4519,12 +4598,11 @@ var tools = {
                     toastLog("超过逃跑时间 强制结束");
                     return false;
                 }
-                var 是否小退 = tools.挂机打怪.是否小退();
-                var 血量预警 = tools.挂机打怪.是否逃跑();
-                if (是否小退) {
+                if (!禁止小退 && tools.挂机打怪.是否小退()) {
                     tools.常用操作.小退("逃跑小退", false)
                 }
-                else if (!血量预警) {
+                var 血量预警 = tools.挂机打怪.是否逃跑();
+                if (!血量预警) {
                     tools.挂机打怪.设置宝宝模式("攻击");
                     break;
                 }
@@ -5088,10 +5166,28 @@ var tools = {
                     }
                 }
                 if (isok) {
-                    // if (isClick) {
-                    //     tools.click(r.x, r.y + 100)
-                    //     sleep(1000);
-                    // }
+                    if (isClick) {
+                        var d = random(555, 666);
+                        var 人物中心 = config.zuobiao.人物中心[fbl];
+                        if (r.x < 人物中心.x) {
+                            if (r.y + 100 < 人物中心.y) {
+                                tools.人物移动.左上走(d);
+                            }
+                            else {
+                                tools.人物移动.左下走(d);
+                            }
+                        }
+                        else {
+                            if (r.y + 100 < 人物中心.y) {
+                                tools.人物移动.右上走(d);
+                            }
+                            else {
+                                tools.人物移动.右下走(d);
+                            }
+                        }
+                        // tools.click(r.x, r.y + 100)
+                        // sleep(1000);
+                    }
                     return true;
                 }
             }
@@ -5318,25 +5414,16 @@ var tools = {
                     var 是否静止 = tools.人物移动.是否跑图并截图坐标(false);
                     if (是否静止) {
                         累计未移动次数++;
-                        toastLog("未移动(" + 累计未移动次数 + ")")
                         if (累计未移动次数 >= 3) {
-                            tools.拾取.点击(0, "激活未移动(" + 累计未移动次数 + ") 退出");
+                            tools.拾取.点击(0, "未移动(" + 累计未移动次数 + ") 退出");
                             禁止拾取时间 = new Date().getTime() + 禁止拾取时间戳;
                             break;
                         }
                         else {
-                            tools.拾取.点击(0, "激活未移动(" + 累计未移动次数 + ")");
+                            tools.拾取.点击(0, "未移动(" + 累计未移动次数 + ")");
                             sleep(666);
-                            tools.拾取.点击(1, "激活未移动(" + 累计未移动次数 + ")");
+                            tools.拾取.点击(1, "未移动(" + 累计未移动次数 + ")");
                             sleep(1200)
-                            // if (累计未移动次数 >= 2) {
-                            //     if (tools.拾取.扫描拾取(null, false)) {
-                            //         tools.拾取.点击(0, "激活未移动(" + 累计未移动次数 + ")");
-                            //         sleep(1500);
-                            //         tools.拾取.点击(1, "激活未移动(" + 累计未移动次数 + ")");
-                            //         sleep(1500)
-                            //     }
-                            // }
                         }
                     }
                     上一次移动 = new Date().getTime();
@@ -5752,6 +5839,19 @@ var tools = {
                 tools.人物移动.上走一步((人物坐标.y - 小贩坐标.y) * 1000)
                 sleep(600)
             }
+        },
+        回老兵后暂停: () => {
+            var 当前地图 = tools.常用操作.获取人物地图();
+            if (挂机参数.地牢回城 == 1 && 当前地图.indexOf("苍月") < 0 && 当前地图.indexOf("比奇") < 0 && 当前地图.indexOf("盟重") < 0 && 当前地图 != "土城") {
+                tools.人物移动.使用地牢();
+                tools.常用操作.关闭所有窗口();
+            }
+            tools.人物移动.回老兵Loop();
+            isStart = false
+            ui.run(() => {
+                win.btnStart.text("启动")
+            });
+            当前总状态 = 总状态.未启动;
         },
         回老兵: (当前地图, routes, 大地图偏移) => {
             tools.常用操作.打开大地图();
@@ -9075,12 +9175,20 @@ ui.run(() => {
         } else {
             tools.悬浮球描述("技术支持:宁波字节飞舞软件科技(初始化中)")
             isShowConfig = false;
-            isStart = true
+            isStart = true;
             win.setPosition(-10000, padding_top);
             ui.run(() => {
                 win.btnStart.text("暂停")
             });
             当前总状态 = 总状态.已启动;
+        }
+    })
+    win.btnZuDui.click(() => {
+        if (挂机参数.是否队长 == 0) {
+            tools.Socket.是否申请过组队 = false;
+        }
+        else {
+            tools.Socket.队长是否初始化 = false;
         }
     })
     win.btnClose.click(() => {
@@ -9105,6 +9213,13 @@ ui.run(() => {
         win.setPosition(-10000, padding_top);
         toastLog("执行完当前任务将回城补给")
     })
+    win.btnLaoBing.click(() => {
+        是否回老兵暂停 = true;
+        isShowConfig = false
+        win.setPosition(-10000, padding_top);
+        toastLog("执行完当前任务将回城补给")
+    })
+
     win.btnSetFouse.click(() => {
         win.requestFocus(); //设置焦点
     })
@@ -9340,7 +9455,6 @@ ui.run(() => {
     win.setSize(w, h);
     win.setPosition(-10000, padding_top);
     win.setTouchable(true); // 可交互
-    // win.btnStart.setSize(100,500)
 
     // 设置悬浮窗圆角背景
     let gd = new android.graphics.drawable.GradientDrawable();
@@ -9514,14 +9628,20 @@ function showWinConfig() {
     win.tab1.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
     win.tab2.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
     win.tab3.setLayoutParams(android.widget.LinearLayout.LayoutParams(tabW, -2));
-    win.btnStart.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
-    win.btnSave.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
-    win.btnClose.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
-    win.btnSetFouse.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
-    win.btnReset.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
-    win.btnBuJi.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
-    win.btnExit.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
-    win.btnRenZheng.setLayoutParams(android.widget.LinearLayout.LayoutParams(135, 90));
+    win.btnStart.setLayoutParams(android.widget.LinearLayout.LayoutParams(105, 65));
+    win.btnSave.setLayoutParams(android.widget.LinearLayout.LayoutParams(105, 65));
+    win.btnClose.setLayoutParams(android.widget.LinearLayout.LayoutParams(105, 65));
+    win.btnSetFouse.setLayoutParams(android.widget.LinearLayout.LayoutParams(105, 65));
+    win.btnReset.setLayoutParams(android.widget.LinearLayout.LayoutParams(105, 65));
+    win.btnBuJi.setLayoutParams(android.widget.LinearLayout.LayoutParams(105, 65));
+    win.btnLaoBing.setLayoutParams(android.widget.LinearLayout.LayoutParams(105, 65));
+    win.btnExit.setLayoutParams(android.widget.LinearLayout.LayoutParams(105, 65));
+    win.btnRenZheng.setLayoutParams(android.widget.LinearLayout.LayoutParams(105, 65));
+
+    win.btnZuDui.setLayoutParams(android.widget.LinearLayout.LayoutParams(105, 65));
+    win.btnYouXi.setLayoutParams(android.widget.LinearLayout.LayoutParams(105, 65));
+
+
 
 }
 // while(true){
@@ -9554,6 +9674,7 @@ function showWinConfig() {
 // }
 //启动程序
 threads.start(function () {
+    var 是否启动过游戏 = false;
     while (true) {
         if (当前总状态 == 总状态.已启动) {
             try {
@@ -9570,38 +9691,51 @@ threads.start(function () {
                 tools.悬浮球临时描述("禁止小退后上线");
             }
             else {
-
+                var num = random(30, 45) * 1000;
+                sleep(num)
+                tools.常用操作.小退后开始登录();
+                tools.挂机打怪.启动隐身();
+                tools.挂机打怪.自愈(false);
+                tools.挂机打怪.初始化挂机();
+                if (挂机参数.是否队长 == 0) {
+                    tools.Socket.是否申请过组队 = false;
+                }
+                else {
+                    tools.Socket.队长是否初始化 = false;
+                }
             }
-            // var { w, h } = tools.获取屏幕高宽();
-            // tools.悬浮球描述(w + ":" + h)
-            // if (isStart && w > h) {
-            //     if (tools.常用操作.检测是否在游戏画面()) {
-            //         当前总状态 = 总状态.已启动;
-            //         是否启动初始化过 = false;
-            //     }
-            // }
-            // if (是否初始化物品设置) {
-            //     toastLog("打开默认设置，10秒后开始工作")
-            //     sleep(3000);
-            //     tools.常用方法.设置物品();
-            //     是否初始化物品设置 = false;
-            // }
-            // sleep(333);
         }
         else {
             var { w, h } = tools.获取屏幕高宽();
-            tools.悬浮球描述(w + ":" + h)
-            if (isStart && w > h) {
-                if (tools.常用操作.检测是否在游戏画面()) {
-                    当前总状态 = 总状态.已启动;
-                    是否启动初始化过 = false;
+            var 是否游戏中 = false;
+            try {
+                是否游戏中 = tools.常用操作.检测是否在游戏画面();
+            } catch (error) {
+                是否游戏中 = false;
+            }
+            if (是否游戏中) {
+                tools.悬浮球描述(w + ":" + h)
+                if (isStart && w > h) {
+                    if (tools.常用操作.检测是否在游戏画面()) {
+                        当前总状态 = 总状态.已启动;
+                        是否启动初始化过 = false;
+                    }
+                }
+                if (是否初始化物品设置) {
+                    toastLog("打开默认设置，3秒后开始工作")
+                    sleep(3000);
+                    tools.常用方法.设置物品();
+                    是否初始化物品设置 = false;
                 }
             }
-            if (是否初始化物品设置) {
-                toastLog("打开默认设置，10秒后开始工作")
-                sleep(3000);
-                tools.常用方法.设置物品();
-                是否初始化物品设置 = false;
+            else if (!是否启动过游戏 && currentPackage() != 盛趣包名) {
+                toastLog("启动游戏中")
+                sleep(2000);
+                tools.常用操作.启动游戏();
+                是否启动过游戏 = true;
+            }
+            else {
+                tools.悬浮球描述("启动游戏失败");
             }
             sleep(333);
         }
@@ -9683,5 +9817,6 @@ threads.start(function () {
 // intent.addCategory(Intent.CATEGORY_HOME);
 // intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 // context.startActivity(intent);
+
 
 setInterval(() => { }, 1000);
