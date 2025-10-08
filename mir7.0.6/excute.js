@@ -3943,10 +3943,13 @@ var tools = {
         },
         跑向怪物: () => {
             var 移动时间戳 = 1000 * 1.2;
+            var 开始时间 = new Date().getTime();
             var 上一次移动 = new Date().getTime();
             var 人物中心 = config.zuobiao.人物中心[fbl];
             var p = config.zuobiao.大范围扫描怪物名[fbl];
             var 按钮集合 = config.zuobiao.按钮集合[fbl];
+            var isTouchDown = false;
+            var ra = new RootAutomator2({ root: true });
             var r = {
                 身边怪物名称: "",
                 向怪物移动次数: 0,
@@ -3954,48 +3957,55 @@ var tools = {
                 是否移动过: false,
                 强制跑图: false
             }
+            var msg = "等待时间戳"
             while (当前总状态 == 总状态.已启动) {
                 var 扫描R = tools.挂机打怪.扫描身边怪物名();
                 if (扫描R.status && 扫描R.name.length > 0) {
                     r.身边怪物名称 = 扫描R.name;
                     r.扫描身边怪物名失败次数 = 0;
                     r.向怪物移动次数 = 0;
+                    msg = "到达怪物";
                     break;
                 }
                 else {
-                    var msg = "等待时间戳"
                     if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
                         var 是否变化 = tools.人物移动.坐标是否变化并截图坐标();
                         if (是否变化) {
                             msg = "跑动中"
+                            上一次移动 = new Date().getTime();
                         }
                         else {
-                          
-
                             var t0 = new Date().getTime()
                             var 怪物P = tools.挂机打怪.扫描怪物名图片(锁定的怪物明细, p, true);
                             var t00 = new Date().getTime()
-
-
                             if (怪物P.status) {
                                 var t1 = new Date().getTime()
-                                r = tools.挂机打怪.扫描怪物空位(怪物P.血量左上);
-                                if (r == null || !r.status) {
-                                    r = tools.人物移动.获取人物空位();
+                                var 空位 = tools.挂机打怪.扫描怪物空位(怪物P.血量左上);
+                                if (空位 == null || !空位.status) {
+                                    空位 = tools.人物移动.获取人物空位();
                                 }
                                 var t11 = new Date().getTime()
-                                if (r && r.status) {
-                                    ra.touchDown([
+                                if (空位 && 空位.status) {
+                                    if (!isTouchDown) {
+                                        ra.touchDown([
+                                            {
+                                                x: 空位.click.x,
+                                                y: 空位.click.y,
+                                                id: 0
+                                            },
+                                        ]);
+                                    }
+                                    sleep(random(60, 99));
+                                    ra.touchMove([
                                         {
-                                            x: r.click.x,
-                                            y: r.click.y,
+                                            x: 怪物P.血量左上.x + 20,
+                                            y: 怪物P.血量左上.y,
                                             id: 0
-                                        },
-                                    ]);
-                                    //tools.click(r.click.x, r.click.y);
+                                        }
+                                    ])
                                 }
                                 else {
-                                    var d = random(777, 999);
+                                    var d = random(1000, 1111);
                                     if (怪物P.血量左上.x < 人物中心.x) {
                                         if (怪物P.血量左上.y < 人物中心.y) {
                                             tools.人物移动.左上走(d);
@@ -4020,34 +4030,10 @@ var tools = {
                                 };;
                             }
                             else {
-                                return {
-                                    status: false,
-                                    type: 3,
-                                    msg: "扫描怪物坐标失败"
-                                };
+                                msg = "扫描怪物失败";
+                                break;
                             }
-                            // var t1 = new Date().getTime()
-                            // r = tools.挂机打怪.向怪物移动();
-                            // var t2 = new Date().getTime()
                         }
-                    }
-                    var 时间段 = ((new Date().getTime() - 上一次移动) / 1000).toFixed(2)
-                    tools.悬浮球描述Temp("是否跑图=" + 是否跑图 + "(" + 时间段 + ")")
-                    if (是否变化) {
-
-
-                    }
-                    else {
-                        上一次隐身 = new Date().getTime() - (60 * 1000);
-                    }
-                    // if (tools.挂机打怪.判断中间血量是否大于65()) {
-                    //     if (new Date().getTime() - 上一次移动 >= 移动时间戳1){
-
-                    //     }
-                    // }
-                    if (挂机参数.隐身走动 != 1 && 身边怪物名称.length > 1) {
-                        扫描身边怪物名失败次数++;
-                        toastLog("扫描身边怪名失败[" + 扫描身边怪物名失败次数 + "](" + 身边怪物名称 + ")")
                     }
                 }
             }
@@ -5482,7 +5468,9 @@ var tools = {
         扫描怪物名图片: (文字枚举, p, 是否额外) => {
             var t = 0.4;
             var 怪物集合 = [];
-            怪物集合.push(文字枚举);
+            if (文字枚举 != null) {
+                怪物集合.push(文字枚举);
+            }
             if (是否额外) {
                 var arr = [];
                 if (挂机参数.挂机地图大 == "蜈蚣洞") {
@@ -9127,7 +9115,7 @@ var tools = {
     悬浮球描述Temp: (text) => {
         if (text) {
             ui.run(() => {
-                windowTemp.temp1Text.setText(text);
+                windowTemp.temp1Text.setText(text+ "(" + new Date().getTime().toString().slice(-4) + ")");
             });
         }
     },
