@@ -3965,6 +3965,15 @@ var tools = {
                     r.扫描身边怪物名失败次数 = 0;
                     r.向怪物移动次数 = 0;
                     msg = "到达怪物";
+
+                    if (isTouchDown) {
+
+                        ra.touchUp();   // 弹起所有手指
+
+                        ra.flush();  // 等待前面的操作全部完成
+
+                        ra.exit();   // 退出RootAutomator，如果没有正确退出，可能导致"手指"残留在屏幕上
+                    }
                     break;
                 }
                 else {
@@ -3975,18 +3984,14 @@ var tools = {
                             上一次移动 = new Date().getTime();
                         }
                         else {
-                            var t0 = new Date().getTime()
                             var 怪物P = tools.挂机打怪.扫描怪物名图片(锁定的怪物明细, p, true);
-                            var t00 = new Date().getTime()
                             if (怪物P.status) {
-                                var t1 = new Date().getTime()
-                                var 空位 = tools.挂机打怪.扫描怪物空位(怪物P.血量左上);
-                                if (空位 == null || !空位.status) {
-                                    空位 = tools.人物移动.获取人物空位();
-                                }
-                                var t11 = new Date().getTime()
-                                if (空位 && 空位.status) {
-                                    if (!isTouchDown) {
+                                if (!isTouchDown) {
+                                    var 空位 = tools.挂机打怪.扫描怪物空位(怪物P.血量左上);
+                                    if (空位 == null || !空位.status) {
+                                        空位 = tools.人物移动.获取人物空位();
+                                    }
+                                    if (空位 && 空位.status) {
                                         ra.touchDown([
                                             {
                                                 x: 空位.click.x,
@@ -3994,40 +3999,39 @@ var tools = {
                                                 id: 0
                                             },
                                         ]);
-                                    }
-                                    sleep(random(60, 99));
-                                    ra.touchMove([
-                                        {
-                                            x: 怪物P.血量左上.x + 20,
-                                            y: 怪物P.血量左上.y,
-                                            id: 0
-                                        }
-                                    ])
-                                }
-                                else {
-                                    var d = random(1000, 1111);
-                                    if (怪物P.血量左上.x < 人物中心.x) {
-                                        if (怪物P.血量左上.y < 人物中心.y) {
-                                            tools.人物移动.左上走(d);
-                                        }
-                                        else {
-                                            tools.人物移动.左下走(d);
-                                        }
+                                        isTouchDown = true;
+                                        sleep(random(60, 99));
+                                        ra.touchMove([
+                                            {
+                                                x: 怪物P.血量左上.x + 20,
+                                                y: 怪物P.血量左上.y,
+                                                id: 0
+                                            }
+                                        ])
                                     }
                                     else {
-                                        if (怪物P.血量左上.y < 人物中心.y) {
-                                            tools.人物移动.右上走(d);
+                                        var d = random(1000, 1111);
+                                        if (怪物P.血量左上.x < 人物中心.x) {
+                                            if (怪物P.血量左上.y < 人物中心.y) {
+                                                tools.人物移动.左上走(d);
+                                            }
+                                            else {
+                                                tools.人物移动.左下走(d);
+                                            }
                                         }
                                         else {
-                                            tools.人物移动.右下走(d);
+                                            if (怪物P.血量左上.y < 人物中心.y) {
+                                                tools.人物移动.右上走(d);
+                                            }
+                                            else {
+                                                tools.人物移动.右下走(d);
+                                            }
                                         }
                                     }
                                 }
-                                tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
-                                return {
-                                    status: true,
-                                    msg: ((t00 - t0) / 1000).toFixed(2) + " | " + ((t11 - t1) / 1000).toFixed(2)
-                                };;
+
+
+
                             }
                             else {
                                 msg = "扫描怪物失败";
@@ -4035,7 +4039,11 @@ var tools = {
                             }
                         }
                     }
+                    else {
+                        msg = "等待时间戳";
+                    }
                 }
+                tools.悬浮球描述Temp(msg)
             }
         },
         判断是否强制攻击: () => {
@@ -9115,7 +9123,7 @@ var tools = {
     悬浮球描述Temp: (text) => {
         if (text) {
             ui.run(() => {
-                windowTemp.temp1Text.setText(text+ "(" + new Date().getTime().toString().slice(-4) + ")");
+                windowTemp.temp1Text.setText(text + "(" + new Date().getTime().toString().slice(-4) + ")");
             });
         }
     },
