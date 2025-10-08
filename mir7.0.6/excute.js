@@ -3360,7 +3360,6 @@ var tools = {
             var 是否强制攻击 = false;
             var 切换左面板人物 = false;
             var 是否扫描过中间怪物 = false;
-            var 第一次近怪时间 = null;
             var 扫描宝宝 = {
                 status: false
             };
@@ -3454,18 +3453,15 @@ var tools = {
                         }
                     }
 
-
-
-
-                    //if (身边怪物名称.length <= 0 || (new Date().getTime() - 上一次扫描身边怪物名时间 >= 扫描身边怪物名时间戳)) {
-                    if (挂机参数.隐身走动 != 1 || 身边怪物名称.length <= 0) {
-                        var 扫描R = tools.挂机打怪.扫描身边怪物名();
-                        if (扫描R.status && 扫描R.name.length > 0) {
-                            身边怪物名称 = 扫描R.name;
-                            扫描身边怪物名失败次数 = 0;
-                            向怪物移动次数 = 0;
+                    if (挂机参数.隐身走动 != 1) {
+                        try {
+                            r = tools.挂机打怪.跑向怪物();
+                        } catch (error) {
+                            toastLog("跑向怪物异常")
+                            r = null;
+                        }
+                        if (r && r.status) {
                             if (!是否触发攻击) {
-                                第一次近怪时间 = new Date().getTime();
                                 是否触发攻击 = true;
                                 tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                             }
@@ -3474,51 +3470,17 @@ var tools = {
                                 tools.挂机打怪.宝宝是否存在("攻击", true, false);
                                 上次检查宝宝时间 = new Date().getTime();
                             }
+                            身边怪物名称 = r.身边怪物名称;
                         }
                         else {
-                            var 是否跑图 = tools.人物移动.是否跑图并截图坐标(false);
-                            var 时间段 = ((new Date().getTime() - 上一次移动) / 1000).toFixed(2)
-                            tools.悬浮球描述Temp("是否跑图=" + 是否跑图 + "(" + 时间段 + ")")
-                            if (!是否跑图) {
-                                上一次隐身 = new Date().getTime() - (60 * 1000);
-                            }
-                            // if (tools.挂机打怪.判断中间血量是否大于65()) {
-                            //     if (new Date().getTime() - 上一次移动 >= 移动时间戳1){
-
-                            //     }
-                            // }
-                            if (挂机参数.隐身走动 != 1 && 身边怪物名称.length > 1) {
-                                扫描身边怪物名失败次数++;
-                                toastLog("扫描身边怪名失败[" + 扫描身边怪物名失败次数 + "](" + 身边怪物名称 + ")")
-                            }
+                            tools.挂机打怪.关闭中间怪物("强制跑图");
+                            tools.挂机打怪.强制跑图();
+                            toastLog("移动失败")
+                            sleep(2222);
+                            break;
                         }
                     }
 
-                    // var 宝宝身边 = tools.挂机打怪.获取宝宝身边怪物数据(1);
-                    // tools.悬浮球描述("宝宝(" + 宝宝身边.value.length + ")")
-                    if ((!是否隐身等待 || 是否强制攻击) && 身边怪物名称.length > 1 && 扫描身边怪物名失败次数 >= 1) {
-                        r = tools.挂机打怪.找正上锁定怪物(0, 0);
-                        if (r.status) {
-                            var t1 = new Date().getTime();
-                            r = tools.挂机打怪.向怪物移动();
-                            var t2 = new Date().getTime();
-                            if (r.status) {
-                                扫描身边怪物名失败次数 = 0;
-                                向怪物移动次数++;
-                                toastLog("移动成功2")
-                                tools.悬浮球描述Temp(r.msg)
-                                sleep(200)
-                                continue;
-                            }
-                            else {
-                                tools.挂机打怪.强制跑图();
-                                toastLog("移动失败2")
-                                tools.挂机打怪.关闭中间怪物("强制跑图2(" + ((t1 - t0) / 1000).toFixed(2) + " | " + ((t2 - t1) / 1000).toFixed(2) + ")");
-                                上次跑图时间 = new Date().getTime();
-                                break;
-                            }
-                        }
-                    }
                     if (挂机参数.隐身走动 == 1 && !是否强制攻击 && (new Date().getTime() - 发现其他玩家时间) <= 发现其他玩家时间等待) { //二分钟内发现玩家需要强制攻击
                         toastLog((new Date().getTime() - 发现其他玩家时间) / 1000 + "秒前发现玩家,强制攻击")
                         是否强制攻击 = true;
@@ -3535,36 +3497,7 @@ var tools = {
                     if (挂机参数.隐身数量 > 0) {
                         怪物 = tools.挂机打怪.获取人物身边怪物数据();
                     }
-                    // if (挂机参数.寻找宝宝数 > 0) {
-                    //     扫描宝宝 = tools.挂机打怪.扫描宝宝();
-                    //     if (扫描宝宝.status) {
-                    //         宝宝最后位置信息 = {
-                    //             p: {
-                    //                 x: 扫描宝宝.r.x,
-                    //                 y: 扫描宝宝.r.y,
-                    //             },
-                    //             time: new Date().getTime()
-                    //         }
-                    //     }
-                    // }
-                    if (挂机参数.躲避精英 != 1 && 精英怪 && 精英怪.status && !是否锁定危险怪) {
-                        if (精英怪.value.是否施毒) {
-                            tools.挂机打怪.施毒(true);
-                            精英怪上一次施毒 = new Date().getTime();
-                            上一次施毒 = new Date().getTime();
-                            上一次攻击 = new Date().getTime() - (60 * 1000);
-                        }
-                        if (精英怪.value.是否打魔) {
-                            tools.挂机打怪.打魔();
-                        }
-                        if (精英怪.value.是否攻击) {
-                            是否强制攻击 = true;
-                        }
-                        else {
-                            是否隐身等待 = true;
-                        }
-                        是否锁定危险怪 = true;
-                    }
+
                     if (tools.挂机打怪.是否自愈()) {
                         tools.挂机打怪.自愈(true);
                     }
@@ -3618,7 +3551,6 @@ var tools = {
                             上一次打防 = new Date().getTime();
                         }
                     }
-
                     if (挂机参数.寻找宝宝数 > 0 && 怪物.length >= 挂机参数.寻找宝宝数) {
                         扫描宝宝 = tools.挂机打怪.扫描宝宝();
                         if (!扫描宝宝.status) {
@@ -3630,44 +3562,6 @@ var tools = {
                         if (r.status) {
                             tools.挂机打怪.向宝宝移动2(r);
                         }
-                    }
-                    if (new Date().getTime() - 上一次移动 >= 移动时间戳1) {
-                        var 是否跑图 = tools.人物移动.是否跑图并截图坐标(false);
-                        var 时间段 = ((new Date().getTime() - 上一次移动) / 1000).toFixed(2)
-                        tools.悬浮球描述Temp("是否跑图=" + 是否跑图 + "(" + 时间段 + ")")
-                        if (!是否跑图) {
-                            上一次隐身 = new Date().getTime() - (60 * 1000);
-                        }
-                        else {
-                            if ((!是否隐身等待 || 是否强制攻击) && 身边怪物名称.length <= 1) {
-                                if (挂机参数.隐身走动 == 0) {
-                                    var t1 = new Date().getTime()
-                                    r = tools.挂机打怪.向怪物移动();
-                                    var t2 = new Date().getTime()
-                                    if (r.status) {
-                                        向怪物移动次数++;
-                                        toastLog("移动成功(" + ((t1 - t0) / 1000).toFixed(2) + " | " + ((t2 - t1) / 1000).toFixed(2)) + ")"
-                                        sleep(200)
-                                        continue;
-                                    }
-                                    else {
-                                        tools.挂机打怪.强制跑图();
-                                        tools.挂机打怪.关闭中间怪物("强制跑图1(" + ((t1 - t0) / 1000).toFixed(2) + " | " + ((t2 - t1) / 1000).toFixed(2) + ")");
-                                        toastLog("移动失败(" + ((t1 - t0) / 1000).toFixed(2) + " | " + ((t2 - t1) / 1000).toFixed(2) + ")")
-                                        if (挂机参数.只打满血怪 != 1) {
-                                            sleep(1000);
-                                        }
-                                        上次跑图时间 = new Date().getTime();
-                                        break;
-                                    }
-                                }
-                                // else {
-                                //     tools.人物移动.随机走一步(random(777, 999));
-                                //     toastLog("移动" + r.msg);
-                                // }
-                            }
-                        }
-                        上一次移动 = new Date().getTime();
                     }
                     if (是否隐身等待 && !是否强制攻击) {
                         var result = tools.挂机打怪.判断是否强制攻击();
@@ -3708,11 +3602,6 @@ var tools = {
                         }
                         //是否扫描过中间怪物 = true;
                     }
-
-
-                    // if (精英怪 == null || !精英怪.status) {
-                    //     tools.执行时间戳.检测背包(false); //不能检查，点击整理按钮会导致怪物归属消失
-                    // }
 
                     tools.常用操作.及时执行事件(挂机参数.是否队长 == 1 ? false : true, "攻击怪物", true);
 
@@ -3951,21 +3840,22 @@ var tools = {
             var isTouchDown = false;
             var ra = new RootAutomator2({ root: true });
             var r = {
+                status: false,
                 身边怪物名称: "",
-                向怪物移动次数: 0,
-                扫描身边怪物名失败次数: 0,
-                是否移动过: false,
-                强制跑图: false
             }
             var msg = "等待时间戳"
             while (当前总状态 == 总状态.已启动) {
-                var 扫描R = tools.挂机打怪.扫描身边怪物名();
-                if (扫描R.status && 扫描R.name.length > 0) {
-                    r.身边怪物名称 = 扫描R.name;
-                    r.扫描身边怪物名失败次数 = 0;
-                    r.向怪物移动次数 = 0;
+                if (new Date().getTime() - 开始时间 > 1000 * 10) {
+                    msg = "超时退出";
+                    tools.悬浮球描述Temp(msg)
+                    break;
+                }
+                var 怪物R = tools.挂机打怪.扫描身边怪物名();
+                if (怪物R.status && 怪物R.name.length > 1) {
+                    r.身边怪物名称 = 怪物R.name;
+                    r.status = true;
                     msg = "到达怪物";
-
+                    tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                     if (isTouchDown) {
 
                         ra.touchUp();   // 弹起所有手指
@@ -3986,12 +3876,14 @@ var tools = {
                         else {
                             var 怪物P = tools.挂机打怪.扫描怪物名图片(锁定的怪物明细, p, true);
                             if (怪物P.status) {
+                                msg = "{x:" + 怪物P.血量左上.x + ",y:" + 怪物P.血量左上.y + "}";
                                 if (!isTouchDown) {
                                     var 空位 = tools.挂机打怪.扫描怪物空位(怪物P.血量左上);
                                     if (空位 == null || !空位.status) {
                                         空位 = tools.人物移动.获取人物空位();
                                     }
                                     if (空位 && 空位.status) {
+                                        toastLog("1111")
                                         ra.touchDown([
                                             {
                                                 x: 空位.click.x,
@@ -4000,38 +3892,39 @@ var tools = {
                                             },
                                         ]);
                                         isTouchDown = true;
-                                        sleep(random(60, 99));
-                                        ra.touchMove([
-                                            {
-                                                x: 怪物P.血量左上.x + 20,
-                                                y: 怪物P.血量左上.y,
-                                                id: 0
-                                            }
-                                        ])
-                                    }
-                                    else {
-                                        var d = random(1000, 1111);
-                                        if (怪物P.血量左上.x < 人物中心.x) {
-                                            if (怪物P.血量左上.y < 人物中心.y) {
-                                                tools.人物移动.左上走(d);
-                                            }
-                                            else {
-                                                tools.人物移动.左下走(d);
-                                            }
-                                        }
-                                        else {
-                                            if (怪物P.血量左上.y < 人物中心.y) {
-                                                tools.人物移动.右上走(d);
-                                            }
-                                            else {
-                                                tools.人物移动.右下走(d);
-                                            }
-                                        }
                                     }
                                 }
 
-
-
+                                if (isTouchDown) {
+                                    sleep(random(122, 166));
+                                    ra.touchMove([
+                                        {
+                                            x: 怪物P.血量左上.x + 20,
+                                            y: 怪物P.血量左上.y,
+                                            id: 0
+                                        }
+                                    ])
+                                }
+                                else {
+                                    var d = random(1000, 1111);
+                                    if (怪物P.血量左上.x < 人物中心.x) {
+                                        if (怪物P.血量左上.y < 人物中心.y) {
+                                            tools.人物移动.左上走(d);
+                                        }
+                                        else {
+                                            tools.人物移动.左下走(d);
+                                        }
+                                    }
+                                    else {
+                                        if (怪物P.血量左上.y < 人物中心.y) {
+                                            tools.人物移动.右上走(d);
+                                        }
+                                        else {
+                                            tools.人物移动.右下走(d);
+                                        }
+                                    }
+                                }
+                                tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
                             }
                             else {
                                 msg = "扫描怪物失败";
@@ -4045,6 +3938,7 @@ var tools = {
                 }
                 tools.悬浮球描述Temp(msg)
             }
+            return r;
         },
         判断是否强制攻击: () => {
             var 怪物数 = 0;
@@ -9660,6 +9554,12 @@ var tools = {
             }
         }
         else if (x >= p1.x1 && x <= p1.x2 && y >= p1.y1 && y <= p1.y2) { //避免点到充值
+            var r = tools.findImageArea("chongBtn.png", p.x1, p.y1, p.x2, p.y2, 0.8);
+            if (r.status) {
+                return false;
+            }
+        }
+        else if (x >= 410 && x <= 960 && y >= 618 && y <= 720) { //避免点到聊天框
             var r = tools.findImageArea("chongBtn.png", p.x1, p.y1, p.x2, p.y2, 0.8);
             if (r.status) {
                 return false;
