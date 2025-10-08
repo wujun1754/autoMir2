@@ -27,6 +27,8 @@ let ocrPladderOCR = $ocr.create({
     models: 'slim', // 指定精度相对低但速度更快的模型，若不指定则为default模型，精度高一点但速度慢一点
 });
 
+var 同一挂点累计点次数 = 0;
+
 var 是否替换武器 = false;
 var 是否替换衣服 = false;
 var 上一次小退时间 = new Date().getTime();
@@ -494,7 +496,7 @@ var 左怪物文字枚举 = {//不要随便动顺序，精英怪枚举有写死
         },
         {
             精英怪: false,
-            name: "猪",
+            name: "红黑猪",
             pic: "wenzhi_zuomianban_shimu_zhu.png",
             怪物显示图: "wenzi_shimu_zhu.png",
             左上血条偏移: {
@@ -3134,7 +3136,6 @@ var tools = {
             return r;
         },
         锁定怪物: () => {
-
             var isFind = false;
             var 锁定怪物顺序 = 0;
             var r = null;
@@ -3217,8 +3218,8 @@ var tools = {
                 if (是否替换衣服) {
                     是否替换衣服 = false;
                     var isSuccess = tools.常用操作.更换衣服()
+                    tools.挂机打怪.回城补给在挂机("衣服无持久");
                     if (!isSuccess) {
-                        tools.挂机打怪.回城补给在挂机("衣服无持久");
                     }
                 }
 
@@ -3369,6 +3370,7 @@ var tools = {
             var 是否允许拾取 = true;
             while (当前总状态 == 总状态.已启动) {
                 var 时间戳 = new Date().getTime() - start;
+
                 if (时间戳 > timeout && (精英怪 == null || !精英怪.status)) {
                     tools.挂机打怪.强制跑图();
                     if (挂机参数.隐身走动 == 1) {
@@ -3391,7 +3393,7 @@ var tools = {
                     if (挂机参数.隐身走动 == 1) {
                         tools.常用操作.点击左面板怪物();
                     }
-
+                    toastLog(msg)
                     锁定失败次数 = 0;
                     if (锁定失败次数 >= 3 || (挂机参数.躲避精英 == 1 && 精英怪 != null && 精英怪.status)) {
                         sleep(1000 * 10);
@@ -3399,12 +3401,7 @@ var tools = {
                     break;
                 }
                 var 血量是否为0 = tools.挂机打怪.判断中间血量是否为0();
-                // var 是否激活状态 = tools.拾取.状态();
-                // if (是否激活状态) {
-                //     tools.拾取.激活后操作();
-                // }
-                // if (血量是否为0 && (精英怪 == null || !精英怪.status || 精英怪.攻击中扫描拾取)) {
-              
+
                 if (血量是否为0) {
                     tools.拾取.点击(1, "血量0");
                     tools.拾取.等待();
@@ -3419,29 +3416,27 @@ var tools = {
                 }
 
                 if (精英怪 && 精英怪.status && !精英怪.value.攻击中扫描拾取) {
-                    //
                     r = tools.挂机打怪.判断中间血量是否存在();
                     if (r) {
                         是否允许拾取 = false;
                     }
                 }
                 if (是否允许拾取 && !是否已经拾取) {
-                    if (new Date().getTime() >= 禁止拾取时间) {
-                        var msg = "经验"
-                        var isShiQu = tools.挂机打怪.判断经验增加();
-                        if (!isShiQu) {
-                            msg = "攻扫";
-                            isShiQu = tools.拾取.扫描拾取(拾取范围P, true)
-                        }
+                    var msg = "经验"
+                    var isShiQu = tools.挂机打怪.判断经验增加();
+                    if (!isShiQu && new Date().getTime() >= 禁止拾取时间) {
+                        msg = "攻扫";
+                        isShiQu = tools.拾取.扫描拾取(拾取范围P, true)
                     }
                     if (isShiQu) {
                         tools.拾取.点击(1, msg);
                         tools.拾取.等待();
                         tools.拾取.激活后操作();
+                        是否已经拾取 = true;
                     }
                 }
                 if (是否结束攻击) {
-                    tools.悬浮球描述Temp("0血结束")
+                    //tools.悬浮球描述Temp("0血结束")
                 }
                 else {
                     r = tools.挂机打怪.找正上锁定怪物(0, 0);
@@ -3460,9 +3455,10 @@ var tools = {
                     }
 
 
+
+
                     //if (身边怪物名称.length <= 0 || (new Date().getTime() - 上一次扫描身边怪物名时间 >= 扫描身边怪物名时间戳)) {
                     if (挂机参数.隐身走动 != 1 || 身边怪物名称.length <= 0) {
-
                         var 扫描R = tools.挂机打怪.扫描身边怪物名();
                         if (扫描R.status && 扫描R.name.length > 0) {
                             身边怪物名称 = 扫描R.name;
@@ -3480,6 +3476,17 @@ var tools = {
                             }
                         }
                         else {
+                            var 是否跑图 = tools.人物移动.是否跑图并截图坐标(false);
+                            var 时间段 = ((new Date().getTime() - 上一次移动) / 1000).toFixed(2)
+                            tools.悬浮球描述Temp("是否跑图=" + 是否跑图 + "(" + 时间段 + ")")
+                            if (!是否跑图) {
+                                上一次隐身 = new Date().getTime() - (60 * 1000);
+                            }
+                            // if (tools.挂机打怪.判断中间血量是否大于65()) {
+                            //     if (new Date().getTime() - 上一次移动 >= 移动时间戳1){
+
+                            //     }
+                            // }
                             if (挂机参数.隐身走动 != 1 && 身边怪物名称.length > 1) {
                                 扫描身边怪物名失败次数++;
                                 toastLog("扫描身边怪名失败[" + 扫描身边怪物名失败次数 + "](" + 身边怪物名称 + ")")
@@ -3489,7 +3496,7 @@ var tools = {
 
                     // var 宝宝身边 = tools.挂机打怪.获取宝宝身边怪物数据(1);
                     // tools.悬浮球描述("宝宝(" + 宝宝身边.value.length + ")")
-                    if ((!是否隐身等待 || 是否强制攻击) && 身边怪物名称.length > 0 && 扫描身边怪物名失败次数 >= 1) {
+                    if ((!是否隐身等待 || 是否强制攻击) && 身边怪物名称.length > 1 && 扫描身边怪物名失败次数 >= 1) {
                         r = tools.挂机打怪.找正上锁定怪物(0, 0);
                         if (r.status) {
                             var t1 = new Date().getTime();
@@ -3498,12 +3505,14 @@ var tools = {
                             if (r.status) {
                                 扫描身边怪物名失败次数 = 0;
                                 向怪物移动次数++;
+                                toastLog("移动成功2")
                                 tools.悬浮球描述Temp(r.msg)
                                 sleep(200)
                                 continue;
                             }
                             else {
                                 tools.挂机打怪.强制跑图();
+                                toastLog("移动失败2")
                                 tools.挂机打怪.关闭中间怪物("强制跑图2(" + ((t1 - t0) / 1000).toFixed(2) + " | " + ((t2 - t1) / 1000).toFixed(2) + ")");
                                 上次跑图时间 = new Date().getTime();
                                 break;
@@ -3624,24 +3633,30 @@ var tools = {
                     }
                     if (new Date().getTime() - 上一次移动 >= 移动时间戳1) {
                         var 是否跑图 = tools.人物移动.是否跑图并截图坐标(false);
+                        var 时间段 = ((new Date().getTime() - 上一次移动) / 1000).toFixed(2)
+                        tools.悬浮球描述Temp("是否跑图=" + 是否跑图 + "(" + 时间段 + ")")
                         if (!是否跑图) {
                             上一次隐身 = new Date().getTime() - (60 * 1000);
                         }
                         else {
-                            if ((!是否隐身等待 || 是否强制攻击) && 身边怪物名称.length <= 0) {
+                            if ((!是否隐身等待 || 是否强制攻击) && 身边怪物名称.length <= 1) {
                                 if (挂机参数.隐身走动 == 0) {
                                     var t1 = new Date().getTime()
                                     r = tools.挂机打怪.向怪物移动();
                                     var t2 = new Date().getTime()
                                     if (r.status) {
                                         向怪物移动次数++;
-                                        tools.悬浮球描述Temp(((t1 - t0) / 1000).toFixed(2) + " | " + ((t2 - t1) / 1000).toFixed(2))
+                                        toastLog("移动成功(" + ((t1 - t0) / 1000).toFixed(2) + " | " + ((t2 - t1) / 1000).toFixed(2)) + ")"
                                         sleep(200)
                                         continue;
                                     }
                                     else {
                                         tools.挂机打怪.强制跑图();
                                         tools.挂机打怪.关闭中间怪物("强制跑图1(" + ((t1 - t0) / 1000).toFixed(2) + " | " + ((t2 - t1) / 1000).toFixed(2) + ")");
+                                        toastLog("移动失败(" + ((t1 - t0) / 1000).toFixed(2) + " | " + ((t2 - t1) / 1000).toFixed(2) + ")")
+                                        if (挂机参数.只打满血怪 != 1) {
+                                            sleep(1000);
+                                        }
                                         上次跑图时间 = new Date().getTime();
                                         break;
                                     }
@@ -3710,6 +3725,11 @@ var tools = {
 
                     tools.悬浮球描述("[" + 精英怪Str + "](" + ((timeout - (时间戳)) / 1000).toFixed(2) + ") (" + 身边怪物名称 + ") (" + 锁定的怪物明细.name + ") (" + isChange + ") (" + 怪物.length + " | " + 宝宝身边怪物 + ")");
                 } else {
+                    if (!是否已经拾取) {
+                        tools.拾取.点击(1, msg);
+                        tools.拾取.等待();
+                        tools.拾取.激活后操作();
+                    }
                     if (挂机参数.攻击宝宝身边 > 0) {
                         var 是否有怪 = tools.挂机打怪.找非满血怪(0, false, false)
                         if (是否有怪.status) {
@@ -3724,6 +3744,10 @@ var tools = {
                                     是否锁定危险怪 = false;
                                     身边怪物名称 = "";
                                     精英怪 = null;
+
+                                    是否结束攻击 = false;
+                                    是否已经拾取 = false;
+                                    是否允许拾取 = true;
                                     continue;
                                     // isFind = true;
                                     // 锁定怪物顺序 = 0;
@@ -3760,8 +3784,7 @@ var tools = {
             else {
                 tools.click(random(726, 736), random(25, 35));
             }
-
-            tools.悬浮球描述Temp(msg)
+            //tools.悬浮球描述Temp(msg)
         },
         点击脚下: () => {
             tools.click(635, 352)
@@ -3889,12 +3912,21 @@ var tools = {
                 result.index = 顺序;
             }
             else {
-                var item = config.zuobiao.左攻击面板[fbl].血量坐标[0];
-                var isOk = images.detectsColor(img, item.c1, item.x1, item.y1, 12, "diff")
-                if (isOk) {
-                    result.status = true;
-                    result.index = 0;
+                for (var index = 0; index < 5; index++) {
+                    var item = config.zuobiao.左攻击面板[fbl].血量坐标[index];
+                    var isOk = images.detectsColor(img, item.c1, item.x1, item.y1, 12, "diff")
+                    if (isOk) {
+                        result.status = true;
+                        result.index = index;
+                        break;
+                    }
                 }
+                // var item = config.zuobiao.左攻击面板[fbl].血量坐标[0];
+                // var isOk = images.detectsColor(img, item.c1, item.x1, item.y1, 12, "diff")
+                // if (isOk) {
+                //     result.status = true;
+                //     result.index = 0;
+                // }
             }
             if (result.status) {
                 var 顺序p = Y顺序Arr[result.index];
@@ -3908,6 +3940,117 @@ var tools = {
             }
             utils.recycleNull(img);
             return result;
+        },
+        跑向怪物: () => {
+            var 移动时间戳 = 1000 * 1.2;
+            var 上一次移动 = new Date().getTime();
+            var 人物中心 = config.zuobiao.人物中心[fbl];
+            var p = config.zuobiao.大范围扫描怪物名[fbl];
+            var 按钮集合 = config.zuobiao.按钮集合[fbl];
+            var r = {
+                身边怪物名称: "",
+                向怪物移动次数: 0,
+                扫描身边怪物名失败次数: 0,
+                是否移动过: false,
+                强制跑图: false
+            }
+            while (当前总状态 == 总状态.已启动) {
+                var 扫描R = tools.挂机打怪.扫描身边怪物名();
+                if (扫描R.status && 扫描R.name.length > 0) {
+                    r.身边怪物名称 = 扫描R.name;
+                    r.扫描身边怪物名失败次数 = 0;
+                    r.向怪物移动次数 = 0;
+                    break;
+                }
+                else {
+                    var msg = "等待时间戳"
+                    if (new Date().getTime() - 上一次移动 >= 移动时间戳) {
+                        var 是否变化 = tools.人物移动.坐标是否变化并截图坐标();
+                        if (是否变化) {
+                            msg = "跑动中"
+                        }
+                        else {
+                          
+
+                            var t0 = new Date().getTime()
+                            var 怪物P = tools.挂机打怪.扫描怪物名图片(锁定的怪物明细, p, true);
+                            var t00 = new Date().getTime()
+
+
+                            if (怪物P.status) {
+                                var t1 = new Date().getTime()
+                                r = tools.挂机打怪.扫描怪物空位(怪物P.血量左上);
+                                if (r == null || !r.status) {
+                                    r = tools.人物移动.获取人物空位();
+                                }
+                                var t11 = new Date().getTime()
+                                if (r && r.status) {
+                                    ra.touchDown([
+                                        {
+                                            x: r.click.x,
+                                            y: r.click.y,
+                                            id: 0
+                                        },
+                                    ]);
+                                    //tools.click(r.click.x, r.click.y);
+                                }
+                                else {
+                                    var d = random(777, 999);
+                                    if (怪物P.血量左上.x < 人物中心.x) {
+                                        if (怪物P.血量左上.y < 人物中心.y) {
+                                            tools.人物移动.左上走(d);
+                                        }
+                                        else {
+                                            tools.人物移动.左下走(d);
+                                        }
+                                    }
+                                    else {
+                                        if (怪物P.血量左上.y < 人物中心.y) {
+                                            tools.人物移动.右上走(d);
+                                        }
+                                        else {
+                                            tools.人物移动.右下走(d);
+                                        }
+                                    }
+                                }
+                                tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+                                return {
+                                    status: true,
+                                    msg: ((t00 - t0) / 1000).toFixed(2) + " | " + ((t11 - t1) / 1000).toFixed(2)
+                                };;
+                            }
+                            else {
+                                return {
+                                    status: false,
+                                    type: 3,
+                                    msg: "扫描怪物坐标失败"
+                                };
+                            }
+                            // var t1 = new Date().getTime()
+                            // r = tools.挂机打怪.向怪物移动();
+                            // var t2 = new Date().getTime()
+                        }
+                    }
+                    var 时间段 = ((new Date().getTime() - 上一次移动) / 1000).toFixed(2)
+                    tools.悬浮球描述Temp("是否跑图=" + 是否跑图 + "(" + 时间段 + ")")
+                    if (是否变化) {
+
+
+                    }
+                    else {
+                        上一次隐身 = new Date().getTime() - (60 * 1000);
+                    }
+                    // if (tools.挂机打怪.判断中间血量是否大于65()) {
+                    //     if (new Date().getTime() - 上一次移动 >= 移动时间戳1){
+
+                    //     }
+                    // }
+                    if (挂机参数.隐身走动 != 1 && 身边怪物名称.length > 1) {
+                        扫描身边怪物名失败次数++;
+                        toastLog("扫描身边怪名失败[" + 扫描身边怪物名失败次数 + "](" + 身边怪物名称 + ")")
+                    }
+                }
+            }
         },
         判断是否强制攻击: () => {
             var 怪物数 = 0;
@@ -3963,6 +4106,16 @@ var tools = {
                 怪物数: 怪物数,
                 status: false
             };
+        },
+        判断中间血量是否大于65: () => {
+            var result = false;
+            let img = captureScreen();
+            var v0 = images.detectsColor(img, "#FF3300", 666, 39, 6, "diff");//100%血量和0血量会冲突
+            if (v0) {
+                return true;
+            }
+            utils.recycleNull(img);
+            return result;
         },
         判断中间血量是否为0: () => {
             var result = false;
@@ -4234,6 +4387,7 @@ var tools = {
 
             if (箭头P.status && 箭头P.r && Math.abs(箭头P.r.x - x) <= 50 && Math.abs(箭头P.r.y - y) <= 50) {
                 toastLog("到达挂点(" + 挂机点跑图顺序 + ")");
+                同一挂点累计点次数 = 0;
                 if (挂机参数.反跑地图 == 1) {
                     挂机点跑图顺序--;
                 }
@@ -4251,13 +4405,24 @@ var tools = {
                     y = closeImg.y + (r.y - 偏移.y) + random(-1, 1);
                 }
             }
+            else {
+                同一挂点累计点次数++;
+            }
+            if (同一挂点累计点次数 >= 20) {
+                if (挂机参数.反跑地图 == 1) {
+                    挂机点跑图顺序--;
+                }
+                else {
+                    挂机点跑图顺序++;
+                }
+            }
             if (x <= 0 || x > 1028 || y <= 0 || y > 720) {
                 toastLog("{x:" + x + ",y:" + y + "}无效");
             }
             else {
                 tools.click(x, y)
             }
-            //tools.悬浮球描述Temp("跑图顺序(" + 挂机点跑图顺序 + ")")
+            tools.悬浮球描述Temp("跑图(" + 挂机点跑图顺序 + ")累计:" + 同一挂点累计点次数)
             是否强制跑图 = false;
             tools.常用操作.关闭所有窗口(false, 0, true);
             // if (宝宝模式 != "休息") {
@@ -4984,9 +5149,19 @@ var tools = {
             if (怪物P.status) {
                 var t1 = new Date().getTime()
                 r = tools.挂机打怪.扫描怪物空位(怪物P.血量左上);
+                if (r == null || !r.status) {
+                    r = tools.人物移动.获取人物空位();
+                }
                 var t11 = new Date().getTime()
                 if (r && r.status) {
-                    tools.click(r.click.x, r.click.y);
+                    ra.touchDown([
+                        {
+                            x: r.click.x,
+                            y: r.click.y,
+                            id: 0
+                        },
+                    ]);
+                    //tools.click(r.click.x, r.click.y);
                 }
                 else {
                     var d = random(777, 999);
@@ -5021,6 +5196,56 @@ var tools = {
                 };
             }
         },
+        // 向怪物移动Old: () => {
+        //     var 人物中心 = config.zuobiao.人物中心[fbl];
+        //     var p = config.zuobiao.大范围扫描怪物名[fbl];
+        //     var 按钮集合 = config.zuobiao.按钮集合[fbl];
+
+        //     var t0 = new Date().getTime()
+        //     var 怪物P = tools.挂机打怪.扫描怪物名图片(锁定的怪物明细, p, true);
+        //     var t00 = new Date().getTime()
+
+
+        //     if (怪物P.status) {
+        //         var t1 = new Date().getTime()
+        //         r = tools.挂机打怪.扫描怪物空位(怪物P.血量左上);
+        //         var t11 = new Date().getTime()
+        //         if (r && r.status) {
+        //             tools.click(r.click.x, r.click.y);
+        //         }
+        //         else {
+        //             var d = random(777, 999);
+        //             if (怪物P.血量左上.x < 人物中心.x) {
+        //                 if (怪物P.血量左上.y < 人物中心.y) {
+        //                     tools.人物移动.左上走(d);
+        //                 }
+        //                 else {
+        //                     tools.人物移动.左下走(d);
+        //                 }
+        //             }
+        //             else {
+        //                 if (怪物P.血量左上.y < 人物中心.y) {
+        //                     tools.人物移动.右上走(d);
+        //                 }
+        //                 else {
+        //                     tools.人物移动.右下走(d);
+        //                 }
+        //             }
+        //         }
+        //         tools.click(random(按钮集合.普攻.x[0], 按钮集合.普攻.x[1]), random(按钮集合.普攻.y[0], 按钮集合.普攻.y[1]));
+        //         return {
+        //             status: true,
+        //             msg: ((t00 - t0) / 1000).toFixed(2) + " | " + ((t11 - t1) / 1000).toFixed(2)
+        //         };;
+        //     }
+        //     else {
+        //         return {
+        //             status: false,
+        //             type: 3,
+        //             msg: "扫描怪物坐标失败"
+        //         };
+        //     }
+        // },
         扫描怪物空位: (怪物P) => {
             var color = "#DB0000";//红血条
             var color2 = "#00BF00";//蓝血条
@@ -5677,6 +5902,40 @@ var tools = {
         },
     },
     人物移动: {
+        获取人物空位: () => {
+            var r = {
+                status: false,
+                click: {
+                    x: 0,
+                    y: 0
+                }
+            }
+            var img = captureScreen();
+            var color = "#DB0000";//红血条
+            var color2 = "#00BF00";//蓝血条
+            var 点击范围 = config.人物点击范围全部[fbl];
+            for (var index = 0; index < 点击范围.length; index++) {
+                var item = 点击范围[index];
+                var r1 = images.findColor(img, color, {
+                    region: [item.x1, item.y1, item.x2 - item.x1, item.y2 - item.y1],
+                    threshold: 4
+                })
+                var r2 = images.findColor(img, color2, {
+                    region: [item.x1, item.y1, item.x2 - item.x1, item.y2 - item.y1],
+                    threshold: 4
+                })
+                if ((r1 == null || r1.x <= 0 || r1.y <= 0) && (r2 == null || r2.x <= 0 || r2.y <= 0)) {
+                    r = {
+                        status: true,
+                        click: item.click
+                    }
+
+                    break;
+                }
+            }
+            utils.recycleNull(img);
+            return r;
+        },
         点击人物空位: (arr) => {
             var img = captureScreen();
             var isok = false;
@@ -5956,6 +6215,21 @@ var tools = {
                 }
             }
             return 是否跑图;
+        },
+        坐标是否变化并截图坐标: () => {
+            var 是否变化 = true;
+            if (上次坐标截图 == null) {
+                上次坐标截图 = tools.常用操作.截图当前坐标();
+            }
+            else {
+                是否变化 = tools.人物移动.跑图坐标是否变化()
+                if (是否变化) {
+                    var 当前坐标截图 = tools.常用操作.截图当前坐标();
+                    utils.recycleNull(上次坐标截图);
+                    上次坐标截图 = 当前坐标截图;
+                }
+            }
+            return 是否变化;
         },
         获取路由组: (当前地图, 目的地) => {
             var routesGroup = [];
@@ -6353,6 +6627,21 @@ var tools = {
                             } else {
                                 强制跑图 = 打怪次数 > 0 || 是否强制跑图 ? true : false;
                                 break;
+                            }
+                        }
+                    } else if (挂机参数.扫描精英 == 1) {
+                        var 精英怪 = tools.挂机打怪.寻找精英怪();
+                        if (精英怪.status) {
+                            toastLog("扫描到精英怪")
+                            锁定的怪物明细 = 精英怪.value.左怪物枚举;
+                            tools.挂机打怪.攻击怪物();
+                        }
+                        else {
+                            var now = new Date().getTime();
+                            if (now >= 禁止拾取时间 && now - 上一次激活拾取时间 > 激活拾取时间戳 && tools.拾取.扫描拾取(null, false)) {
+                                tools.拾取.点击(1, " 去挂机图");
+                                tools.拾取.等待();
+                                tools.拾取.激活后操作();
                             }
                         }
                     }
@@ -7368,6 +7657,7 @@ var tools = {
             }
         },
         回城补给: () => {
+            上一次启动执行时间 = new Date().getTime();
             tools.悬浮球描述("回城补给");
             var 当前地图 = tools.常用操作.获取人物地图();
             if (挂机参数.地牢回城 == 1 && 当前地图.indexOf("苍月") < 0 && 当前地图.indexOf("比奇") < 0 && 当前地图.indexOf("盟重") < 0 && 当前地图 != "土城") {
@@ -7378,50 +7668,42 @@ var tools = {
                 while (true) {
                     try {
                         tools.人物移动.去小贩Loop();
-                        tools.常用方法.错误日志("去小贩Loop:成功", 2)
                         break;
                     } catch (e) {
                         var msg = typeof e === "object" && e.stack ? e.stack + "\n" + e.toString() : e.toString()
-                        tools.常用方法.错误日志("去小贩Loop:异常\n" + msg, 2)
                         toastLog("去小贩Loop: 异常\n" + msg);
                         sleep(666);
                     }
                 }
+                上一次启动执行时间 = new Date().getTime();
             }
             if (当前总状态 == 总状态.已启动) {
                 tools.补给操作.点击分身();
-                tools.常用方法.错误日志("点击分身完成", 2)
             }
             if (当前总状态 == 总状态.已启动) {
                 tools.补给操作.替换装备();
-                tools.常用方法.错误日志("替换装备完成", 2)
             }
             if (当前总状态 == 总状态.已启动) {
                 tools.补给操作.卖物品Loop();
-                tools.常用方法.错误日志("卖物品Loop完成1", 2)
             }
             if (当前总状态 == 总状态.已启动) {
                 tools.补给操作.把药品格非蓝拖到背包();
                 tools.补给操作.卖物品Loop();
-                tools.常用方法.错误日志("卖物品Loop完成2", 2)
             }
             if (当前总状态 == 总状态.已启动) {
                 tools.补给操作.修理装备Loop();
-                tools.常用方法.错误日志("修理装备Loop完成", 2)
             }
             if (当前总状态 == 总状态.已启动) {
                 tools.补给操作.买物品Loops();
-                tools.常用方法.错误日志("买物品Loops完成", 2)
             }
             if (当前总状态 == 总状态.已启动 && 挂机参数.捆雪霜包 == 1) {
                 sleep(888);
                 var msg = tools.补给操作.检查仓库雪霜();
-                tools.常用方法.错误日志("检查仓库雪霜:" + msg, 2);
             }
             if (当前总状态 == 总状态.已启动) {
                 tools.补给操作.取武器衣服();
-                tools.常用方法.错误日志("取武器衣服完成", 2)
             }
+            上一次启动执行时间 = new Date().getTime();
             tools.悬浮球描述("补给完成");
         },
         点击分身: () => {
