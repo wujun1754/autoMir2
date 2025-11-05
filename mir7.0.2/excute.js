@@ -6840,19 +6840,19 @@ var tools = {
                 tools.补给操作.点击分身();
                 tools.常用方法.错误日志("点击分身完成", 2)
             }
-            if (当前总状态 == 总状态.已启动) {
-                tools.补给操作.替换装备();
-                tools.常用方法.错误日志("替换装备完成", 2)
-            }
-            if (当前总状态 == 总状态.已启动) {
-                tools.补给操作.卖物品Loop();
-                tools.常用方法.错误日志("卖物品Loop完成1", 2)
-            }
-            if (当前总状态 == 总状态.已启动) {
-                tools.补给操作.把药品格非蓝拖到背包();
-                tools.补给操作.卖物品Loop();
-                tools.常用方法.错误日志("卖物品Loop完成2", 2)
-            }
+            // if (当前总状态 == 总状态.已启动) {
+            //     tools.补给操作.替换装备();
+            //     tools.常用方法.错误日志("替换装备完成", 2)
+            // }
+            // if (当前总状态 == 总状态.已启动) {
+            //     tools.补给操作.卖物品Loop();
+            //     tools.常用方法.错误日志("卖物品Loop完成1", 2)
+            // }
+            // if (当前总状态 == 总状态.已启动) {
+            //     tools.补给操作.把药品格非蓝拖到背包();
+            //     tools.补给操作.卖物品Loop();
+            //     tools.常用方法.错误日志("卖物品Loop完成2", 2)
+            // }
             if (当前总状态 == 总状态.已启动) {
                 tools.补给操作.修理装备Loop();
                 tools.常用方法.错误日志("修理装备Loop完成", 2)
@@ -7406,7 +7406,7 @@ var tools = {
             if (物品集合 != null && 物品集合.length > 0) {
                 tools.常用操作.关闭所有窗口();
                 tools.常用操作.打开背包();
-                sleep(1200);
+                sleep(888);
                 var 蓝包数量 = tools.matchTemplate(补给枚举.中蓝包, 10, 0.85).count;
                 var 蓝个数量_背包 = tools.matchTemplate(补给枚举.中蓝个_背包, 15, 0.85).count;
                 var 蓝个数量_格子 = tools.matchTemplate(补给枚举.中蓝个_格子, 6, 0.85).count;
@@ -7423,7 +7423,7 @@ var tools = {
                 var 修复油数量 = 修复油数量_背包 + 修复油数量_格子;
                 var 物品S1 = [];
                 var 护身符 = null;
-                var 毒 = null;
+                var 灰毒 = null;
                 for (var i = 0; i < 物品集合.length; i++) {
                     if (当前总状态 == 总状态.已启动) {
                         tools.常用操作.及时执行事件(false);
@@ -7451,7 +7451,7 @@ var tools = {
                                 continue;
                             }
                             else {
-                                毒 = 物品对象;
+                                灰毒 = 物品对象;
                             }
                         }
 
@@ -7508,37 +7508,93 @@ var tools = {
                 }
 
                 if (物品S1.length > 0) {
+                    var r = tools.补给操作.点击小贩按钮("购买", true);
+                    sleep(random(666, 888));
                     物品S1.sort((a, b) => a["页码"] - b["页码"]);
+                    var 当前页码 = 1;
+                    for (var i = 0; i < 物品S1.length; i++) {
+                        var item = 物品S1[i];
+                        var 页码 = item["页码"];
+                        if (页码 != 当前页码) {
+                            var 差值 = 页码 - 当前页码;
+                            for (var i = 1; i < 差值; i++) {
+                                r = tools.findImageForWaitClick("youjiantouBtn.png", {
+                                    maxTries: 6,
+                                    interval: 666
+                                });
+                                if (r.status) {
+                                    sleep(random(666, 888))
+                                }
+                                else {
+                                    return {
+                                        status: false,
+                                        err: "未找到youjiantouBtn"
+                                    }
+                                }
+
+                            }
+                            当前页码 = 页码;
+                        }
+                        tools.补给操作.买物品(item)
+                    }
+                }
+
+                if (护身符 != null) {
+                    var r = tools.补给操作.点击小贩按钮("购买", true);
+                    sleep(random(666, 888));
+                    r = tools.findImageForWaitClick("youjiantouBtn.png", {
+                        maxTries: 6,
+                        interval: 666
+                    });
+                    if (r.status) {
+                        sleep(random(666, 888))
+                        tools.补给操作.买物品(护身符)
+                    }
+                    else {
+                        return {
+                            status: false,
+                            err: "未找到youjiantouBtn"
+                        }
+                    }
                 }
 
 
-
-
-                tools.补给操作.买物品(物品对象)
-                sleep(random(333, 555));
-            }
-            tools.悬浮球描述("购买物品结束");
-        },
-        买物品: (物品对象) => {
-            var r = tools.补给操作.点击小贩按钮("购买", true);
-            sleep(random(666, 888));
-            var 购买物品位置 = config.zuobiao.购买物品位置[fbl];
-            for (var i = 1; i < 物品对象["页码"]; i++) {
-                r = tools.findImageForWaitClick("youjiantouBtn.png", {
-                    maxTries: 6,
-                    interval: 666
-                });
-                if (r.status) {
-                    sleep(random(666, 888))
-                }
-                else {
-                    return {
-                        status: false,
-                        err: "未找到youjiantouBtn"
+                if (灰毒 != null) {
+                    var r = tools.补给操作.点击小贩按钮("购买", true);
+                    sleep(random(666, 888));
+                    r = tools.findImageForWaitClick("youjiantouBtn.png", {
+                        maxTries: 6,
+                        interval: 666
+                    });
+                    if (r.status) {
+                        r = tools.findImageForWaitClick("youjiantouBtn.png", {
+                            maxTries: 6,
+                            interval: 666
+                        });
+                        if (r.status) {
+                            sleep(random(666, 888))
+                            tools.补给操作.买物品(灰毒)
+                        }
+                        else {
+                            return {
+                                status: false,
+                                err: "未找到youjiantouBtn"
+                            }
+                        }
+                    }
+                    else {
+                        return {
+                            status: false,
+                            err: "未找到youjiantouBtn"
+                        }
                     }
                 }
 
             }
+            tools.悬浮球描述("购买物品结束");
+        },
+        买物品: (物品对象) => {
+            var 购买物品位置 = config.zuobiao.购买物品位置[fbl];
             var p = 购买物品位置[物品对象.顺序.toString()];
             tools.click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]))
             sleep(random(666, 888))
@@ -7562,14 +7618,61 @@ var tools = {
             }
             for (var i = 0; i < 物品对象["数量"]; i++) {
                 tools.悬浮球描述("购买数" + (i + 1));
-                // if (fbl == "1080_2248") {
-                //     tools.click()
-                // }
                 tools.findImageClick("buygoumaiBtn.png");
-                sleep(random(666, 777))
+                sleep(random(500, 600))
             }
-            tools.常用操作.关闭所有窗口();
         },
+        // 买物品: (物品对象) => {
+        //     var r = tools.补给操作.点击小贩按钮("购买", true);
+        //     sleep(random(666, 888));
+        //     var 购买物品位置 = config.zuobiao.购买物品位置[fbl];
+        //     for (var i = 1; i < 物品对象["页码"]; i++) {
+        //         r = tools.findImageForWaitClick("youjiantouBtn.png", {
+        //             maxTries: 6,
+        //             interval: 666
+        //         });
+        //         if (r.status) {
+        //             sleep(random(666, 888))
+        //         }
+        //         else {
+        //             return {
+        //                 status: false,
+        //                 err: "未找到youjiantouBtn"
+        //             }
+        //         }
+
+        //     }
+        //     var p = 购买物品位置[物品对象.顺序.toString()];
+        //     tools.click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]))
+        //     sleep(random(666, 888))
+        //     if (物品对象["是否下翻"]) {
+        //         r = tools.findImageForWaitClick("buychakanBtn.png", {
+        //             maxTries: 6,
+        //             interval: 666
+        //         });
+        //         if (r.status) {
+        //             sleep(random(666, 888))
+        //             p = 购买物品位置["1"];
+        //             tools.click(random(p.x[0], p.x[1]), random(p.y[0], p.y[1]))
+        //             sleep(random(666, 888))
+        //         }
+        //         else {
+        //             return {
+        //                 status: false,
+        //                 err: "未找到buychakanBtn"
+        //             }
+        //         }
+        //     }
+        //     for (var i = 0; i < 物品对象["数量"]; i++) {
+        //         tools.悬浮球描述("购买数" + (i + 1));
+        //         // if (fbl == "1080_2248") {
+        //         //     tools.click()
+        //         // }
+        //         tools.findImageClick("buygoumaiBtn.png");
+        //         sleep(random(666, 777))
+        //     }
+        //     tools.常用操作.关闭所有窗口();
+        // },
         存仓库: (index1, index2) => {
             var r = tools.补给操作.点击小贩按钮("保存", true);
             if (!r) {
@@ -7651,23 +7754,24 @@ var tools = {
             for (let index = 1; index <= 5; index++) {
                 for (let index1 = 1; index1 <= 8; index1++) {
                     tools.常用操作.及时执行事件(false);
-                    if (是否返回修理) {
-                        var result = tools.findImageForWaitClick("xiulifanhui.png", {
-                            maxTries: 5,
-                            interval: 1000
-                        })
-                        if (!result.status) {
-                            toastLog("找不到xiulifanhui")
-                            return;
-                        }
-                        result = tools.findImageForWaitClick("putongxiuliBtn.png", {
-                            maxTries: 5,
-                            interval: 1000
-                        })
-                        if (!result.status) {
-                            toastLog("找不到putongxiuliBtn")
-                            return;
-                        }
+                    if (true) {
+                        tools.click(1052 + random(-5, 5), 325 + random(-3, 3));
+                        // var result = tools.findImageForWaitClick("xiulifanhui.png", {
+                        //     maxTries: 5,
+                        //     interval: 1000
+                        // })
+                        // if (!result.status) {
+                        //     toastLog("找不到xiulifanhui")
+                        //     return;
+                        // }
+                        // result = tools.findImageForWaitClick("putongxiuliBtn.png", {
+                        //     maxTries: 5,
+                        //     interval: 1000
+                        // })
+                        // if (!result.status) {
+                        //     toastLog("找不到putongxiuliBtn")
+                        //     return;
+                        // }
                     }
                     sleep(1200)
                     //tools.悬浮球描述(`开始修理${index}_${index1}格子`);
